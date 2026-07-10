@@ -103,6 +103,11 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
+      # Adapters import `@stainless-code/layers` (core) which resolves to its
+      # built `dist`; build before running the workspace test suites.
+      - name: Build
+        run: bun run build
+
       - name: Run unit tests with coverage gate
         run: bun run test:coverage
 
@@ -120,7 +125,11 @@ jobs:
       - name: Setup
         uses: ./.github/actions/setup
 
-      - name: Run React reactivity tests (vitest + jsdom)
+      # DOM suites resolve each package by name → its built `dist`, so build first.
+      - name: Build
+        run: bun run build
+
+      - name: Run adapter reactivity tests (vitest + jsdom)
         run: bun run test:dom
 
   build:
