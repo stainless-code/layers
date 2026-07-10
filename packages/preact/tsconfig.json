@@ -1,0 +1,5 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": { "jsxImportSource": "preact" },
+  "include": ["src/**/*.ts", "tests-dom/**/*.tsx", "tsdown.config.ts"]
+}

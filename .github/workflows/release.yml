@@ -1,0 +1,59 @@
+# [Changesets](https://github.com/changesets/changesets): open a "Version packages" PR when
+# `.changeset/*.md` files land on `main`, then publish to npm when that PR merges via npm
+# trusted publishing (GitHub OIDC — no NPM_TOKEN; provenance auto-generated).
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+  id-token: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    environment: release
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun and install
+        uses: ./.github/actions/setup
+
+      # npm trusted publishing (OIDC) needs npm ≥ 11.5.1 + Node ≥ 22.14
+      # (docs.npmjs.com/trusted-publishers). setup-bun leaves the runner's
+      # npm 10.x in PATH → `npm publish` can't detect OIDC → ENEEDAUTH.
+      # Node 24 ships npm 11.x; npm then auto-authenticates via OIDC (no token).
+      - name: Setup Node + npm for trusted publishing
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      # Opens/updates the Version PR when `.changeset/*.md` exist. When there are none, the action
+      # can still run `publish` (see changesets/action) so a just-merged Version PR can ship.
+      # `changeset publish` should exit 0 when there is nothing new to publish. If this job fails,
+      # read the step log: common causes are OIDC/trusted-publishing misconfig (`id-token: write`,
+      # the `release` environment, or the npm trusted-publisher binding), registry/network errors,
+      # or a real publish failure — not assumed from the runner alone.
+      - name: Create Release Pull Request or Publish to npm
+        id: changesets
+        uses: changesets/action@a45c4d594aa4e2c509dc14a9f2b3b67ba3780d0d # v1
+        with:
+          # Runs `changeset version` then oxfmt on CHANGELOG.md so `format:check` passes.
+          version: bun run version
+          publish: bun run release
+          title: "chore: version packages"
+          commit: "chore: version packages"
+          createGithubReleases: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

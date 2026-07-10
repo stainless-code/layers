@@ -1,0 +1,306 @@
+# Version PRs from `changesets/action` use head branch `changeset-release/<base>` (e.g. `changeset-release/main`);
+# see changesets/action `run.ts`: `versionBranch = \`changeset-release/${branch}\``.
+#
+# GitHub docs: required status checks may be successful, skipped, or neutral — skipped often still allows merge
+# (see https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches#require-status-checks-before-merging ).
+# This workflow still gates on `changeset-release/*` and finishes with one **`CI complete`** job so there is a
+# single unambiguous pass/fail (branch protection also warns that duplicate job *names* across workflows can block merges).
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+# CI jobs are read-only; the Release workflow carries its own elevated
+# `permissions` (contents / pull-requests / id-token) — this default doesn't
+# extend to it.
+permissions:
+  contents: read
+
+jobs:
+  skip-ci:
+    name: Gate (skip full CI for version PRs?)
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.gate.outputs.skip }}
+    steps:
+      - id: gate
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ] && \
+             echo "${{ github.head_ref }}" | grep -q '^changeset-release/'; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "Head is changeset-release/* — full CI skipped; ci-complete will pass."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  format:
+    name: 💅 Format
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Run format
+        run: bun run format:check
+
+  lint:
+    name: 🕵 Lint
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Run lint
+        run: bun run lint:ci
+
+  typecheck:
+    name: ✅ Typecheck
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Run typecheck
+        run: bun run typecheck
+
+  test:
+    name: 🔬 Test
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Run unit tests with coverage gate
+        run: bun run test:coverage
+
+  test-dom:
+    name: 🌐 Test (DOM)
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Run React reactivity tests (vitest + jsdom)
+        run: bun run test:dom
+
+  build:
+    name: 🧰 Build
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Run build
+        run: bun run build
+
+  check-pack:
+    name: 📦 Pack validation
+    needs: [skip-ci, build]
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Build
+        run: bun run build
+
+      - name: Run pack validation
+        run: bun run check:pack
+
+  size:
+    name: 📏 Bundle size
+    needs: [skip-ci, build]
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Build
+        run: bun run build
+
+      - name: Run size limit
+        run: bun run size
+
+  docs-api:
+    name: 📚 API docs
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Generate API docs (fails on broken {@link} / not-exported)
+        run: bun run docs:api
+
+  links:
+    name: 🔗 Doc links
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      # Pinned to the immutable v2.9.0 release commit, not the moving @v2 tag
+      # (which would orphan the SHA on bump).
+      - name: Check markdown links (offline)
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
+        with:
+          args: "--config ./lychee.toml '**/*.md'"
+          fail: true
+
+  audit:
+    # `bun audit` exits 0 regardless of severity — the scan below decides.
+    # An advisory-API outage doesn't block; malware is out of scope
+    # (provenance + frozen lockfile cover that).
+    name: 🛡 Audit
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: bun audit (block on high/critical)
+        run: |
+          set +e
+          # bun emits ANSI color even when piped — strip it or the severity grep misses it.
+          NO_COLOR=1 bun audit 2>&1 | sed -E 's/\x1b\[[0-9;]*m//g' > /tmp/bun-audit.log
+          cat /tmp/bun-audit.log
+          if grep -E '(^|[[:space:]])(high|critical):[[:space:]]' /tmp/bun-audit.log; then
+            echo "::error::high or critical vulnerabilities found — blocking"
+            exit 1
+          fi
+
+  deps:
+    name: 🧩 Workspace deps
+    needs: skip-ci
+    if: needs['skip-ci'].outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+
+      - name: Setup
+        uses: ./.github/actions/setup
+
+      - name: Lint workspace dependencies (sherif) + unused (knip)
+        run: |
+          bun run check:deps
+          bunx knip
+
+  ci-complete:
+    name: CI complete
+    needs:
+      [
+        skip-ci,
+        format,
+        lint,
+        typecheck,
+        test,
+        test-dom,
+        build,
+        check-pack,
+        size,
+        docs-api,
+        links,
+        audit,
+        deps,
+      ]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail if any required job failed
+        if: |
+          needs['skip-ci'].outputs.skip != 'true' && (
+            needs.format.result != 'success' ||
+            needs.lint.result != 'success' ||
+            needs.typecheck.result != 'success' ||
+            needs.test.result != 'success' ||
+            needs['test-dom'].result != 'success' ||
+            needs.build.result != 'success' ||
+            needs['check-pack'].result != 'success' ||
+            needs.size.result != 'success' ||
+            needs['docs-api'].result != 'success' ||
+            needs.links.result != 'success' ||
+            needs.audit.result != 'success' ||
+            needs.deps.result != 'success'
+          )
+        run: exit 1
+
+      - name: OK
+        run: echo "CI requirements satisfied"

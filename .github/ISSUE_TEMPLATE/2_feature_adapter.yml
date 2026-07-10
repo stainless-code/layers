@@ -1,0 +1,48 @@
+name: Feature / adapter proposal
+description: Propose a new adapter, layer option, or stack behavior — keep core small and the headless contract intact.
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Adapters** plug in via one seam — a binding that subscribes to `LayerStack.subscribe`/`getSnapshot` and renders the active stack in that library or framework's reactivity (`useSyncExternalStore`, Svelte runes, Vue refs, Solid accessors, Angular signals, Preact compat). See [`docs/architecture.md`](https://github.com/stainless-code/layers/blob/main/docs/architecture.md). Open an issue here first so we can agree on shape (entry point, optional peer, API) before a large PR.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / motivation
+      description: What should layers support that the core + shipped adapters don't cover today?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: Proposed scope
+      description: Which surface (core engine / new adapter / layer option / stack behavior), the optional peer dep, and the rough API shape.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: packaging
+    attributes:
+      label: Packaging preference
+      description: Each adapter is its own package with the library or framework as a required peer dependency (e.g. `@stainless-code/react-layers`).
+      options:
+        - New subpath entry in this repo (owns its optional peer)
+        - Separate npm package (I can help maintain)
+        - Not sure yet
+    validations:
+      required: true
+
+  - type: textarea
+    id: api
+    attributes:
+      label: API sketch (optional)
+      description: If you have ideas for the `useStack` / `StackOutlet` / `layerOptions` shape, outline it here.
+
+  - type: textarea
+    id: links
+    attributes:
+      label: Prior art
+      description: Links to prior art or example repos, if any.

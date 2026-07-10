@@ -1,0 +1,81 @@
+{
+  "name": "layers-monorepo",
+  "private": true,
+  "description": "Monorepo for @stainless-code/layers — a headless layer/stack manager with a UI-agnostic core and opt-in adapters.",
+  "homepage": "https://github.com/stainless-code/layers#readme",
+  "bugs": {
+    "url": "https://github.com/stainless-code/layers/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stainless-code/layers.git"
+  },
+  "funding": "https://github.com/sponsors/SutuSebastian",
+  "workspaces": [
+    "packages/*"
+  ],
+  "type": "module",
+  "scripts": {
+    "build": "bun run build:core && bun run --filter '@stainless-code/*-layers' build",
+    "build:core": "bun run --filter '@stainless-code/layers' build",
+    "changeset": "changeset",
+    "check": "bun run build && bun run --parallel format:check lint:ci test test:dom typecheck",
+    "check-updates": "bun update -i --latest",
+    "check:deps": "sherif",
+    "check:links": "lychee --config lychee.toml \"**/*.md\"",
+    "check:pack": "bun run --filter '*' check:pack",
+    "clean": "git clean -xdf -e .env",
+    "docs:api": "typedoc",
+    "fix": "bun run lint:fix && bun run format",
+    "fix:changes": "bun run lint:fix:changes && bun run format:changes",
+    "format": "oxfmt --no-error-on-unmatched-pattern",
+    "format:changes": "bun scripts/run-on-changed-files.ts format",
+    "format:check": "oxfmt --check --no-error-on-unmatched-pattern",
+    "intent:stale": "intent stale",
+    "intent:validate": "intent validate",
+    "lint": "oxlint --no-error-on-unmatched-pattern",
+    "lint-staged": "lint-staged",
+    "lint:changes": "bun scripts/run-on-changed-files.ts lint",
+    "lint:ci": "oxlint --quiet",
+    "lint:fix": "bun run lint --fix",
+    "lint:fix:changes": "bun scripts/run-on-changed-files.ts lint:fix",
+    "prepare": "husky || true",
+    "release": "bun scripts/release.ts",
+    "size": "size-limit",
+    "test": "bun run --filter '*' test",
+    "test:coverage": "bun run --filter '*' test:coverage",
+    "test:dom": "bun run --filter '*' test:dom",
+    "test:types": "bun run --filter '*' typecheck",
+    "typecheck": "bun run --filter '*' typecheck",
+    "upgrade-packages:evidence": "bun run scripts/upgrade-packages/evidence.ts",
+    "version": "changeset version && bun install && bun scripts/sync-skill-versions.ts && bun run format \"packages/*/CHANGELOG.md\""
+  },
+  "devDependencies": {
+    "@angular/core": "22.0.5",
+    "@arethetypeswrong/cli": "0.18.4",
+    "@changesets/changelog-github": "0.7.0",
+    "@changesets/cli": "2.31.0",
+    "@size-limit/preset-small-lib": "12.1.0",
+    "@stainless-code/codemap": "0.11.2",
+    "@tanstack/intent": "0.3.5",
+    "@types/bun": "1.3.14",
+    "@types/node": "26.1.1",
+    "husky": "9.1.7",
+    "knip": "6.24.0",
+    "lint-staged": "17.0.8",
+    "oxfmt": "0.58.0",
+    "oxlint": "1.73.0",
+    "publint": "0.3.21",
+    "sherif": "1.6.1",
+    "size-limit": "12.1.0",
+    "tsdown": "0.22.3",
+    "typedoc": "0.28.19",
+    "typescript": "6.0.3"
+  },
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": "^20.19.0 || >=22.12.0"
+  },
+  "packageManager": "bun@1.3.14"
+}

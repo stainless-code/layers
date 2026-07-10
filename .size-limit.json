@@ -1,0 +1,62 @@
+[
+  {
+    "name": "@stainless-code/layers (core)",
+    "path": "packages/core/dist/index.mjs",
+    "limit": "7.5 KB",
+    "gzip": true
+  },
+  {
+    "name": "@stainless-code/react-layers",
+    "path": "packages/react/dist/index.mjs",
+    "ignore": ["@stainless-code/layers", "react"],
+    "limit": "4 KB",
+    "gzip": true
+  },
+  {
+    "name": "@stainless-code/preact-layers",
+    "path": "packages/preact/dist/index.mjs",
+    "ignore": [
+      "@stainless-code/layers",
+      "preact",
+      "preact/compat",
+      "preact/hooks"
+    ],
+    "limit": "3 KB",
+    "gzip": true
+  },
+  {
+    "name": "@stainless-code/svelte-layers",
+    "path": "packages/svelte/dist/index.mjs",
+    "ignore": ["@stainless-code/layers", "svelte", "svelte/reactivity"],
+    "limit": "2 KB",
+    "gzip": true
+  },
+  {
+    "name": "@stainless-code/svelte-layers/store",
+    "path": "packages/svelte/dist/store.mjs",
+    "ignore": ["@stainless-code/layers", "svelte", "svelte/store"],
+    "limit": "2 KB",
+    "gzip": true
+  },
+  {
+    "name": "@stainless-code/vue-layers",
+    "path": "packages/vue/dist/index.mjs",
+    "ignore": ["@stainless-code/layers", "vue"],
+    "limit": "3.5 KB",
+    "gzip": true
+  },
+  {
+    "name": "@stainless-code/solid-layers",
+    "path": "packages/solid/dist/index.mjs",
+    "ignore": ["@stainless-code/layers", "solid-js"],
+    "limit": "3 KB",
+    "gzip": true
+  },
+  {
+    "name": "@stainless-code/angular-layers",
+    "path": "packages/angular/dist/index.mjs",
+    "ignore": ["@stainless-code/layers", "@angular/core"],
+    "limit": "3 KB",
+    "gzip": true
+  }
+]

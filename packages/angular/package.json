@@ -1,0 +1,82 @@
+{
+  "name": "@stainless-code/angular-layers",
+  "version": "0.0.0",
+  "description": "Angular adapter for @stainless-code/layers — call a layer like an async function and await its response.",
+  "keywords": [
+    "angular",
+    "dialog",
+    "drawer",
+    "headless",
+    "layer",
+    "modal",
+    "popover",
+    "stack",
+    "tanstack-intent",
+    "typescript"
+  ],
+  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/angular#readme",
+  "bugs": {
+    "url": "https://github.com/stainless-code/layers/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stainless-code/layers.git",
+    "directory": "packages/angular"
+  },
+  "funding": "https://github.com/sponsors/SutuSebastian",
+  "files": [
+    "dist",
+    "skills",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.test-d.ts",
+    "!src/**/*.test-d.tsx"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@stainless-code/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "check:pack": "attw --pack . --profile esm-only && publint --strict",
+    "test": "bun test ./src",
+    "test:coverage": "bun test ./src --coverage --coverage-threshold=0.75",
+    "test:dom": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stainless-code/layers": "workspace:*"
+  },
+  "devDependencies": {
+    "@analogjs/vite-plugin-angular": "2.6.3",
+    "@analogjs/vitest-angular": "2.6.3",
+    "@angular/build": "22.0.5",
+    "@angular/common": "22.0.5",
+    "@angular/compiler": "22.0.5",
+    "@angular/compiler-cli": "22.0.5",
+    "@angular/core": "22.0.5",
+    "@angular/platform-browser": "22.0.5",
+    "jsdom": "29.1.1",
+    "vitest": "4.1.9",
+    "zone.js": "^0.16.2"
+  },
+  "peerDependencies": {
+    "@angular/core": ">=17.0.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

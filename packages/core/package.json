@@ -1,0 +1,62 @@
+{
+  "name": "@stainless-code/layers",
+  "version": "0.0.0",
+  "description": "Headless, UI-agnostic layer/stack manager for modal/dialog/drawer/popover/toast UI. Call a layer like an async function and await its response.",
+  "keywords": [
+    "dialog",
+    "drawer",
+    "headless",
+    "layer",
+    "modal",
+    "popover",
+    "stack",
+    "tanstack-intent",
+    "toast",
+    "typescript"
+  ],
+  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/core#readme",
+  "bugs": {
+    "url": "https://github.com/stainless-code/layers/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stainless-code/layers.git",
+    "directory": "packages/core"
+  },
+  "funding": "https://github.com/sponsors/SutuSebastian",
+  "files": [
+    "dist",
+    "skills",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.test-d.ts",
+    "!src/**/*.test-d.tsx"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@stainless-code/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "check:pack": "attw --pack . --profile esm-only && publint --strict",
+    "test": "bun test ./src",
+    "test:coverage": "bun test ./src --coverage --coverage-threshold=0.75",
+    "typecheck": "tsc --noEmit"
+  },
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

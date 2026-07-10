@@ -1,0 +1,75 @@
+{
+  "name": "@stainless-code/preact-layers",
+  "version": "0.0.0",
+  "description": "Preact adapter for @stainless-code/layers — call a layer like an async function and await its response.",
+  "keywords": [
+    "dialog",
+    "drawer",
+    "headless",
+    "layer",
+    "modal",
+    "popover",
+    "preact",
+    "stack",
+    "tanstack-intent",
+    "typescript"
+  ],
+  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/preact#readme",
+  "bugs": {
+    "url": "https://github.com/stainless-code/layers/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stainless-code/layers.git",
+    "directory": "packages/preact"
+  },
+  "funding": "https://github.com/sponsors/SutuSebastian",
+  "files": [
+    "dist",
+    "skills",
+    "src",
+    "!src/**/*.test.ts",
+    "!src/**/*.test.tsx",
+    "!src/**/*.test-d.ts",
+    "!src/**/*.test-d.tsx"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@stainless-code/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "check:pack": "attw --pack . --profile esm-only && publint --strict",
+    "test": "bun test ./src",
+    "test:coverage": "bun test ./src --coverage --coverage-threshold=0.75",
+    "test:dom": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stainless-code/layers": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/preact": "3.2.4",
+    "jsdom": "29.1.1",
+    "preact": "10.29.4",
+    "vitest": "4.1.9"
+  },
+  "peerDependencies": {
+    "preact": ">=10.19.0"
+  },
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}

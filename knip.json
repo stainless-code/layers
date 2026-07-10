@@ -1,0 +1,64 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/**/*.ts"],
+      "project": ["scripts/**/*.ts"]
+    },
+    "packages/core": {
+      "entry": ["src/**/*.test.ts", "src/**/*.test-d.ts"],
+      "project": ["src/**/*.ts"]
+    },
+    "packages/react": {
+      "entry": [
+        "src/**/*.test.ts",
+        "tests-dom/**/*.test.tsx",
+        "tests-dom/**/*.test-d.tsx"
+      ],
+      "project": ["src/**/*.{ts,tsx}", "tests-dom/**/*.tsx"]
+    },
+    "packages/preact": {
+      "entry": [
+        "src/**/*.test.ts",
+        "src/**/*.test-d.ts",
+        "tests-dom/**/*.test.tsx"
+      ],
+      "project": ["src/**/*.ts", "tests-dom/**/*.tsx"]
+    },
+    "packages/svelte": {
+      "entry": [
+        "src/**/*.test.ts",
+        "src/**/*.test-d.ts",
+        "tests-dom/**/*.test.ts"
+      ],
+      "project": ["src/**/*.ts", "tests-dom/**/*.{ts,svelte}"]
+    },
+    "packages/vue": {
+      "entry": [
+        "src/**/*.test.ts",
+        "tests-dom/**/*.test.ts",
+        "tests-dom/**/*.test-d.ts"
+      ],
+      "project": ["src/**/*.ts", "tests-dom/**/*.ts"]
+    },
+    "packages/solid": {
+      "entry": [
+        "src/**/*.test.ts",
+        "src/**/*.test-d.ts",
+        "tests-dom/**/*.test.tsx",
+        "tests-dom/**/*.test-d.tsx"
+      ],
+      "project": ["src/**/*.ts", "tests-dom/**/*.tsx"]
+    },
+    "packages/angular": {
+      "entry": [
+        "src/**/*.test.ts",
+        "src/**/*.test-d.ts",
+        "tests-dom/**/*.test.ts"
+      ],
+      "project": ["src/**/*.ts", "tests-dom/**/*.ts"]
+    }
+  },
+  "ignoreDependencies": ["@stainless-code/codemap", "@angular/core"],
+  "ignoreBinaries": ["lychee"]
+}

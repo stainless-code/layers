@@ -1,0 +1,51 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "packages/core/src/index.ts",
+    "packages/react/src/index.tsx",
+    "packages/svelte/src/index.ts",
+    "packages/svelte/src/store.ts",
+    "packages/vue/src/index.ts",
+    "packages/solid/src/index.ts",
+    "packages/preact/src/index.ts",
+    "packages/angular/src/index.ts"
+  ],
+  "out": "docs/api",
+  "tsconfig": "tsconfig.docs.json",
+  "name": "@stainless-code/layers",
+  "includeVersion": false,
+  "readme": "none",
+  "entryPointStrategy": "resolve",
+  "categorizeByGroup": false,
+  "sort": ["source-order"],
+  "visibilityFilters": {},
+  "intentionallyNotExported": [],
+  "treatWarningsAsErrors": true,
+  "treatValidationWarningsAsErrors": true,
+  "validation": {
+    "notExported": true,
+    "invalidLink": true,
+    "invalidPath": true,
+    "rewrittenLink": true
+  },
+  "highlightLanguages": [
+    "bash",
+    "css",
+    "html",
+    "javascript",
+    "jsx",
+    "json",
+    "jsonc",
+    "ts",
+    "tsx",
+    "typescript",
+    "svelte",
+    "vue"
+  ],
+  "excludePrivate": true,
+  "excludeInternal": true,
+  "disableSources": false,
+  "sourceLinkTemplate": "https://github.com/stainless-code/layers/blob/{gitRevision}/{path}#L{line}",
+  "gitRevision": "main",
+  "logLevel": "Info"
+}
