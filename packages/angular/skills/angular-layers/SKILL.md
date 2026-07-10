@@ -11,7 +11,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/angular-layers"
-  library_version: "0.0.0"
+  library_version: "0.1.0"
   framework: "angular"
 sources:
   - https://github.com/stainless-code/layers/blob/main/packages/angular/README.md

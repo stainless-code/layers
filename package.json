@@ -49,7 +49,7 @@
     "test:types": "bun run --filter '*' typecheck",
     "typecheck": "bun run --filter '*' typecheck",
     "upgrade-packages:evidence": "bun run scripts/upgrade-packages/evidence.ts",
-    "version": "changeset version && bun install && bun scripts/sync-skill-versions.ts && bun run format \"packages/*/CHANGELOG.md\""
+    "version": "changeset version && rm -f bun.lock && bun install && bun scripts/sync-skill-versions.ts && bun run format \"packages/*/CHANGELOG.md\""
   },
   "devDependencies": {
     "@angular/core": "22.0.5",
