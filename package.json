@@ -52,8 +52,8 @@
     "version": "changeset version && rm -f bun.lock && bun install && bun scripts/sync-skill-versions.ts && bun run format \"packages/*/CHANGELOG.md\""
   },
   "devDependencies": {
-    "@angular/core": "22.0.5",
-    "@arethetypeswrong/cli": "0.18.4",
+    "@angular/core": "22.0.6",
+    "@arethetypeswrong/cli": "0.18.5",
     "@changesets/changelog-github": "0.7.0",
     "@changesets/cli": "2.31.0",
     "@size-limit/preset-small-lib": "12.1.0",
@@ -62,16 +62,16 @@
     "@types/bun": "1.3.14",
     "@types/node": "26.1.1",
     "husky": "9.1.7",
-    "knip": "6.24.0",
+    "knip": "6.26.0",
     "lint-staged": "17.0.8",
     "oxfmt": "0.58.0",
     "oxlint": "1.73.0",
     "publint": "0.3.21",
-    "sherif": "1.6.1",
+    "sherif": "1.13.0",
     "size-limit": "12.1.0",
-    "tsdown": "0.22.3",
-    "typedoc": "0.28.19",
-    "typescript": "6.0.3"
+    "tsdown": "0.22.4",
+    "typedoc": "0.28.20",
+    "typescript": "7.0.2"
   },
   "engines": {
     "bun": ">=1.0.0",

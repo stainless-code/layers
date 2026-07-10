@@ -62,8 +62,8 @@
   "devDependencies": {
     "@testing-library/preact": "3.2.4",
     "jsdom": "29.1.1",
-    "preact": "10.29.4",
-    "vitest": "4.1.9"
+    "preact": "10.29.7",
+    "vitest": "4.1.10"
   },
   "peerDependencies": {
     "preact": ">=10.19.0"
