@@ -2,13 +2,14 @@ import type { LayerComponentProps } from "@stainless-code/layers";
 import { LayerClient, layerOptions } from "@stainless-code/layers";
 import { StackOutlet, StackProvider } from "@stainless-code/react-layers";
 import {
+  act,
   cleanup,
   fireEvent,
   render,
   screen,
   waitFor,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 afterEach(() => {
   cleanup();
@@ -106,24 +107,37 @@ describe("React adapter — transition lifecycle", () => {
     expect(client.getStack("transition").getSnapshot()).toHaveLength(0);
   });
 
-  it("enteringDelay: observable entering then settled", async () => {
-    const client = new LayerClient();
-    render(<App client={client} />);
+  it("enteringDelay: observable entering then settled", () => {
+    // Fake timers keep the entering→settled window deterministic: with real
+    // timers the 20ms `enteringDelay` can elapse before an async `findByRole`
+    // resolves, so the first assertion races the auto-settle timer.
+    vi.useFakeTimers();
+    try {
+      const client = new LayerClient();
+      render(<App client={client} />);
 
-    void client.open({
-      ...enteringOptions,
-      payload: { label: "Entering" },
-    });
+      act(() => {
+        void client.open({
+          ...enteringOptions,
+          payload: { label: "Entering" },
+        });
+      });
 
-    const dialog = await screen.findByRole("dialog");
-    expect(dialog.getAttribute("data-transition")).toBe("entering");
+      // Timer not yet fired — the layer is mid-enter.
+      expect(screen.getByRole("dialog").getAttribute("data-transition")).toBe(
+        "entering",
+      );
 
-    await waitFor(
-      () =>
-        expect(screen.getByRole("dialog").getAttribute("data-transition")).toBe(
-          "settled",
-        ),
-      { timeout: 500 },
-    );
+      // Fire the `enteringDelay` timer — it auto-settles.
+      act(() => {
+        vi.advanceTimersByTime(50);
+      });
+
+      expect(screen.getByRole("dialog").getAttribute("data-transition")).toBe(
+        "settled",
+      );
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });
