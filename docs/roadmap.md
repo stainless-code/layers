@@ -23,6 +23,7 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 ## Docs site (`apps/docs/`, Blume)
 
 - **MCP server + Ask AI** — require `deployment.output: "server"` + a deploy adapter + API key + rate limits on `/api/ask`. `llms.txt` / `llms-full.txt` / per-page `.md` mirrors / `agent-readability.json` already cover the static agent surface.
+- **`<Component>`/`examples/` consolidation** — collapse the React (and optionally Vue/Svelte) live-demo slice onto Blume's native `<Component path=…>` (live preview + source tabs from one file); keep Solid/Preact/Angular as `?raw` code tabs. Large restructure; defer until the recipe matrix stabilizes.
 
 ## Out of scope
 
