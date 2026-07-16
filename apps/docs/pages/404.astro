@@ -3,18 +3,17 @@ import PageLayout from "blume/components/layout/PageLayout.astro";
 import { withBase } from "blume/components/islands/base-path.ts";
 import { contentHref } from "blume/components/content/base-href.ts";
 import data from "blume:data";
+import { CURATED_POPULAR } from "../components/curated-popular.ts";
 
 export const prerender = true;
 
 const { config } = data;
 const site = { description: config.description, title: config.title };
 
-const popular = [
-  { href: contentHref("/guides/getting-started"), label: "Getting started" },
-  { href: contentHref("/concepts"), label: "Concepts" },
-  { href: contentHref("/examples"), label: "Examples" },
-  { href: contentHref("/adapters"), label: "Adapters" },
-];
+const popular = CURATED_POPULAR.map(({ route, label }) => ({
+  href: contentHref(route),
+  label,
+}));
 ---
 
 <PageLayout
@@ -64,10 +63,10 @@ const popular = [
       </a>
     </div>
     <nav
-      aria-label="Popular pages"
+      aria-label="Start here"
       class="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-border border-t pt-6 text-muted-foreground text-sm"
     >
-      <span class="text-xs tracking-wider uppercase">Popular</span>
+      <span class="text-xs tracking-wider uppercase">Start here</span>
       {
         popular.map((link) => (
           <a class="transition-colors hover:text-foreground" href={link.href}>
