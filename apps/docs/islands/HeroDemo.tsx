@@ -5,6 +5,7 @@ import {
   LayerClient,
   StackOutlet,
   StackProvider,
+  useLayer,
   useLayerClient,
   useLayerGroup,
   useStack,
@@ -1164,6 +1165,13 @@ let toastCounter = 0;
 
 function HeroShowcase() {
   const client = useLayerClient();
+  // Wired handles for fixed-key demos; bag-form `client.open` kept where open overrides `key`.
+  const confirm = useLayer(confirmOpts);
+  const progress = useLayer(progressOpts);
+  const drawer = useLayer(drawerOpts);
+  const nested = useLayer(nestedOpts);
+  const asyncLayer = useLayer(asyncOpts);
+  const blocker = useLayer(blockerOpts);
   const [activeTab, setActiveTab] = useState<DemoTab>("confirm");
   const [inspectedStack, setInspectedStack] = useState<string>("hero-confirm");
   const [trace, setTrace] = useState<string[]>([]);
@@ -1184,12 +1192,9 @@ function HeroShowcase() {
 
   const runConfirm = async () => {
     setTrace([]);
-    const ok = await client.open({
-      ...confirmOpts,
-      payload: {
-        title: "Delete this file?",
-        message: "This action cannot be undone. Continue?",
-      },
+    const ok = await confirm.open({
+      title: "Delete this file?",
+      message: "This action cannot be undone. Continue?",
     });
     addTrace(`await open → ${ok ? "✓ true" : "✕ false"}`);
   };
@@ -1207,19 +1212,19 @@ function HeroShowcase() {
 
   const runProgress = () => {
     setTrace([]);
-    void client.open({
-      ...progressOpts,
-      payload: { fileName: "layers-core-1.4.0.tgz", percent: 0, speedKb: 0 },
+    void progress.open({
+      fileName: "layers-core-1.4.0.tgz",
+      percent: 0,
+      speedKb: 0,
     });
-    const stack = client.getStack("hero-progress");
-    const layer = stack.find(["hero-progress"]);
+    const layer = progress.stack.find(["hero-progress"]);
     if (!layer) return;
     let pct = 0;
     const tick = setInterval(() => {
       pct = Math.min(100, pct + Math.round(6 + Math.random() * 8));
       const speed = Math.round((8 + Math.random() * 6) * 10) / 10;
-      stack.update(layer, { percent: pct, speedKb: speed } as never);
-      stack.setRunning(layer, pct < 100);
+      progress.stack.update(layer, { percent: pct, speedKb: speed } as never);
+      progress.stack.setRunning(layer, pct < 100);
       if (pct >= 100) clearInterval(tick);
     }, 130);
     addTrace("open progress → live payload updates");
@@ -1227,10 +1232,7 @@ function HeroShowcase() {
 
   const runDrawer = async () => {
     setTrace([]);
-    const ok = await client.open({
-      ...drawerOpts,
-      payload: { title: "Filter options" },
-    });
+    const ok = await drawer.open({ title: "Filter options" });
     addTrace(`await open → ${ok ? "✓ done" : "✕ cancelled"}`);
   };
 
@@ -1248,25 +1250,19 @@ function HeroShowcase() {
 
   const runNested = async () => {
     setTrace([]);
-    const ok = await client.open({
-      ...nestedOpts,
-      payload: { title: "Account settings" },
-    });
+    const ok = await nested.open({ title: "Account settings" });
     addTrace(`nested drawer → ${ok ? "✓ saved" : "✕ closed"}`);
   };
 
   const runAsync = () => {
     setTrace([]);
-    void client.open({ ...asyncOpts, payload: { userId: "ada" } });
+    void asyncLayer.open({ userId: "ada" });
     addTrace("open → loadFn pending → data");
   };
 
   const runBlocker = async () => {
     setTrace([]);
-    const ok = await client.open({
-      ...blockerOpts,
-      payload: { title: "Edit profile" },
-    });
+    const ok = await blocker.open({ title: "Edit profile" });
     addTrace(`form → ${ok ? "✓ force-closed" : "✕ discarded"}`);
   };
 

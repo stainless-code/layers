@@ -14,7 +14,7 @@ export const adapterSnippets: AdapterSnippet[] = [
     label: "Vanilla",
     installCommand: "bun add @stainless-code/layers",
     lang: "ts",
-    code: `import { LayerClient, layerOptions } from "@stainless-code/layers";
+    code: `import { LayerClient, createLayer, layerOptions } from "@stainless-code/layers";
 
 const client = new LayerClient();
 
@@ -24,8 +24,10 @@ const confirm = layerOptions({
   component: renderConfirm, // your render fn
 });
 
+const c = createLayer(confirm, client);
+
 async function remove() {
-  const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+  const ok = await c.open({ title: "Remove?" });
   //    ^? boolean
 }`,
   },
@@ -39,7 +41,7 @@ async function remove() {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 
 const confirm = layerOptions({
@@ -52,16 +54,18 @@ function App() {
   return (
     <StackProvider>
       <StackOutlet stack="confirm" />
+      <RemoveButton />
     </StackProvider>
   );
 }
 
 function RemoveButton() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   async function remove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+    const ok = await c.open({ title: "Remove?" });
     //    ^? boolean
   }
+  return <button onClick={() => void remove()}>Remove</button>;
 }`,
   },
   {
@@ -74,7 +78,7 @@ function RemoveButton() {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/preact-layers";
 
 const confirm = layerOptions({
@@ -87,16 +91,18 @@ function App() {
   return (
     <StackProvider>
       <StackOutlet stack="confirm" />
+      <RemoveButton />
     </StackProvider>
   );
 }
 
 function RemoveButton() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   async function remove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+    const ok = await c.open({ title: "Remove?" });
     //    ^? boolean
   }
+  return <button onClick={() => void remove()}>Remove</button>;
 }`,
   },
   {
@@ -110,7 +116,7 @@ function RemoveButton() {
   LayerClientContext,
   StackOutlet,
   layerOptions,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/solid-layers";
 
 const confirm = layerOptions({
@@ -131,11 +137,12 @@ function App() {
 }
 
 function RemoveButton() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   async function remove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+    const ok = await c.open({ title: "Remove?" });
     //    ^? boolean
   }
+  return <button onClick={() => void remove()}>Remove</button>;
 }`,
   },
   {
@@ -149,7 +156,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
 } from "@stainless-code/angular-layers";
 
 const confirm = layerOptions({
@@ -164,7 +171,7 @@ const confirm = layerOptions({
   template: \`<button (click)="remove()">Remove</button><ng-container #outlet />\`,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(confirm);
   private vcr = inject(ViewContainerRef);
 
   constructor() {
@@ -172,7 +179,7 @@ export class AppComponent {
   }
 
   async remove() {
-    const ok = await this.client.open({ ...confirm, payload: { title: "Remove?" } });
+    const ok = await this.c.open({ title: "Remove?" });
     //    ^? boolean
   }
 }`,
@@ -188,7 +195,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 
 const confirm = layerOptions({
@@ -198,10 +205,10 @@ const confirm = layerOptions({
 });
 
 provideLayerClient();
+const c = useLayer(confirm);
 
 async function remove() {
-  const client = useLayerClient();
-  const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+  const ok = await c.open({ title: "Remove?" });
   //    ^? boolean
 }
 </script>
@@ -219,9 +226,9 @@ async function remove() {
     lang: "svelte",
     code: `<script lang="ts">
   import {
+    createLayer,
     layerOptions,
     setLayerClient,
-    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers";
 
@@ -231,11 +238,11 @@ async function remove() {
   });
 
   setLayerClient();
-  const client = useLayerClient();
   const stack = useStack({ stack: "confirm" });
+  const c = createLayer(confirm);
 
   async function remove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+    const ok = await c.open({ title: "Remove?" });
     //    ^? boolean
   }
 </script>
@@ -252,6 +259,7 @@ async function remove() {
 export const svelteStoreCode = `<script lang="ts">
   import {
     callFor,
+    createLayer,
     layerOptions,
     setLayerClient,
     useLayerClient,
@@ -266,9 +274,10 @@ export const svelteStoreCode = `<script lang="ts">
   setLayerClient();
   const client = useLayerClient();
   const stack = useStack({ stack: "confirm" });
+  const c = createLayer(confirm);
 
   async function remove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+    const ok = await c.open({ title: "Remove?" });
     //    ^? boolean
   }
 </script>
