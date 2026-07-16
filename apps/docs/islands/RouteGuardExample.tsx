@@ -1,6 +1,7 @@
 export const client = "visible";
 
 import {
+  createLayer,
   LayerClient,
   layerOptions,
   StackProvider,
@@ -23,8 +24,6 @@ const KEYFRAMES = `
   @keyframes guard-dialog-in { from { opacity: 0; transform: translate(-50%, -50%) scale(0.95); } to { opacity: 1; transform: translate(-50%, -50%) scale(1); } }
   @keyframes guard-dialog-out { from { opacity: 1; transform: translate(-50%, -50%) scale(1); } to { opacity: 0; transform: translate(-50%, -50%) scale(0.95); } }
 `;
-
-const guardClient = new LayerClient();
 
 function Backdrop({ transition }: { transition: LayerTransition }) {
   return (
@@ -122,12 +121,12 @@ const guard = layerOptions<{ destination: string }, boolean>({
   exitingDelay: EXIT_MS,
 });
 
+const guardClient = new LayerClient();
+const guardLayer = createLayer(guard, guardClient);
+
 /** Module-level guard — callable from route guards, data loaders, etc. */
 export async function confirmLeave(destination: string): Promise<boolean> {
-  return guardClient.open({
-    ...guard,
-    payload: { destination },
-  });
+  return guardLayer.open({ destination });
 }
 
 async function simulateNavigation(destination: string): Promise<string> {

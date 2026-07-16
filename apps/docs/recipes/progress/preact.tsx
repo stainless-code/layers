@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/preact-layers";
 import type { LayerComponentProps } from "@stainless-code/preact-layers";
 import { useState } from "preact/hooks";
@@ -26,7 +26,7 @@ const progress = layerOptions<{ percent: number; label: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const progressLayer = useLayer(progress);
   const [status, setStatus] = useState<"idle" | "running" | "complete">("idle");
 
   return (
@@ -36,12 +36,8 @@ function Trigger() {
         disabled={status === "running"}
         onClick={() => {
           setStatus("running");
-          const stack = client.getStack("example-progress");
-          void client.open({
-            ...progress,
-            payload: { percent: 0, label: "Uploading file…" },
-          });
-          const layer = stack.find(["example-progress"]);
+          void progressLayer.open({ percent: 0, label: "Uploading file…" });
+          const layer = progressLayer.stack.find(["example-progress"]);
           if (!layer) {
             setStatus("idle");
             return;
@@ -50,12 +46,14 @@ function Trigger() {
           let percent = 0;
           const interval = setInterval(() => {
             percent = Math.min(100, percent + 5);
-            stack.update(layer, { percent });
+            progressLayer.stack.update(layer, { percent });
             if (percent >= 100) {
               clearInterval(interval);
-              void stack.dismiss(layer, undefined as void).then(() => {
-                setStatus("complete");
-              });
+              void progressLayer.stack
+                .dismiss(layer, undefined as void)
+                .then(() => {
+                  setStatus("complete");
+                });
             }
           }, 150);
         }}

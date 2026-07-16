@@ -3,13 +3,11 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
-// Base UI variant of the confirm-dialog example (inline CSS).
-// Static recipe — source shown via `?raw`; not rendered live.
-// Strategy A: controlled `open` -> onOpenChange -> onOpenChangeComplete -> call.end,
-// so Base UI's exit animation finishes before Layers unmounts the layer.
+// Controlled open → onOpenChange → onOpenChangeComplete → call.end
+// so Base UI's exit animation finishes before Layers unmounts.
 import { useRef, useState } from "react";
 
 function ConfirmDialog({
@@ -65,7 +63,7 @@ const confirm = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const confirmLayer = useLayer(confirm);
   const [result, setResult] = useState<boolean | null>(null);
 
   return (
@@ -74,10 +72,7 @@ function Trigger() {
         type="button"
         onClick={async () => {
           setResult(null);
-          const ok = await client.open({
-            ...confirm,
-            payload: { title: "Delete this file?" },
-          });
+          const ok = await confirmLayer.open({ title: "Delete this file?" });
           setResult(ok);
         }}
       >

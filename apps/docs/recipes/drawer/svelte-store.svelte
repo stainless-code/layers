@@ -3,6 +3,7 @@
     type LayerCallContext,
     type LayerState,
     callFor,
+    createLayer,
     layerOptions,
     setLayerClient,
     useLayerClient,
@@ -24,14 +25,13 @@
     key: ["example-drawer"],
   });
 
+  const c = createLayer(drawer);
+
   let result: boolean | null = null;
 
   async function openDrawer() {
     result = null;
-    const saved = await client.open({
-      ...drawer,
-      payload: { title: "Settings" },
-    });
+    const saved = await c.open({ title: "Settings" });
     result = saved;
   }
 </script>

@@ -2,11 +2,9 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
-// React Aria Components variant of the animated-enter-exit example (inline CSS).
-// Static recipe — source shown via `?raw`; not rendered live.
 // Defer call.end until RAC's exit animation completes — do not end instantly on dismiss.
 import { useEffect, useState } from "react";
 import {
@@ -71,7 +69,7 @@ const animated = layerOptions<{ title: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const animatedLayer = useLayer(animated);
   const [status, setStatus] = useState<"idle" | "open" | "closed">("idle");
 
   return (
@@ -80,14 +78,9 @@ function Trigger() {
         type="button"
         onClick={() => {
           setStatus("open");
-          void client
-            .open({
-              ...animated,
-              payload: { title: "Animated dialog" },
-            })
-            .then(() => {
-              setStatus("closed");
-            });
+          void animatedLayer.open({ title: "Animated dialog" }).then(() => {
+            setStatus("closed");
+          });
         }}
       >
         Open animated dialog

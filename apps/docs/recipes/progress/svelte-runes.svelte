@@ -2,9 +2,9 @@
   import {
     type LayerCallContext,
     type LayerState,
+    createLayer,
     layerOptions,
     setLayerClient,
-    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers";
 
@@ -14,7 +14,6 @@
   type ProgressCall = LayerCallContext<ProgressPayload, void>;
 
   setLayerClient();
-  const client = useLayerClient();
   const progressStack = useStack({ stack: "example-progress" });
 
   const progress = layerOptions<ProgressPayload, void>({
@@ -22,16 +21,14 @@
     key: ["example-progress"],
   });
 
+  const c = createLayer(progress);
+
   let status = $state<"idle" | "running" | "complete">("idle");
 
   function startUpload() {
     status = "running";
-    const stack = client.getStack("example-progress");
-    void client.open({
-      ...progress,
-      payload: { percent: 0, label: "Uploading file…" },
-    });
-    const layer = stack.find(["example-progress"]);
+    void c.open({ percent: 0, label: "Uploading file…" });
+    const layer = c.stack.find(["example-progress"]);
     if (!layer) {
       status = "idle";
       return;
@@ -40,10 +37,10 @@
     let percent = 0;
     const interval = setInterval(() => {
       percent = Math.min(100, percent + 5);
-      stack.update(layer, { percent });
+      c.stack.update(layer, { percent });
       if (percent >= 100) {
         clearInterval(interval);
-        void stack.dismiss(layer, undefined as void).then(() => {
+        void c.stack.dismiss(layer, undefined as void).then(() => {
           status = "complete";
         });
       }

@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
   useLayerGroup,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
@@ -78,9 +78,8 @@ const edit = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
-  const open = () =>
-    client.open({ ...edit, payload: { title: "Edit profile" } });
+  const editLayer = useLayer(edit);
+  const open = () => editLayer.open({ title: "Edit profile" });
   return <button onClick={open}>Open form</button>;
 }
 

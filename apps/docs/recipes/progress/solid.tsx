@@ -3,7 +3,7 @@ import {
   LayerClient,
   LayerClientContext,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/solid-layers";
 import type { LayerComponentProps } from "@stainless-code/solid-layers";
 import { createSignal } from "solid-js";
@@ -29,7 +29,7 @@ const progress = layerOptions<{ percent: number; label: string }, void>({
 const client = new LayerClient();
 
 function Trigger() {
-  const c = useLayerClient();
+  const progressLayer = useLayer(progress);
   const [status, setStatus] = createSignal<"idle" | "running" | "complete">(
     "idle",
   );
@@ -41,12 +41,8 @@ function Trigger() {
         disabled={status() === "running"}
         onClick={() => {
           setStatus("running");
-          const stack = c.getStack("example-progress");
-          void c.open({
-            ...progress,
-            payload: { percent: 0, label: "Uploading file…" },
-          });
-          const layer = stack.find(["example-progress"]);
+          void progressLayer.open({ percent: 0, label: "Uploading file…" });
+          const layer = progressLayer.stack.find(["example-progress"]);
           if (!layer) {
             setStatus("idle");
             return;
@@ -55,12 +51,14 @@ function Trigger() {
           let percent = 0;
           const interval = setInterval(() => {
             percent = Math.min(100, percent + 5);
-            stack.update(layer, { percent });
+            progressLayer.stack.update(layer, { percent });
             if (percent >= 100) {
               clearInterval(interval);
-              void stack.dismiss(layer, undefined as void).then(() => {
-                setStatus("complete");
-              });
+              void progressLayer.stack
+                .dismiss(layer, undefined as void)
+                .then(() => {
+                  setStatus("complete");
+                });
             }
           }, 150);
         }}

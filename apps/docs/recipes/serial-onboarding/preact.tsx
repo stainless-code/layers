@@ -3,6 +3,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
+  useLayer,
   useLayerClient,
 } from "@stainless-code/preact-layers";
 import type { LayerComponentProps } from "@stainless-code/preact-layers";
@@ -74,7 +75,9 @@ function QueueReadout() {
 }
 
 function Trigger() {
-  const client = useLayerClient();
+  const step1 = useLayer(steps[0]);
+  const step2 = useLayer(steps[1]);
+  const step3 = useLayer(steps[2]);
   const [started, setStarted] = useState(false);
 
   return (
@@ -83,12 +86,9 @@ function Trigger() {
         type="button"
         onClick={() => {
           setStarted(true);
-          for (let i = 0; i < steps.length; i++) {
-            void client.open({
-              ...steps[i],
-              payload: stepPayloads[i],
-            });
-          }
+          void step1.open(stepPayloads[0]);
+          void step2.open(stepPayloads[1]);
+          void step3.open(stepPayloads[2]);
         }}
       >
         Start onboarding

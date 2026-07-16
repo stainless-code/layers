@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/preact-layers";
 import type { LayerComponentProps } from "@stainless-code/preact-layers";
 import { useState } from "preact/hooks";
@@ -37,7 +37,7 @@ const drawer = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const drawerLayer = useLayer(drawer);
   const [result, setResult] = useState<boolean | null>(null);
 
   return (
@@ -46,10 +46,7 @@ function Trigger() {
         type="button"
         onClick={async () => {
           setResult(null);
-          const saved = await client.open({
-            ...drawer,
-            payload: { title: "Settings" },
-          });
+          const saved = await drawerLayer.open({ title: "Settings" });
           setResult(saved);
         }}
       >

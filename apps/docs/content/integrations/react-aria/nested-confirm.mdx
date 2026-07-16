@@ -7,7 +7,7 @@ search:
 
 import racSrc from "../../../recipes/nested-confirm/react.rac.tsx?raw";
 
-Open a child confirm inside a parent dialog via a Layers layer group — each dialog is its own layer rendering a controlled RAC `Modal` + `Dialog`; `call.end` resolves each. See the [live demo](/examples/nested-confirm) for the behavior.
+Delete inside a parent dialog needs its own confirm — no `DialogTrigger` on either surface. `useLayer(parent)` + `useLayerGroup`/`group.open` mounts nested RAC `Modal`s; `call.end` resolves each. See the [live demo](/examples/nested-confirm).
 
 ## Recipe
 
@@ -15,7 +15,7 @@ Open a child confirm inside a parent dialog via a Layers layer group — each di
 
 ## Seam notes
 
-- Don't use RAC `DialogTrigger` — Layers owns the imperative open; the layer component renders the controlled overlay directly while mounted.
+- Don't use RAC `DialogTrigger` — one controlled `Modal` per layer.
 - Nest via the Layers **layer group** (`useLayerGroup` + `<group.Outlet />`), NOT stacked-in-one-component — one RAC `Modal` per layer.
 - RAC owns portal/focus/scroll-lock per dialog — don't double-apply Layers-side equivalents.
 - Don't drive RAC exit timing via Layers' `transition` axis — defer `call.end` until the lib animation finishes.

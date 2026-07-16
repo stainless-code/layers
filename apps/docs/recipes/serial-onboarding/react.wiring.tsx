@@ -3,6 +3,7 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 
@@ -59,11 +60,14 @@ const stepPayloads = [
 ] as const;
 
 function Trigger() {
+  const s1 = useLayer(steps[0]);
+  const s2 = useLayer(steps[1]);
+  const s3 = useLayer(steps[2]);
   const start = () => {
     // serial — opens play one at a time
-    for (let i = 0; i < steps.length; i++) {
-      void layerClient.open({ ...steps[i], payload: stepPayloads[i] });
-    }
+    void s1.open(stepPayloads[0]);
+    void s2.open(stepPayloads[1]);
+    void s3.open(stepPayloads[2]);
   };
   return <button onClick={start}>Start onboarding</button>;
 }

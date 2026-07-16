@@ -4,7 +4,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type {
   LayerComponentProps,
@@ -113,7 +113,7 @@ const drawer = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const drawerLayer = useLayer(drawer);
   const [result, setResult] = useState<boolean | null>(null);
 
   return (
@@ -123,10 +123,7 @@ function Trigger() {
         className="rounded-blume bg-accent px-5 py-2.5 font-medium text-accent-foreground text-sm transition-opacity hover:opacity-90"
         onClick={async () => {
           setResult(null);
-          const saved = await client.open({
-            ...drawer,
-            payload: { title: "Settings" },
-          });
+          const saved = await drawerLayer.open({ title: "Settings" });
           setResult(saved);
         }}
       >

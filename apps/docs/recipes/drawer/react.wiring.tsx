@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 
@@ -27,8 +27,8 @@ const drawer = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
-  const open = () => client.open({ ...drawer, payload: { title: "Settings" } });
+  const drawerLayer = useLayer(drawer);
+  const open = () => drawerLayer.open({ title: "Settings" });
   return <button onClick={open}>Open drawer</button>;
 }
 

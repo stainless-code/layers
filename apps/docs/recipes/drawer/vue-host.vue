@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { ref } from "vue";
 
@@ -18,15 +18,12 @@ const drawer = layerOptions<DrawerPayload, boolean>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(drawer);
 const result = ref<boolean | null>(null);
 
 async function openDrawer() {
   result.value = null;
-  const saved = await client.open({
-    ...drawer,
-    payload: { title: "Settings" },
-  });
+  const saved = await c.open({ title: "Settings" });
   result.value = saved;
 }
 </script>

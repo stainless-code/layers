@@ -1,5 +1,6 @@
 import {
   LayerClient,
+  createLayer,
   layerOptions,
   StackProvider,
   StackOutlet,
@@ -38,11 +39,10 @@ const guard = layerOptions<{ destination: string }, boolean>({
   component: GuardDialog,
 });
 
+const guardLayer = createLayer(guard, layerClient);
+
 async function simulateNavigation(destination: string): Promise<string> {
-  const ok = await layerClient.open({
-    ...guard,
-    payload: { destination },
-  });
+  const ok = await guardLayer.open({ destination });
   return ok ? `Navigated to ${destination}` : "Navigation cancelled";
 }
 

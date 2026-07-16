@@ -7,7 +7,7 @@ search:
 
 import buSrc from "../../../recipes/nested-confirm/react.baseui.tsx?raw";
 
-Open a child confirm inside a parent via a Layers layer group — two controlled `Dialog.Root`s (Base UI supports native nesting); one layer per dialog; `call.end` resolves each. See the [live demo](/examples/nested-confirm) for the behavior.
+Delete inside a parent dialog needs its own confirm — no `Dialog.Trigger` on either surface. `useLayer(parent)` + `useLayerGroup`/`group.open` mounts nested `Dialog.Root`s; `call.end` resolves each. See the [live demo](/examples/nested-confirm).
 
 ## Recipe
 
@@ -15,7 +15,7 @@ Open a child confirm inside a parent via a Layers layer group — two controlled
 
 ## Seam notes
 
-- Don't use `Dialog.Trigger` — Layers owns the imperative open; the layer component renders the controlled overlay directly while mounted.
+- Don't use `Dialog.Trigger` — one controlled `Dialog.Root` per layer.
 - Nest via the Layers layer group (`useLayerGroup` + `<group.Outlet />`), one `Dialog.Root` per layer — not stacked-in-one-component.
 - **Exit-animation crux** — `onOpenChangeComplete(false)` → `call.end` per dialog; Base UI owns portal/focus/scroll-lock.
 

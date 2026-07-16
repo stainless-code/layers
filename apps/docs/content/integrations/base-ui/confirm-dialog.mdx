@@ -7,7 +7,7 @@ search:
 
 import buSrc from "../../../recipes/confirm-dialog/react.baseui.tsx?raw";
 
-`await client.open(...)` is the typed entry; the layer component renders Base UI `Dialog.Root` (Alert Dialog) + `Portal`/`Backdrop`/`Popup`/`Close`; `call.end(true|false)` on dismiss. See the [live demo](/examples/confirm-dialog) for the behavior.
+Delete needs a typed yes/no without Base UI's `Dialog.Trigger`. `useLayer(confirm)` + `await confirm.open(payload)` mounts a controlled Alert Dialog; `call.end` resolves the boolean. See the [live demo](/examples/confirm-dialog).
 
 ## Recipe
 
@@ -15,7 +15,7 @@ import buSrc from "../../../recipes/confirm-dialog/react.baseui.tsx?raw";
 
 ## Seam notes
 
-- Don't use Base UI's `Dialog.Trigger` — Layers owns the imperative open; controlled `open` starts `true`.
+- Don't use Base UI's `Dialog.Trigger` — controlled `open` starts `true`.
 - **Exit-animation crux (Base UI):** on dismiss intent set pending result + `setOpen(false)`; resolve `call.end(result)` in `onOpenChangeComplete(false)` (fires AFTER Base UI's exit animation) so exit anim is never cut off.
 - Blockers: use Base UI's dismiss-disable (`disablePointerDismissal` / `eventDetails.cancel()`).
 - Lib owns portal/focus/scroll-lock — don't double-apply Layers-side equivalents.

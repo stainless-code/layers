@@ -10,7 +10,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
 } from "@stainless-code/angular-layers";
 import type { LayerComponentProps } from "@stainless-code/angular-layers";
 
@@ -85,7 +85,9 @@ const stepPayloads = [
   `,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private step0 = injectLayer(steps[0]!);
+  private step1 = injectLayer(steps[1]!);
+  private step2 = injectLayer(steps[2]!);
   private vcr = inject(ViewContainerRef);
   started = signal(false);
   queued = signal(0);
@@ -93,7 +95,7 @@ export class AppComponent {
   constructor() {
     renderStack(this.vcr, STACK_ID);
 
-    const stack = this.client.getStack(STACK_ID);
+    const stack = this.step0.stack;
     effect((onCleanup) => {
       const sync = () => this.queued.set(stack.getQueuedSnapshot().length);
       sync();
@@ -103,11 +105,9 @@ export class AppComponent {
 
   startOnboarding() {
     this.started.set(true);
+    const handles = [this.step0, this.step1, this.step2];
     for (let i = 0; i < steps.length; i++) {
-      void this.client.open({
-        ...steps[i],
-        payload: stepPayloads[i],
-      });
+      void handles[i]!.open(stepPayloads[i]);
     }
   }
 }

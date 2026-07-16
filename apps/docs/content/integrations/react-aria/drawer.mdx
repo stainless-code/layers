@@ -7,7 +7,7 @@ search:
 
 import racSrc from "../../../recipes/drawer/react.rac.tsx?raw";
 
-`await client.open({ ...drawer, payload: { title: "Settings" } })` is the typed entry; the layer component renders a controlled RAC `Modal` with slide-over CSS while mounted. RAC has no Drawer primitive — the sheet is a styled modal. `call.end(true|false)` resolves on dismiss. See the [live demo](/examples/drawer) for the behavior.
+Settings belong in a slide-over — RAC has no Drawer, so style a controlled `Modal` as a sheet. `useLayer(drawer)` + `await drawer.open({ title: "Settings" })`; `call.end` returns the typed boolean. See the [live demo](/examples/drawer).
 
 ## Recipe
 
@@ -15,8 +15,7 @@ import racSrc from "../../../recipes/drawer/react.rac.tsx?raw";
 
 ## Seam notes
 
-- Don't use RAC's trigger wrappers — Layers owns the imperative open; the layer component renders the controlled overlay directly while mounted (`isOpen` literal `true`, `onOpenChange(false)` is the dismiss signal).
-- `call.end(result)` returns the typed boolean to the caller — same contract as the inline recipe.
+- Don't use RAC's trigger wrappers — controlled overlay while mounted (`isOpen` literal `true`, `onOpenChange(false)` is the dismiss signal).
 - RAC owns focus trap / portal / scroll-lock — don't double-apply Layers-side equivalents.
 - For animated slide-over exit, hold local `exiting` and `call.end(result)` on `onAnimationComplete`. Don't drive RAC exit timing via Layers' `transition` axis.
 

@@ -3,7 +3,7 @@ import {
   LayerClient,
   LayerClientContext,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/solid-layers";
 import type { LayerComponentProps } from "@stainless-code/solid-layers";
 import { createEffect, createSignal, onCleanup } from "solid-js";
@@ -46,7 +46,7 @@ const animated = layerOptions<{ title: string }, void>({
 const client = new LayerClient();
 
 function Trigger() {
-  const c = useLayerClient();
+  const animatedLayer = useLayer(animated);
   const [status, setStatus] = createSignal<"idle" | "open" | "closed">("idle");
 
   return (
@@ -55,14 +55,9 @@ function Trigger() {
         type="button"
         onClick={() => {
           setStatus("open");
-          void c
-            .open({
-              ...animated,
-              payload: { title: "Animated dialog" },
-            })
-            .then(() => {
-              setStatus("closed");
-            });
+          void animatedLayer.open({ title: "Animated dialog" }).then(() => {
+            setStatus("closed");
+          });
         }}
       >
         Open animated dialog

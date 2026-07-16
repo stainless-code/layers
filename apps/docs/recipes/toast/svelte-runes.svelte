@@ -2,9 +2,9 @@
   import {
     type LayerCallContext,
     type LayerState,
+    createLayer,
     layerOptions,
     setLayerClient,
-    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers";
 
@@ -14,7 +14,6 @@
   type ToastCall = LayerCallContext<ToastPayload, void>;
 
   setLayerClient();
-  const client = useLayerClient();
   const toastStack = useStack({ stack: "example-toast" });
 
   const toast = layerOptions<ToastPayload, void>({
@@ -22,13 +21,12 @@
     key: ["example-toast"],
   });
 
+  const c = createLayer(toast);
+
   let fired = $state(false);
 
   function showToast() {
-    void client.open({
-      ...toast,
-      payload: { message: "Changes saved" },
-    });
+    void c.open({ message: "Changes saved" });
     fired = true;
   }
 

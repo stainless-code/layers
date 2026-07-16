@@ -15,7 +15,7 @@ import progressSvelteRunesSrc from "../../recipes/progress/svelte-runes.svelte?r
 import progressSvelteStoreSrc from "../../recipes/progress/svelte-store.svelte?raw";
 import progressAngularSrc from "../../recipes/progress/angular.ts?raw";
 
-A file upload mounts a progress layer once; `stack.update(layer, { percent })` pushes new percentages from outside the component without re-opening.
+A file upload needs a live percent bar without remounting. `useLayer(progress)` opens once; `progress.stack.update(layer, { percent })` pushes ticks while it stays mounted.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
@@ -26,7 +26,7 @@ Other frameworks are code-complete below.
 
 ## Layers wiring
 
-Live payload updates — open with a payload, mutate it via the stack while the layer is open, then dismiss. The recipes below wrap it in a real progress bar.
+Open once, then mutate via the handle's stack while mounted. The recipes below wrap it in a real progress bar.
 
 <CodeBlock code={progressWiringSrc} lang="tsx" />
 

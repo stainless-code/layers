@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 
 import ParentDialog from "./vue.vue";
@@ -17,13 +17,10 @@ const parentDialog = layerOptions<ParentPayload, void>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(parentDialog);
 
 function openParent() {
-  void client.open({
-    ...parentDialog,
-    payload: { title: "Edit item" },
-  });
+  void c.open({ title: "Edit item" });
 }
 </script>
 

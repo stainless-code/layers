@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
   useLayerGroup,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
@@ -57,9 +57,8 @@ const parentDialog = layerOptions<{ title: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
-  const open = () =>
-    client.open({ ...parentDialog, payload: { title: "Edit item" } });
+  const parent = useLayer(parentDialog);
+  const open = () => parent.open({ title: "Edit item" });
   return <button onClick={open}>Open parent dialog</button>;
 }
 

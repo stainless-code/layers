@@ -2,12 +2,10 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
-// React Aria Components variant of the confirm-dialog example (inline CSS).
-// Static recipe — source shown via `?raw`; not rendered live.
-// Instant dismiss: confirm ends the layer synchronously (no exit animation). For animated exits, defer call.end until the exit transition completes — see AnimatedEnterExitExample.rac.tsx.
+// Instant dismiss — call.end on dismiss intent (no exit animation).
 import { useState } from "react";
 import {
   Button,
@@ -25,7 +23,7 @@ function ConfirmDialog({
     // apply your own positioning/styling
     <ModalOverlay
       isOpen
-      // Confirm dismiss is instant on purpose; animated recipes must defer call.end (see AnimatedEnterExitExample.rac.tsx).
+      // Instant dismiss — for exit CSS, defer call.end until the animation finishes.
       onOpenChange={(o) => {
         if (!o) call.end(false);
       }}
@@ -50,7 +48,7 @@ const confirm = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const confirmLayer = useLayer(confirm);
   const [result, setResult] = useState<boolean | null>(null);
 
   return (
@@ -59,10 +57,7 @@ function Trigger() {
         type="button"
         onClick={async () => {
           setResult(null);
-          const ok = await client.open({
-            ...confirm,
-            payload: { title: "Delete this file?" },
-          });
+          const ok = await confirmLayer.open({ title: "Delete this file?" });
           setResult(ok);
         }}
       >

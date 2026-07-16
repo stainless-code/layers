@@ -7,19 +7,19 @@ search:
   tags: ["integration"]
 ---
 
-Don't wire Base UI's trigger helpers to Layers' imperative open — mount controlled `Dialog`, `Drawer`, and alert primitives from the layer component while the call is active. Each page ships a recipe and seam notes; live behavior is on the matching [example](/examples) page.
+Skip Base UI's trigger helpers — mount controlled `Dialog`, `Drawer`, and alert primitives from the layer component while the call runs. Each page ships a recipe and seam notes; live behavior is on the matching [example](/examples) page.
 
 <CardGroup cols={2}>
   <Card
     title="Toast with auto-dismiss"
-    description="`void client.open(...)` + Base UI toast region while mounted."
+    description="`void toast.open(...)` + Base UI toast region while mounted."
     href="/integrations/base-ui/toast"
     icon="bell"
     arrow
   />
   <Card
     title="Confirm dialog with a typed result"
-    description="`await client.open(...)` → controlled `Dialog`; `call.end` resolves."
+    description="`await confirm.open(...)` → controlled `Dialog`; `call.end` resolves."
     href="/integrations/base-ui/confirm-dialog"
     icon="help-circle"
     arrow

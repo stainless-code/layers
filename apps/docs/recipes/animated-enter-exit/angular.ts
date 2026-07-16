@@ -10,7 +10,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
 } from "@stainless-code/angular-layers";
 import type {
   LayerComponentProps,
@@ -72,7 +72,7 @@ const animated = layerOptions<AnimatedPayload, void>({
   `,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(animated);
   private vcr = inject(ViewContainerRef);
   status = signal<"idle" | "open" | "closed">("idle");
 
@@ -82,10 +82,9 @@ export class AppComponent {
 
   openDialog() {
     this.status.set("open");
-    void this.client
+    void this.c
       .open({
-        ...animated,
-        payload: { title: "Animated dialog" },
+        title: "Animated dialog",
       })
       .then(() => {
         this.status.set("closed");

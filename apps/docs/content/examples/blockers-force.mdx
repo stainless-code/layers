@@ -16,7 +16,7 @@ import blockersSvelteRunesSrc from "../../recipes/blockers-force/svelte-runes.sv
 import blockersSvelteStoreSrc from "../../recipes/blockers-force/svelte-store.svelte?raw";
 import blockersAngularSrc from "../../recipes/blockers-force/angular.ts?raw";
 
-A blocker (`call.addBlocker(() => !dirty)`) vetoes `call.end`/`call.dismiss` while the form is dirty. Backdrop and Close call a handler that opens a discard confirm (child layer via `useLayerGroup`) when dirty; `call.end(value, { force: true })` bypasses the blocker entirely.
+Dirty form — Close shouldn't nuke unsaved edits. `call.addBlocker` vetoes dismiss; a discard confirm via `useLayerGroup` asks first; `{ force: true }` bypasses when the user confirms.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).

@@ -15,7 +15,7 @@ import animatedSvelteRunesSrc from "../../recipes/animated-enter-exit/svelte-run
 import animatedSvelteStoreSrc from "../../recipes/animated-enter-exit/svelte-store.svelte?raw";
 import animatedAngularSrc from "../../recipes/animated-enter-exit/angular.ts?raw";
 
-Hold unmount until a CSS exit animation finishes — `transition` plus `call.settle()` lets the component drive enter and exit without overloading lifecycle phase.
+Instant unmount cuts off CSS exit. Drive enter/exit with the `transition` prop and `call.settle()` — don't overload lifecycle phase.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).

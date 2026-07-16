@@ -3,7 +3,7 @@ import {
   LayerClient,
   LayerClientContext,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/solid-layers";
 import type { LayerComponentProps } from "@stainless-code/solid-layers";
 import { createSignal, onCleanup, onMount } from "solid-js";
@@ -37,7 +37,7 @@ const toast = layerOptions<{ message: string }, void>({
 const client = new LayerClient();
 
 function Trigger() {
-  const c = useLayerClient();
+  const toastLayer = useLayer(toast);
   const [fired, setFired] = createSignal(false);
 
   return (
@@ -45,10 +45,7 @@ function Trigger() {
       <button
         type="button"
         onClick={() => {
-          void c.open({
-            ...toast,
-            payload: { message: "Changes saved" },
-          });
+          void toastLayer.open({ message: "Changes saved" });
           setFired(true);
         }}
       >

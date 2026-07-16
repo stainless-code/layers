@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
 } from "@stainless-code/angular-layers";
 import type { LayerComponentProps } from "@stainless-code/angular-layers";
 
@@ -48,7 +48,7 @@ const drawer = layerOptions<DrawerPayload, DrawerResponse>({
   `,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(drawer);
   private vcr = inject(ViewContainerRef);
   result = signal<boolean | null>(null);
 
@@ -58,10 +58,7 @@ export class AppComponent {
 
   async openDrawer() {
     this.result.set(null);
-    const saved = await this.client.open({
-      ...drawer,
-      payload: { title: "Settings" },
-    });
+    const saved = await this.c.open({ title: "Settings" });
     this.result.set(saved);
   }
 }

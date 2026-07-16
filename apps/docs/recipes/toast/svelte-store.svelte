@@ -3,6 +3,7 @@
     type LayerCallContext,
     type LayerState,
     callFor,
+    createLayer,
     layerOptions,
     setLayerClient,
     useLayerClient,
@@ -23,13 +24,12 @@
     key: ["example-toast"],
   });
 
+  const c = createLayer(toast);
+
   let fired = false;
 
   function showToast() {
-    void client.open({
-      ...toast,
-      payload: { message: "Changes saved" },
-    });
+    void c.open({ message: "Changes saved" });
     fired = true;
   }
 

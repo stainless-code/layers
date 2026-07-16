@@ -1,5 +1,6 @@
 import { Component, inject, signal, ViewContainerRef } from "@angular/core";
 import {
+  createLayer,
   LayerClient,
   layerOptions,
   provideLayerClient,
@@ -40,11 +41,10 @@ const guard = layerOptions<GuardPayload, GuardResponse>({
   component: GuardDialogComponent,
 });
 
+const g = createLayer(guard, layerClient);
+
 async function simulateNavigation(destination: string): Promise<string> {
-  const ok = await layerClient.open({
-    ...guard,
-    payload: { destination },
-  });
+  const ok = await g.open({ destination });
   return ok ? `Navigated to ${destination}` : "Navigation cancelled";
 }
 

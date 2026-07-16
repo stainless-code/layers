@@ -7,7 +7,7 @@ search:
 
 import racSrc from "../../../recipes/confirm-dialog/react.rac.tsx?raw";
 
-`await client.open(...)` is the typed entry; the layer component renders RAC's controlled `ModalOverlay`/`Modal`/`Dialog(alertdialog)` while mounted and calls `call.end(true|false)` on dismiss. See the [live demo](/examples/confirm-dialog) for the behavior.
+Delete needs a typed yes/no without RAC's `DialogTrigger`. `useLayer(confirm)` + `await confirm.open(payload)` mounts a controlled `ModalOverlay`/`Dialog`; `call.end` resolves the boolean. See the [live demo](/examples/confirm-dialog).
 
 ## Recipe
 
@@ -15,8 +15,7 @@ import racSrc from "../../../recipes/confirm-dialog/react.rac.tsx?raw";
 
 ## Seam notes
 
-- Don't use RAC's `DialogTrigger` — Layers owns the imperative open; render the controlled overlay directly (`isOpen` literal `true`; `onOpenChange(false)` is the dismiss signal).
-- Resolve via `call.end(true)` / `call.end(false)`; `await client.open(...)` returns the typed boolean.
+- Don't use RAC's `DialogTrigger` — render the controlled overlay directly (`isOpen` literal `true`; `onOpenChange(false)` is the dismiss signal).
 - Blockers: for Layers blockers that must prevent dismissal, use RAC's `isKeyboardDismissDisabled` + `isDismissable={false}` — don't also apply Layers-side focus/scroll-lock (RAC owns portal/focus/scroll-lock).
 - Exit animation: instant-dismiss can `call.end` on `onOpenChange`; animated exit should hold local `exiting` + `onAnimationComplete` → `call.end` (see animated-enter-exit). Don't drive RAC exit timing via Layers' `transition` axis.
 

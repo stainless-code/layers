@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 import { useState } from "react";
@@ -56,7 +56,7 @@ const profile = layerOptions<{ userId: string }, void, never, Profile>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const profileLayer = useLayer(profile);
   const [phase, setPhase] = useState<"idle" | "loading" | "done">("idle");
 
   return (
@@ -65,8 +65,8 @@ function Trigger() {
         type="button"
         onClick={() => {
           setPhase("loading");
-          void client
-            .open({ ...profile, payload: { userId: "ada" } })
+          void profileLayer
+            .open({ userId: "ada" })
             .then(() => setPhase("done"));
         }}
       >

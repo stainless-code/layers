@@ -2,6 +2,7 @@
   import {
     type LayerCallContext,
     type LayerState,
+    createLayer,
     LayerClient,
     layerOptions,
     setLayerClient,
@@ -24,11 +25,10 @@
     key: ["example-route-guard"],
   });
 
+  const c = createLayer(guard);
+
   async function simulateNavigation(destination: string): Promise<string> {
-    const ok = await layerClient.open({
-      ...guard,
-      payload: { destination },
-    });
+    const ok = await c.open({ destination });
     return ok ? `Navigated to ${destination}` : "Navigation cancelled";
   }
 

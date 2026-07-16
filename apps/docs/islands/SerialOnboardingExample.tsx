@@ -5,6 +5,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
+  useLayer,
   useLayerClient,
 } from "@stainless-code/react-layers";
 import type {
@@ -184,7 +185,9 @@ function QueueReadout() {
 }
 
 function Trigger() {
-  const client = useLayerClient();
+  const s1 = useLayer(steps[0]);
+  const s2 = useLayer(steps[1]);
+  const s3 = useLayer(steps[2]);
   const [started, setStarted] = useState(false);
 
   return (
@@ -194,12 +197,9 @@ function Trigger() {
         className="rounded-blume bg-accent px-5 py-2.5 font-medium text-accent-foreground text-sm transition-opacity hover:opacity-90"
         onClick={() => {
           setStarted(true);
-          for (let i = 0; i < steps.length; i++) {
-            void client.open({
-              ...steps[i],
-              payload: stepPayloads[i],
-            });
-          }
+          void s1.open(stepPayloads[0]);
+          void s2.open(stepPayloads[1]);
+          void s3.open(stepPayloads[2]);
         }}
       >
         Start onboarding

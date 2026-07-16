@@ -13,7 +13,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
   useLayerGroup,
 } from "@stainless-code/angular-layers";
 import type {
@@ -139,7 +139,7 @@ const edit = layerOptions<ParentPayload, ParentResponse>({
   `,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(edit);
   private vcr = inject(ViewContainerRef);
   result = signal<boolean | null>(null);
 
@@ -149,11 +149,6 @@ export class AppComponent {
 
   async openForm() {
     this.result.set(null);
-    this.result.set(
-      await this.client.open({
-        ...edit,
-        payload: { title: "Edit profile" },
-      }),
-    );
+    this.result.set(await this.c.open({ title: "Edit profile" }));
   }
 }

@@ -2,10 +2,12 @@
   import {
     type LayerCallContext,
     type LayerState,
-    LayerClient,
     callFor,
+    createLayer,
+    LayerClient,
     layerOptions,
     setLayerClient,
+    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers/store";
 
@@ -24,6 +26,7 @@
   const layerClient = new LayerClient();
 
   setLayerClient(layerClient);
+  const client = useLayerClient();
   const profileStack = useStack({ stack: "example-async-loadfn" });
 
   const profile = layerOptions<ProfilePayload, ProfileResponse, never, Profile>({
@@ -39,18 +42,20 @@
     },
   });
 
+  const c = createLayer(profile);
+
   let phase: "idle" | "loading" | "done" = "idle";
 
   async function openProfile() {
     phase = "loading";
-    await layerClient.open({ ...profile, payload: { userId: "ada" } });
+    await c.open({ userId: "ada" });
     phase = "done";
   }
 </script>
 
 {#each $profileStack as raw (raw.id)}
   {@const state = raw as ProfileState}
-  {@const call = callFor(layerClient, "example-async-loadfn", raw) as ProfileCall | null}
+  {@const call = callFor(client, "example-async-loadfn", raw) as ProfileCall | null}
   {#if call}
     <div role="dialog" aria-modal="true" aria-label={`Profile ${state.payload.userId}`}>
       {#if state.phase === "pending"}

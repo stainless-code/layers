@@ -10,7 +10,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
 } from "@stainless-code/angular-layers";
 import type { LayerComponentProps } from "@stainless-code/angular-layers";
 
@@ -62,7 +62,7 @@ const toast = layerOptions<ToastPayload, void>({
   `,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(toast);
   private vcr = inject(ViewContainerRef);
   fired = signal(false);
 
@@ -71,10 +71,7 @@ export class AppComponent {
   }
 
   showToast() {
-    void this.client.open({
-      ...toast,
-      payload: { message: "Changes saved" },
-    });
+    void this.c.open({ message: "Changes saved" });
     this.fired.set(true);
   }
 }

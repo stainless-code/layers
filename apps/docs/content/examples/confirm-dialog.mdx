@@ -15,7 +15,7 @@ import confirmSvelteRunesSrc from "../../recipes/confirm-dialog/svelte-runes.sve
 import confirmSvelteStoreSrc from "../../recipes/confirm-dialog/svelte-store.svelte?raw";
 import confirmAngularSrc from "../../recipes/confirm-dialog/angular.ts?raw";
 
-A delete button in a sidebar, a route guard, an effect — one `await client.open(...)` opens the dialog and hands back a typed boolean.
+A delete button in a sidebar needs a yes/no. `useLayer(confirm)` + `await confirm.open({ title })` returns the typed boolean.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
@@ -27,7 +27,7 @@ live under [Integrations](/integrations).
 
 ## Layers wiring
 
-The Layers surface for this example: declare a typed layer, open it from anywhere, `await` a typed boolean. The recipes below wrap this contract in a real dialog.
+Declare a typed layer, bind it with `useLayer(confirm)` (or `createLayer` headless), then `await confirm.open(payload)` for a typed boolean. The recipes below wrap this contract in a real dialog.
 
 <CodeBlock code={confirmWiringSrc} lang="tsx" />
 

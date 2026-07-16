@@ -4,6 +4,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
+  injectLayer,
 } from "@stainless-code/angular-layers";
 import type { LayerComponentProps } from "@stainless-code/angular-layers";
 
@@ -86,6 +87,7 @@ const profile = layerOptions<ProfilePayload, ProfileResponse, never, Profile>({
   `,
 })
 export class AppComponent {
+  private c = injectLayer(profile);
   private vcr = inject(ViewContainerRef);
   phase = signal<"idle" | "loading" | "done">("idle");
 
@@ -95,7 +97,7 @@ export class AppComponent {
 
   async openProfile() {
     this.phase.set("loading");
-    await layerClient.open({ ...profile, payload: { userId: "ada" } });
+    await this.c.open({ userId: "ada" });
     this.phase.set("done");
   }
 }

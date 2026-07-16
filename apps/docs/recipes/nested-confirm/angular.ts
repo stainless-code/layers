@@ -12,7 +12,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
   useLayerGroup,
 } from "@stainless-code/angular-layers";
 import type {
@@ -109,7 +109,7 @@ const parentDialog = layerOptions<ParentPayload, void>({
   `,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(parentDialog);
   private vcr = inject(ViewContainerRef);
 
   constructor() {
@@ -117,9 +117,6 @@ export class AppComponent {
   }
 
   openParent() {
-    void this.client.open({
-      ...parentDialog,
-      payload: { title: "Edit item" },
-    });
+    void this.c.open({ title: "Edit item" });
   }
 }

@@ -4,7 +4,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { onMounted, onUnmounted, ref } from "vue";
 
@@ -47,12 +47,12 @@ const stepPayloads = [
 ] as const;
 
 provideLayerClient(layerClient);
-const client = useLayerClient();
+const stepHandles = steps.map((step) => useLayer(step));
 const started = ref(false);
 const queued = ref(0);
 
 onMounted(() => {
-  const stack = client.getStack(STACK_ID);
+  const stack = stepHandles[0]!.stack;
   const sync = () => {
     queued.value = stack.getQueuedSnapshot().length;
   };
@@ -65,10 +65,7 @@ onMounted(() => {
 function startOnboarding() {
   started.value = true;
   for (let i = 0; i < steps.length; i++) {
-    void client.open({
-      ...steps[i],
-      payload: stepPayloads[i],
-    });
+    void stepHandles[i]!.open(stepPayloads[i]);
   }
 }
 </script>

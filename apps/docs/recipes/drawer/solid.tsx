@@ -3,7 +3,7 @@ import {
   LayerClient,
   LayerClientContext,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/solid-layers";
 import type { LayerComponentProps } from "@stainless-code/solid-layers";
 import { createSignal } from "solid-js";
@@ -37,7 +37,7 @@ const drawer = layerOptions<{ title: string }, boolean>({
 const client = new LayerClient();
 
 function Trigger() {
-  const c = useLayerClient();
+  const drawerLayer = useLayer(drawer);
   const [result, setResult] = createSignal<boolean | null>(null);
 
   return (
@@ -46,10 +46,7 @@ function Trigger() {
         type="button"
         onClick={async () => {
           setResult(null);
-          const saved = await c.open({
-            ...drawer,
-            payload: { title: "Settings" },
-          });
+          const saved = await drawerLayer.open({ title: "Settings" });
           setResult(saved);
         }}
       >

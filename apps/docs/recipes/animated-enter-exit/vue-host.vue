@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { ref } from "vue";
 
@@ -22,15 +22,14 @@ const animated = layerOptions<AnimatedPayload, void>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(animated);
 const status = ref<"idle" | "open" | "closed">("idle");
 
 function openDialog() {
   status.value = "open";
-  void client
+  void c
     .open({
-      ...animated,
-      payload: { title: "Animated dialog" },
+      title: "Animated dialog",
     })
     .then(() => {
       status.value = "closed";

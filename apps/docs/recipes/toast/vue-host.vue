@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { ref } from "vue";
 
@@ -18,11 +18,11 @@ const toast = layerOptions<ToastPayload, void>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(toast);
 const fired = ref(false);
 
 function showToast() {
-  void client.open({ ...toast, payload: { message: "Changes saved" } });
+  void c.open({ message: "Changes saved" });
   fired.value = true;
 }
 </script>

@@ -4,7 +4,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
   useLayerGroup,
 } from "@stainless-code/react-layers";
 import type {
@@ -224,7 +224,7 @@ const edit = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const editLayer = useLayer(edit);
   const [result, setResult] = useState<boolean | null>(null);
 
   return (
@@ -234,10 +234,7 @@ function Trigger() {
         className="rounded-blume bg-accent px-5 py-2.5 font-medium text-accent-foreground text-sm transition-opacity hover:opacity-90"
         onClick={async () => {
           setResult(null);
-          const ok = await client.open({
-            ...edit,
-            payload: { title: "Edit profile" },
-          });
+          const ok = await editLayer.open({ title: "Edit profile" });
           setResult(ok);
         }}
       >

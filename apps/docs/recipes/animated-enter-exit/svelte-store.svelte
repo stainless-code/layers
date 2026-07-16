@@ -3,6 +3,7 @@
     type LayerCallContext,
     type LayerState,
     callFor,
+    createLayer,
     layerOptions,
     setLayerClient,
     useLayerClient,
@@ -27,6 +28,8 @@
     exitingDelay: EXIT_MS,
   });
 
+  const c = createLayer(animated);
+
   let status: "idle" | "open" | "closed" = "idle";
   let lastTransition: string | null = null;
   let settleTimer: ReturnType<typeof setTimeout> | undefined;
@@ -48,10 +51,9 @@
 
   function openDialog() {
     status = "open";
-    void client
+    void c
       .open({
-        ...animated,
-        payload: { title: "Animated dialog" },
+        title: "Animated dialog",
       })
       .then(() => {
         status = "closed";

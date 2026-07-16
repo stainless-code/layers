@@ -15,7 +15,7 @@ import asyncSvelteRunesSrc from "../../recipes/async-loadfn/svelte-runes.svelte?
 import asyncSvelteStoreSrc from "../../recipes/async-loadfn/svelte-store.svelte?raw";
 import asyncAngularSrc from "../../recipes/async-loadfn/angular.ts?raw";
 
-A `loadFn` on the layer options runs before the layer settles; the component reads `phase` (`"pending"` → `"active"`) and `data` to render a spinner, then the resolved payload — no manual `useState`/`useEffect` wiring in the component.
+Open a profile dialog that needs remote data first. `loadFn` runs before mount; the component shows a spinner in `"pending"`, then renders `data` in `"active"` — no fetch `useEffect`.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
@@ -47,7 +47,7 @@ One complete recipe per framework adapter (live demo above is React).
 ## Variations
 
 - **Live payload updates** — mutate payload while mounted; see [Progress](/examples/progress)
-- **Awaiting results** — typed promises from `client.open(...)`; see [Awaiting results](/guides/awaiting-results)
+- **Awaiting results** — typed promises from handle `open` or `client.open(...)`; see [Awaiting results](/guides/awaiting-results)
 
 ## Learn more
 

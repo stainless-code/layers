@@ -2,12 +2,10 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
   useLayerGroup,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
-// React Aria Components variant of the nested-confirm example (inline CSS).
-// Static recipe — source shown via `?raw`; not rendered live.
 import { useState } from "react";
 import {
   Button,
@@ -98,16 +96,13 @@ const parentDialog = layerOptions<{ title: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const parent = useLayer(parentDialog);
 
   return (
     <button
       type="button"
       onClick={() => {
-        void client.open({
-          ...parentDialog,
-          payload: { title: "Edit item" },
-        });
+        void parent.open({ title: "Edit item" });
       }}
     >
       Open parent dialog

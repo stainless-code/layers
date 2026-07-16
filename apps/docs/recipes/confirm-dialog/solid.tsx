@@ -3,7 +3,7 @@ import {
   LayerClient,
   LayerClientContext,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/solid-layers";
 import type { LayerComponentProps } from "@stainless-code/solid-layers";
 import { createSignal } from "solid-js";
@@ -33,7 +33,7 @@ const confirm = layerOptions<{ title: string }, boolean>({
 const client = new LayerClient();
 
 function Trigger() {
-  const c = useLayerClient();
+  const confirmLayer = useLayer(confirm);
   const [result, setResult] = createSignal<boolean | null>(null);
 
   return (
@@ -42,10 +42,7 @@ function Trigger() {
         type="button"
         onClick={async () => {
           setResult(null);
-          const ok = await c.open({
-            ...confirm,
-            payload: { title: "Delete this file?" },
-          });
+          const ok = await confirmLayer.open({ title: "Delete this file?" });
           setResult(ok);
         }}
       >

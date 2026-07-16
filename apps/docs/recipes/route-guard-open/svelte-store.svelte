@@ -2,10 +2,12 @@
   import {
     type LayerCallContext,
     type LayerState,
-    LayerClient,
     callFor,
+    createLayer,
+    LayerClient,
     layerOptions,
     setLayerClient,
+    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers/store";
 
@@ -18,6 +20,7 @@
   const layerClient = new LayerClient();
 
   setLayerClient(layerClient);
+  const client = useLayerClient();
   const guardStack = useStack({ stack: "example-route-guard" });
 
   const guard = layerOptions<GuardPayload, GuardResponse>({
@@ -25,11 +28,10 @@
     key: ["example-route-guard"],
   });
 
+  const c = createLayer(guard);
+
   async function simulateNavigation(destination: string): Promise<string> {
-    const ok = await layerClient.open({
-      ...guard,
-      payload: { destination },
-    });
+    const ok = await c.open({ destination });
     return ok ? `Navigated to ${destination}` : "Navigation cancelled";
   }
 
@@ -43,7 +45,7 @@
 
 {#each $guardStack as raw (raw.id)}
   {@const state = raw as GuardState}
-  {@const call = callFor(layerClient, "example-route-guard", raw) as GuardCall | null}
+  {@const call = callFor(client, "example-route-guard", raw) as GuardCall | null}
   {#if call}
     <div role="dialog" aria-modal="true">
       <h2>Leave this page?</h2>

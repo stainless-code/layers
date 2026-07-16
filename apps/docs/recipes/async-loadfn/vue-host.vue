@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { ref } from "vue";
 
@@ -33,12 +33,12 @@ const profile = layerOptions<ProfilePayload, ProfileResult, never, Profile>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(profile);
 const phase = ref<"idle" | "loading" | "done">("idle");
 
 async function openProfile() {
   phase.value = "loading";
-  await client.open({ ...profile, payload: { userId: "ada" } });
+  await c.open({ userId: "ada" });
   phase.value = "done";
 }
 </script>

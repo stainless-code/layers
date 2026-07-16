@@ -46,11 +46,12 @@ App.svelte — host wiring:
   const client = useLayerClient();
   const parentStack = useStack({ stack: "example-nested" });
   const parentDialog = layerOptions({ stack: "example-nested", key: ["example-nested", "parent"], component: ParentDialog });
+  const c = createLayer(parentDialog);
   {#each $parentStack as state (state.id)}
     {@const call = callFor(client, "example-nested", state)}
     {#if call}<ParentDialog {call} payload={state.payload} ... />{/if}
   {/each}
-  <button onclick={() => client.open({ ...parentDialog, payload: { title: "Edit item" } })}>Open parent dialog</button>
+  <button onclick={() => c.open({ title: "Edit item" })}>Open parent dialog</button>
 -->
 
 <div role="dialog" aria-modal="true" aria-label={payload.title}>

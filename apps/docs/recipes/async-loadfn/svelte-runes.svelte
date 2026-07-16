@@ -2,6 +2,7 @@
   import {
     type LayerCallContext,
     type LayerState,
+    createLayer,
     LayerClient,
     layerOptions,
     setLayerClient,
@@ -38,11 +39,13 @@
     },
   });
 
+  const c = createLayer(profile);
+
   let phase = $state<"idle" | "loading" | "done">("idle");
 
   async function openProfile() {
     phase = "loading";
-    await layerClient.open({ ...profile, payload: { userId: "ada" } });
+    await c.open({ userId: "ada" });
     phase = "done";
   }
 </script>

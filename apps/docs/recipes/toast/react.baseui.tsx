@@ -3,11 +3,9 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
-// Base UI variant of the toast example (inline CSS).
-// Static recipe — source shown via `?raw`; not rendered live.
 import { useEffect, useState } from "react";
 
 const toastManager = Toast.createToastManager();
@@ -60,7 +58,7 @@ const toast = layerOptions<{ message: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const toastLayer = useLayer(toast);
   const [fired, setFired] = useState(false);
 
   return (
@@ -68,10 +66,7 @@ function Trigger() {
       <button
         type="button"
         onClick={() => {
-          void client.open({
-            ...toast,
-            payload: { message: "Changes saved" },
-          });
+          void toastLayer.open({ message: "Changes saved" });
           setFired(true);
         }}
       >

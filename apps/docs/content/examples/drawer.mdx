@@ -15,7 +15,7 @@ import drawerSvelteRunesSrc from "../../recipes/drawer/svelte-runes.svelte?raw";
 import drawerSvelteStoreSrc from "../../recipes/drawer/svelte-store.svelte?raw";
 import drawerAngularSrc from "../../recipes/drawer/angular.ts?raw";
 
-A settings panel slides in from the edge; `await client.open(...)` tells you whether the user saved or discarded.
+A settings gear opens a slide-over panel. `useLayer(drawer)` + `await drawer.open({ title })` returns save or discard.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
@@ -27,7 +27,7 @@ live under [Integrations](/integrations).
 
 ## Layers wiring
 
-Same contract as the confirm dialog — `await` a typed boolean for save vs. cancel — driven here by a side-drawer. The recipes below wrap it in a real drawer.
+Same contract as confirm — `useLayer(drawer)` + `await drawer.open(payload)` for save vs. cancel, as a slide-over. The recipes below wrap it in a real drawer.
 
 <CodeBlock code={drawerWiringSrc} lang="tsx" />
 

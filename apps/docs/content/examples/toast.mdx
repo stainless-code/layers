@@ -15,19 +15,19 @@ import toastSvelteRunesSrc from "../../recipes/toast/svelte-runes.svelte?raw";
 import toastSvelteStoreSrc from "../../recipes/toast/svelte-store.svelte?raw";
 import toastAngularSrc from "../../recipes/toast/angular.ts?raw";
 
-A save succeeds — `void client.open({ ...toast, payload: { message: "Saved" } })` flashes a notification and never blocks on a result.
+Save feedback shouldn't block the UI. `useLayer(toast)` + `void toast.open({ message: "Saved" })` mounts the toast and returns immediately.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
-Other frameworks are code-complete below; integrations with React Aria and Base UI
-live under [Integrations](/integrations).
+Concurrent toasts here use per-click `client.open` keys; recipes below use a wired handle.
+Integrations with React Aria and Base UI live under [Integrations](/integrations).
 :::
 
 <ToastExample />
 
 ## Layers wiring
 
-Fire-and-forget — `void client.open(...)` with no `await`; the layer dismisses itself. The recipes below wrap it in a real toast.
+Fire-and-forget — `useLayer(toast)` + `void toast.open(payload)` with no `await`. The recipes below wrap it in a real toast.
 
 <CodeBlock code={toastWiringSrc} lang="tsx" />
 
@@ -55,7 +55,7 @@ One complete recipe per framework adapter (live demo above is React).
 ## Variations
 
 - **Live payload updates** — animate progress while open; see [Progress](/examples/progress)
-- **Await a result** — typed `await client.open(...)`; see [Awaiting results](/guides/awaiting-results)
+- **Await a result** — typed `await confirm.open(...)` or `client.open(...)`; see [Awaiting results](/guides/awaiting-results)
 
 ## Learn more
 

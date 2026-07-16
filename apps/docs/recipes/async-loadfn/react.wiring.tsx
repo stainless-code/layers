@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 
@@ -38,9 +38,9 @@ const profile = layerOptions<{ userId: string }, void, never, Profile>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const profileLayer = useLayer(profile);
   const open = () => {
-    void client.open({ ...profile, payload: { userId: "ada" } });
+    void profileLayer.open({ userId: "ada" });
   };
   return <button onClick={open}>Open async dialog</button>;
 }

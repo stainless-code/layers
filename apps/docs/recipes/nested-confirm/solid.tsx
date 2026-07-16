@@ -3,7 +3,7 @@ import {
   LayerClient,
   LayerClientContext,
   StackOutlet,
-  useLayerClient,
+  useLayer,
   useLayerGroup,
 } from "@stainless-code/solid-layers";
 import type { LayerComponentProps } from "@stainless-code/solid-layers";
@@ -73,16 +73,13 @@ const parentDialog = layerOptions<{ title: string }, void>({
 const client = new LayerClient();
 
 function Trigger() {
-  const c = useLayerClient();
+  const parent = useLayer(parentDialog);
 
   return (
     <button
       type="button"
       onClick={() => {
-        void c.open({
-          ...parentDialog,
-          payload: { title: "Edit item" },
-        });
+        void parent.open({ title: "Edit item" });
       }}
     >
       Open parent dialog

@@ -1,12 +1,11 @@
 import {
+  createLayer,
   LayerClient,
   layerOptions,
   StackOutlet,
   StackProvider,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
-
-const guardClient = new LayerClient();
 
 function GuardLayer({
   call,
@@ -34,11 +33,11 @@ const guard = layerOptions<{ destination: string }, boolean>({
   exitingDelay: 200,
 });
 
+const guardClient = new LayerClient();
+const guardLayer = createLayer(guard, guardClient);
+
 async function navigate(destination: string): Promise<string> {
-  const ok = await guardClient.open({
-    ...guard,
-    payload: { destination },
-  });
+  const ok = await guardLayer.open({ destination });
   return ok ? `Navigated to ${destination}` : "Navigation cancelled";
 }
 

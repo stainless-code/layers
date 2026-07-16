@@ -5,6 +5,7 @@
     type LayerCallContext,
     type LayerState,
     callFor,
+    createLayer,
     LayerClient,
     layerOptions,
     setLayerClient,
@@ -50,11 +51,13 @@
     { step: 3, title: "You're all set" },
   ] as const;
 
+  const stepHandles = steps.map((step) => createLayer(step));
+
   let started = false;
   const queued = writable(0);
 
   onMount(() => {
-    const stack = client.getStack(STACK_ID);
+    const stack = stepHandles[0]!.stack;
     const sync = () => queued.set(stack.getQueuedSnapshot().length);
     sync();
     return stack.subscribe(sync);
@@ -63,10 +66,7 @@
   function startOnboarding() {
     started = true;
     for (let i = 0; i < steps.length; i++) {
-      void client.open({
-        ...steps[i],
-        payload: stepPayloads[i],
-      });
+      void stepHandles[i]!.open(stepPayloads[i]);
     }
   }
 </script>

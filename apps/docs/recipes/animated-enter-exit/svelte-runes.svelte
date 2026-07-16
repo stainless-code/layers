@@ -2,9 +2,9 @@
   import {
     type LayerCallContext,
     type LayerState,
+    createLayer,
     layerOptions,
     setLayerClient,
-    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers";
 
@@ -16,7 +16,6 @@
   const EXIT_MS = 200;
 
   setLayerClient();
-  const client = useLayerClient();
   const animatedStack = useStack({ stack: "example-animated" });
 
   const animated = layerOptions<AnimatedPayload, void>({
@@ -25,6 +24,8 @@
     enteringDelay: EXIT_MS,
     exitingDelay: EXIT_MS,
   });
+
+  const c = createLayer(animated);
 
   let status = $state<"idle" | "open" | "closed">("idle");
 
@@ -42,10 +43,9 @@
 
   function openDialog() {
     status = "open";
-    void client
+    void c
       .open({
-        ...animated,
-        payload: { title: "Animated dialog" },
+        title: "Animated dialog",
       })
       .then(() => {
         status = "closed";

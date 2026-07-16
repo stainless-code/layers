@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { ref } from "vue";
 
@@ -19,15 +19,12 @@ const edit = layerOptions<ParentPayload, ParentResponse>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(edit);
 const result = ref<boolean | null>(null);
 
 async function openForm() {
   result.value = null;
-  result.value = await client.open({
-    ...edit,
-    payload: { title: "Edit profile" },
-  });
+  result.value = await c.open({ title: "Edit profile" });
 }
 </script>
 

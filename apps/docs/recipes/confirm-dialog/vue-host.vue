@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { ref } from "vue";
 
@@ -16,15 +16,12 @@ const confirm = layerOptions<{ title: string }, boolean>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(confirm);
 const result = ref<boolean | null>(null);
 
 async function deleteFile() {
   result.value = null;
-  const ok = await client.open({
-    ...confirm,
-    payload: { title: "Delete this file?" },
-  });
+  const ok = await c.open({ title: "Delete this file?" });
   result.value = ok;
 }
 </script>

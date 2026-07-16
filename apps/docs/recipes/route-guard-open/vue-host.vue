@@ -4,6 +4,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { ref } from "vue";
 
@@ -20,16 +21,14 @@ const guard = layerOptions<GuardPayload, GuardResult>({
   component: RouteGuard,
 });
 
+provideLayerClient(layerClient);
+const c = useLayer(guard);
+const result = ref<string | null>(null);
+
 async function navigate(destination: string): Promise<string> {
-  const ok = await layerClient.open({
-    ...guard,
-    payload: { destination },
-  });
+  const ok = await c.open({ destination });
   return ok ? `Navigated to ${destination}` : "Navigation cancelled";
 }
-
-provideLayerClient(layerClient);
-const result = ref<string | null>(null);
 
 async function onNavigate() {
   result.value = null;

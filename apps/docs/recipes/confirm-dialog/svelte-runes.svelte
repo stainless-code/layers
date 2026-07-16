@@ -2,9 +2,9 @@
   import {
     type LayerCallContext,
     type LayerState,
+    createLayer,
     layerOptions,
     setLayerClient,
-    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers";
 
@@ -15,7 +15,6 @@
   type ConfirmCall = LayerCallContext<ConfirmPayload, ConfirmResponse>;
 
   setLayerClient();
-  const client = useLayerClient();
   const confirmStack = useStack({ stack: "example-confirm" });
 
   const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
@@ -23,14 +22,13 @@
     key: ["example-confirm"],
   });
 
+  const c = createLayer(confirm);
+
   let result = $state<boolean | null>(null);
 
   async function deleteFile() {
     result = null;
-    const ok = await client.open({
-      ...confirm,
-      payload: { title: "Delete this file?" },
-    });
+    const ok = await c.open({ title: "Delete this file?" });
     result = ok;
   }
 </script>

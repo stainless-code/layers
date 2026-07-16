@@ -4,7 +4,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 import { useEffect, useState } from "react";
@@ -101,7 +101,7 @@ const animated = layerOptions<{ title: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const animatedLayer = useLayer(animated);
   const [status, setStatus] = useState<"idle" | "open" | "closed">("idle");
 
   return (
@@ -111,14 +111,9 @@ function Trigger() {
         className="rounded-blume bg-accent px-5 py-2.5 text-sm font-medium text-accent-foreground transition-opacity hover:opacity-90"
         onClick={() => {
           setStatus("open");
-          void client
-            .open({
-              ...animated,
-              payload: { title: "Animated dialog" },
-            })
-            .then(() => {
-              setStatus("closed");
-            });
+          void animatedLayer.open({ title: "Animated dialog" }).then(() => {
+            setStatus("closed");
+          });
         }}
       >
         Open animated dialog

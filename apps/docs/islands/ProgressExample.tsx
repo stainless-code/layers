@@ -4,7 +4,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type {
   LayerComponentProps,
@@ -14,7 +14,7 @@ import { useEffect, useState } from "react";
 
 import { overlayPortal } from "./_overlayPortal";
 
-const ENTER_MS = 200;
+const ENTER_MS = 250;
 const EXIT_MS = 200;
 
 const KEYFRAMES = `
@@ -33,7 +33,7 @@ function Backdrop({ transition }: { transition: LayerTransition }) {
         animation:
           transition === "exiting"
             ? `progress-backdrop-out ${EXIT_MS}ms ease-in forwards`
-            : `progress-backdrop-in ${ENTER_MS}ms ease-out forwards`,
+            : `progress-backdrop-in ${EXIT_MS}ms ease-out forwards`,
       }}
       aria-hidden="true"
     />
@@ -56,7 +56,7 @@ function CenterPane({
         animation:
           transition === "exiting"
             ? `progress-dialog-out ${EXIT_MS}ms ease-in forwards`
-            : `progress-dialog-in 250ms ease-out forwards`,
+            : `progress-dialog-in ${ENTER_MS}ms ease-out forwards`,
       }}
     >
       {children}
@@ -132,7 +132,7 @@ function ProgressOverlay({
 
         <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full"
+            className="h-full rounded-full transition-all duration-200 ease-linear"
             style={{
               width: `${payload.percent}%`,
               backgroundColor: done
@@ -167,7 +167,7 @@ const progress = layerOptions<
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const progressLayer = useLayer(progress);
   const [status, setStatus] = useState<"idle" | "running" | "complete">("idle");
 
   return (
@@ -178,16 +178,12 @@ function Trigger() {
         className="rounded-blume bg-accent px-5 py-2.5 font-medium text-accent-foreground text-sm transition-opacity hover:opacity-90 disabled:opacity-50"
         onClick={() => {
           setStatus("running");
-          void client.open({
-            ...progress,
-            payload: {
-              fileName: "layers-core-1.4.0.tgz",
-              percent: 0,
-              speedKb: 0,
-            },
+          void progressLayer.open({
+            fileName: "layers-core-1.4.0.tgz",
+            percent: 0,
+            speedKb: 0,
           });
-          const stack = client.getStack("example-progress");
-          const layer = stack.find(["example-progress"]);
+          const layer = progressLayer.stack.find(["example-progress"]);
           if (!layer) {
             setStatus("idle");
             return;
@@ -197,8 +193,11 @@ function Trigger() {
           const tick = setInterval(() => {
             pct = Math.min(100, pct + Math.round(6 + Math.random() * 8));
             const speed = Math.round((8 + Math.random() * 6) * 10) / 10;
-            stack.update(layer, { percent: pct, speedKb: speed } as never);
-            stack.setRunning(layer, pct < 100);
+            progressLayer.stack.update(layer, {
+              percent: pct,
+              speedKb: speed,
+            } as never);
+            progressLayer.stack.setRunning(layer, pct < 100);
             if (pct >= 100) {
               clearInterval(tick);
               setStatus("complete");

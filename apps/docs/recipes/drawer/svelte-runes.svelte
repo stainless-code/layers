@@ -2,9 +2,9 @@
   import {
     type LayerCallContext,
     type LayerState,
+    createLayer,
     layerOptions,
     setLayerClient,
-    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers";
 
@@ -15,7 +15,6 @@
   type DrawerCall = LayerCallContext<DrawerPayload, DrawerResponse>;
 
   setLayerClient();
-  const client = useLayerClient();
   const drawerStack = useStack({ stack: "example-drawer" });
 
   const drawer = layerOptions<DrawerPayload, DrawerResponse>({
@@ -23,14 +22,13 @@
     key: ["example-drawer"],
   });
 
+  const c = createLayer(drawer);
+
   let result = $state<boolean | null>(null);
 
   async function openDrawer() {
     result = null;
-    const saved = await client.open({
-      ...drawer,
-      payload: { title: "Settings" },
-    });
+    const saved = await c.open({ title: "Settings" });
     result = saved;
   }
 </script>

@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/vue-layers";
 import { ref } from "vue";
 
@@ -18,17 +18,13 @@ const progress = layerOptions<ProgressPayload, void>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(progress);
 const status = ref<"idle" | "running" | "complete">("idle");
 
 function startUpload() {
   status.value = "running";
-  const stack = client.getStack("example-progress");
-  void client.open({
-    ...progress,
-    payload: { percent: 0, label: "Uploading file…" },
-  });
-  const layer = stack.find(["example-progress"]);
+  void c.open({ percent: 0, label: "Uploading file…" });
+  const layer = c.stack.find(["example-progress"]);
   if (!layer) {
     status.value = "idle";
     return;
@@ -37,10 +33,10 @@ function startUpload() {
   let percent = 0;
   const interval = setInterval(() => {
     percent = Math.min(100, percent + 5);
-    stack.update(layer, { percent });
+    c.stack.update(layer, { percent });
     if (percent >= 100) {
       clearInterval(interval);
-      void stack.dismiss(layer, undefined as void).then(() => {
+      void c.stack.dismiss(layer, undefined as void).then(() => {
         status.value = "complete";
       });
     }

@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 
@@ -37,9 +37,8 @@ const animated = layerOptions<{ title: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
-  const open = () =>
-    client.open({ ...animated, payload: { title: "Animated dialog" } });
+  const animatedLayer = useLayer(animated);
+  const open = () => animatedLayer.open({ title: "Animated dialog" });
   return <button onClick={open}>Open animated dialog</button>;
 }
 

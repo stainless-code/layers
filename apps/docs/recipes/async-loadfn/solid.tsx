@@ -3,7 +3,7 @@ import {
   LayerClient,
   LayerClientContext,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/solid-layers";
 import type { LayerComponentProps } from "@stainless-code/solid-layers";
 import { createSignal, Show } from "solid-js";
@@ -54,7 +54,7 @@ const profile = layerOptions<{ userId: string }, void, never, Profile>({
 const layerClient = new LayerClient();
 
 function Trigger() {
-  const client = useLayerClient();
+  const profileLayer = useLayer(profile);
   const [phase, setPhase] = createSignal<"idle" | "loading" | "done">("idle");
 
   return (
@@ -63,8 +63,8 @@ function Trigger() {
         type="button"
         onClick={() => {
           setPhase("loading");
-          void client
-            .open({ ...profile, payload: { userId: "ada" } })
+          void profileLayer
+            .open({ userId: "ada" })
             .then(() => setPhase("done"));
         }}
       >

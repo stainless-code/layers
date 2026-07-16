@@ -4,7 +4,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type {
   LayerComponentProps,
@@ -200,7 +200,7 @@ const profile = layerOptions<{ userId: string }, void, never, Profile>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const profileLayer = useLayer(profile);
   const [phase, setPhase] = useState<"idle" | "loading" | "done">("idle");
 
   return (
@@ -210,8 +210,8 @@ function Trigger() {
         className="rounded-blume bg-accent px-5 py-2.5 font-medium text-accent-foreground text-sm transition-opacity hover:opacity-90"
         onClick={() => {
           setPhase("loading");
-          void client
-            .open({ ...profile, payload: { userId: "ada" } })
+          void profileLayer
+            .open({ userId: "ada" })
             .then(() => setPhase("done"));
         }}
       >

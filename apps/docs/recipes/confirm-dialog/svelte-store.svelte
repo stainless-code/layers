@@ -3,6 +3,7 @@
     type LayerCallContext,
     type LayerState,
     callFor,
+    createLayer,
     layerOptions,
     setLayerClient,
     useLayerClient,
@@ -24,14 +25,13 @@
     key: ["example-confirm"],
   });
 
+  const c = createLayer(confirm);
+
   let result: boolean | null = null;
 
   async function deleteFile() {
     result = null;
-    const ok = await client.open({
-      ...confirm,
-      payload: { title: "Delete this file?" },
-    });
+    const ok = await c.open({ title: "Delete this file?" });
     result = ok;
   }
 </script>

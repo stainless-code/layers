@@ -2,11 +2,9 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
-// React Aria Components variant of the drawer example (inline CSS).
-// Static recipe — source shown via `?raw`; not rendered live.
 // RAC has no Drawer primitive — Modal + CSS positions a right-side panel.
 import { useState } from "react";
 import {
@@ -50,7 +48,7 @@ const drawer = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const drawerLayer = useLayer(drawer);
   const [result, setResult] = useState<boolean | null>(null);
 
   return (
@@ -59,10 +57,7 @@ function Trigger() {
         type="button"
         onClick={async () => {
           setResult(null);
-          const saved = await client.open({
-            ...drawer,
-            payload: { title: "Settings" },
-          });
+          const saved = await drawerLayer.open({ title: "Settings" });
           setResult(saved);
         }}
       >

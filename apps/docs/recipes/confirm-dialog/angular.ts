@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
 } from "@stainless-code/angular-layers";
 import type { LayerComponentProps } from "@stainless-code/angular-layers";
 
@@ -46,7 +46,7 @@ const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
   `,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(confirm);
   private vcr = inject(ViewContainerRef);
   result = signal<boolean | null>(null);
 
@@ -56,10 +56,7 @@ export class AppComponent {
 
   async deleteFile() {
     this.result.set(null);
-    const ok = await this.client.open({
-      ...confirm,
-      payload: { title: "Delete this file?" },
-    });
+    const ok = await this.c.open({ title: "Delete this file?" });
     this.result.set(ok);
   }
 }

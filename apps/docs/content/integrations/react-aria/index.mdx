@@ -7,19 +7,19 @@ search:
   tags: ["integration"]
 ---
 
-Don't wrap RAC's `DialogTrigger` around Layers' imperative open — mount controlled `ModalOverlay`, `Dialog`, drawer, and toast primitives from the layer component while the call is active. Each page ships a recipe and seam notes; live behavior is on the matching [example](/examples) page.
+Skip RAC's `DialogTrigger` — mount controlled `ModalOverlay`, `Dialog`, drawer, and toast primitives from the layer component while the call runs. Each page ships a recipe and seam notes; live behavior is on the matching [example](/examples) page.
 
 <CardGroup cols={2}>
   <Card
     title="Toast with auto-dismiss"
-    description="`void client.open(...)` + RAC `UNSTABLE_Toast*` while mounted."
+    description="`void toast.open(...)` + RAC `UNSTABLE_Toast*` while mounted."
     href="/integrations/react-aria/toast"
     icon="bell"
     arrow
   />
   <Card
     title="Confirm dialog with a typed result"
-    description="`await client.open(...)` → `Modal` + `Dialog(alertdialog)`; `call.end` resolves."
+    description="`await confirm.open(...)` → `Modal` + `Dialog(alertdialog)`; `call.end` resolves."
     href="/integrations/react-aria/confirm-dialog"
     icon="help-circle"
     arrow

@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackOutlet,
   StackProvider,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 import { useEffect } from "react";
@@ -25,10 +25,10 @@ const toast = layerOptions<{ message: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const toastLayer = useLayer(toast);
   const show = () => {
     // fire-and-forget — do not await
-    void client.open({ ...toast, payload: { message: "Changes saved" } });
+    void toastLayer.open({ message: "Changes saved" });
   };
   return <button onClick={show}>Show toast</button>;
 }

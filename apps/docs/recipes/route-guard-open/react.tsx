@@ -1,4 +1,5 @@
 import {
+  createLayer,
   LayerClient,
   layerOptions,
   StackProvider,
@@ -6,8 +7,6 @@ import {
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 import { useState } from "react";
-
-const layerClient = new LayerClient();
 
 function GuardDialog({
   call,
@@ -38,11 +37,11 @@ const guard = layerOptions<{ destination: string }, boolean>({
   component: GuardDialog,
 });
 
+const layerClient = new LayerClient();
+const guardLayer = createLayer(guard, layerClient);
+
 async function simulateNavigation(destination: string): Promise<string> {
-  const ok = await layerClient.open({
-    ...guard,
-    payload: { destination },
-  });
+  const ok = await guardLayer.open({ destination });
   return ok ? `Navigated to ${destination}` : "Navigation cancelled";
 }
 

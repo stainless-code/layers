@@ -16,7 +16,7 @@ import nestedSvelteRunesSrc from "../../recipes/nested-confirm/svelte-runes.svel
 import nestedSvelteStoreSrc from "../../recipes/nested-confirm/svelte-store.svelte?raw";
 import nestedAngularSrc from "../../recipes/nested-confirm/angular.ts?raw";
 
-Delete an item inside an open drawer — the nested confirm lives on a child stack tied to the parent's lifetime, so it drains automatically when the parent dismisses.
+Delete inside an open drawer. `useLayer(parent)` opens the parent; `group.open` scopes the confirm to that stack and auto-drains when the parent dismisses.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
@@ -28,7 +28,7 @@ live under [Integrations](/integrations).
 
 ## Layers wiring
 
-A child layer scoped to its parent's lifetime via `useLayerGroup`; render `<group.Outlet />` where the child should appear. The recipes below wrap it in real nested dialogs.
+Open the parent with a wired handle; scope the child to the parent's lifetime via `useLayerGroup` and `group.open`. Render `<group.Outlet />` where the child should appear. The recipes below wrap it in real nested dialogs.
 
 <CodeBlock code={nestedWiringSrc} lang="tsx" />
 
@@ -62,4 +62,4 @@ One complete recipe per framework adapter (live demo above is React).
 ## Learn more
 
 - [Nested overlays](/guides/nested-overlays) — child stacks, `Outlet`, and auto-drain
-- [Confirm dialog](/examples/confirm-dialog) — typed `await client.open(...)` basics
+- [Confirm dialog](/examples/confirm-dialog) — typed `await confirm.open(...)` basics

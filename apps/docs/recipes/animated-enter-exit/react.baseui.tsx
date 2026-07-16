@@ -3,13 +3,11 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
-// Base UI variant of the animated-enter-exit example (inline CSS).
-// Static recipe — source shown via `?raw`; not rendered live.
-// Strategy A: Base UI's onOpenChangeComplete replaces Layers' transition/settle
-// for exit timing — call.end runs after the CSS exit animation finishes.
+// Base UI's onOpenChangeComplete fires after the CSS exit animation —
+// resolve call.end there, not on dismiss intent, so the exit anim plays.
 import { useState } from "react";
 
 function AnimatedDialog({
@@ -54,7 +52,7 @@ const animated = layerOptions<{ title: string }, void>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const animatedLayer = useLayer(animated);
   const [status, setStatus] = useState<"idle" | "open" | "closed">("idle");
 
   return (
@@ -63,14 +61,9 @@ function Trigger() {
         type="button"
         onClick={() => {
           setStatus("open");
-          void client
-            .open({
-              ...animated,
-              payload: { title: "Animated dialog" },
-            })
-            .then(() => {
-              setStatus("closed");
-            });
+          void animatedLayer.open({ title: "Animated dialog" }).then(() => {
+            setStatus("closed");
+          });
         }}
       >
         Open animated dialog

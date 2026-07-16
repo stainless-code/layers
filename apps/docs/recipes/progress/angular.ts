@@ -3,7 +3,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
 } from "@stainless-code/angular-layers";
 import type { LayerComponentProps } from "@stainless-code/angular-layers";
 
@@ -52,7 +52,7 @@ const progress = layerOptions<ProgressPayload, void>({
   `,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(progress);
   private vcr = inject(ViewContainerRef);
   status = signal<"idle" | "running" | "complete">("idle");
 
@@ -62,12 +62,8 @@ export class AppComponent {
 
   startUpload() {
     this.status.set("running");
-    const stack = this.client.getStack("example-progress");
-    void this.client.open({
-      ...progress,
-      payload: { percent: 0, label: "Uploading file…" },
-    });
-    const layer = stack.find(["example-progress"]);
+    void this.c.open({ percent: 0, label: "Uploading file…" });
+    const layer = this.c.stack.find(["example-progress"]);
     if (!layer) {
       this.status.set("idle");
       return;
@@ -76,10 +72,10 @@ export class AppComponent {
     let percent = 0;
     const interval = setInterval(() => {
       percent = Math.min(100, percent + 5);
-      stack.update(layer, { percent });
+      this.c.stack.update(layer, { percent });
       if (percent >= 100) {
         clearInterval(interval);
-        void stack.dismiss(layer, undefined as void).then(() => {
+        void this.c.stack.dismiss(layer, undefined as void).then(() => {
           this.status.set("complete");
         });
       }

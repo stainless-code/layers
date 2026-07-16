@@ -8,15 +8,17 @@ search:
 import Card from "blume/components/content/Card.astro";
 import CardGroup from "blume/components/content/CardGroup.astro";
 
-The [core](/adapters/core) is framework-free — see [Overview](/concepts/overview) for the engine model. Each adapter re-exports it and binds stack snapshots to framework reactivity.
+Pick a framework binding — same engine, native reactivity. The [core](/adapters/core) stays UI-free; see [Overview](/concepts/overview) for the model.
 
 ## Adapter ergonomics
 
-Every adapter exposes the same primitives — client context, `useLayerClient`, options-bag `useStack({ stack, select, compare })`, **drive** handles (`useLayer` / `injectLayer` / `createLayer`), and **observe** hooks (`useLayerState` / `injectLayerState` / `createLayerState`) — and re-exports the full core. **Engine and primitive parity.** Ergonomic wrappers (`StackOutlet`, `createStackHook`, …) are sugar, not extra engine capability; they diverge by design (matrix below). **Angular and Svelte** ship compiler-free and render via imperative / primitive APIs instead of shipped components.
+Same primitives on every adapter: client context, `useStack`, **drive** handles, **observe** hooks. Engine parity; wrappers (`StackOutlet`, `createStackHook`, …) are sugar and diverge by design. React/Preact/Solid/Angular/Vue re-export the full core; Svelte re-exports selectively. Angular and Svelte ship compiler-free — imperative / primitive render, no shipped host components.
 
 | Capability                                             | React | Preact | Solid | Angular | Vue | Svelte (runes) | Svelte (store) |
 | ------------------------------------------------------ | :---: | :----: | :---: | :-----: | :-: | :------------: | :------------: |
 | Primitives + core re-export                            |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       ✅       |       ✅       |
+| Drive: `useLayer` / `injectLayer` / `createLayer`      |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       ✅       |       ✅       |
+| Observe: `useLayerState` / `injectLayerState` / `createLayerState` |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       ✅       |       ✅       |
 | `StackOutlet` (built-in host)                          |  ✅   |   ✅   |  ✅   |   ✅¹   | ✅  |       —⁴       |       —⁴       |
 | `StackSubscribe` (render-prop / scoped slot)           |  ✅   |   ✅   |  ✅   |   —²    | ✅  |       —⁴       |       —⁴       |
 | `useStackHandles` (headless `{ states, getCall }`)     |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       —⁵       |       —⁵       |
@@ -25,6 +27,8 @@ Every adapter exposes the same primitives — client context, `useLayerClient`, 
 | `createStackHook` (`useAppStack`/`AppHost`/`AppLayer`) |  ✅   |   ✅   |  ✅   |   ✅³   | ✅  |       —⁴       |       —⁴       |
 
 ¹ Angular ships `renderStack(vcr)` — a compiler-free imperative outlet (`ViewContainerRef.createComponent` + `setInput`, id-keyed so state changes update inputs without recreating components). ² Angular has no `StackSubscribe`; `useStack({ stack, select })` as a signal is the idiomatic equivalent. ³ Angular's `useLayerGroup`/`createStackHook` expose `renderInto(vcr)` instead of an `Outlet` component; `createStackHook` returns `{ provideClient, useAppStack, renderInto }` (no `AppHost`/`AppLayer`). ⁴ Svelte ships no `.svelte` components: render with `{#each useStack({ stack }).current as s}` + `callFor(s)` (runes) / `{#each $stack}` + `callFor(client, stackId, s)` (store) in your own markup. ⁵ Svelte's `useStack({ stack })` already returns the headless pair — `.current` (states) + `callFor`. ⁶ Svelte's `useLayerGroup` exposes the child `stack` (`SvelteStack` / `Readable`) instead of an `Outlet`.
+
+Name map: Angular `injectLayer` (`useLayer` alias); Svelte `createLayer` / `createLayerState`; Solid also aliases `createLayerState`. Full signatures: [Adapter hooks](/reference/adapter-hooks).
 
 ## Adapter pages
 

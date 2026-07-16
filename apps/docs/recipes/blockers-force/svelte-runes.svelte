@@ -53,14 +53,14 @@
 <!--
 App.svelte — host wiring:
   setLayerClient();
-  const client = useLayerClient();
   const parentStack = useStack({ stack: "example-blockers-force" });
   const edit = layerOptions({ stack: "example-blockers-force", key: ["example-blockers-force", "parent"], component: EditDialog });
+  const c = createLayer(edit);
   {#each parentStack.current as state (state.id)}
     {@const call = parentStack.callFor(state)}
     {#if call}<EditDialog {call} payload={state.payload} dismissing={state.dismissing} />{/if}
   {/each}
-  <button onclick={() => client.open({ ...edit, payload: { title: "Edit profile" } })}>Open form</button>
+  <button onclick={() => c.open({ title: "Edit profile" })}>Open form</button>
 -->
 
 <div role="dialog" aria-modal="true" aria-label={payload.title}>

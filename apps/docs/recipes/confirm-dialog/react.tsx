@@ -2,7 +2,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
 } from "@stainless-code/react-layers";
 import type { LayerComponentProps } from "@stainless-code/react-layers";
 import { useState } from "react";
@@ -33,7 +33,7 @@ const confirm = layerOptions<{ title: string }, boolean>({
 });
 
 function Trigger() {
-  const client = useLayerClient();
+  const confirmLayer = useLayer(confirm);
   const [result, setResult] = useState<boolean | null>(null);
 
   return (
@@ -42,10 +42,7 @@ function Trigger() {
         type="button"
         onClick={async () => {
           setResult(null);
-          const ok = await client.open({
-            ...confirm,
-            payload: { title: "Delete this file?" },
-          });
+          const ok = await confirmLayer.open({ title: "Delete this file?" });
           setResult(ok);
         }}
       >

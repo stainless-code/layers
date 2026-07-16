@@ -2,10 +2,10 @@
   import {
     type LayerCallContext,
     type LayerState,
+    createLayer,
     LayerClient,
     layerOptions,
     setLayerClient,
-    useLayerClient,
     useStack,
   } from "@stainless-code/svelte-layers";
 
@@ -23,7 +23,6 @@
   type StepCall = LayerCallContext<StepPayload, void>;
 
   setLayerClient(layerClient);
-  const client = useLayerClient();
   const onboardingStack = useStack({ stack: STACK_ID });
 
   const steps = [
@@ -47,11 +46,13 @@
     { step: 3, title: "You're all set" },
   ] as const;
 
+  const stepHandles = steps.map((step) => createLayer(step));
+
   let started = $state(false);
   let queued = $state(0);
 
   $effect(() => {
-    const stack = client.getStack(STACK_ID);
+    const stack = stepHandles[0]!.stack;
     const sync = () => {
       queued = stack.getQueuedSnapshot().length;
     };
@@ -62,10 +63,7 @@
   function startOnboarding() {
     started = true;
     for (let i = 0; i < steps.length; i++) {
-      void client.open({
-        ...steps[i],
-        payload: stepPayloads[i],
-      });
+      void stepHandles[i]!.open(stepPayloads[i]);
     }
   }
 </script>
