@@ -22,10 +22,10 @@ The Angular adapter for Layers — open any layer from anywhere and `await` a ty
 ```ts
 import { Component, ViewContainerRef, inject } from "@angular/core";
 import {
+  injectLayer,
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
   type LayerComponentProps,
 } from "@stainless-code/angular-layers";
 
@@ -68,12 +68,13 @@ export class AppComponent {
   standalone: true,
   template: `<button type="button" (click)="remove()">Remove</button>`,
 })
-class RemoveButtonComponent {
-  private client = useLayerClient();
+export class RemoveButtonComponent {
+  private readonly c = injectLayer(confirm);
+
   async remove() {
-    const ok = await this.client.open({
-      ...confirm,
-      payload: { title: "Remove?" },
+    const ok = await this.c.open({
+      title: "Remove?",
+      message: "Sure?",
     });
     if (ok) deleteItem();
   }

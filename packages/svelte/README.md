@@ -17,41 +17,51 @@ The Svelte adapter for Layers — open any layer from anywhere and `await` a typ
 
 **Peer:** `svelte` (`>=3.0.0`; runes need 5.7+)
 
-Two entry points: [`@stainless-code/svelte-layers`](https://stainless-code.com/layers/adapters/svelte/runes) (runes, Svelte 5.7+) and [`@stainless-code/svelte-layers/store`](https://stainless-code.com/layers/adapters/svelte/store) (Svelte 3+).
+Two entry points: [`@stainless-code/svelte-layers`](https://stainless-code.com/layers/adapters/svelte/runes) (runes, Svelte 5.7+) and [`@stainless-code/svelte-layers/store`](https://stainless-code.com/layers/adapters/svelte/store) (Svelte 3+). Pick one per app.
 
 ## Taste
 
 ```svelte
+<!-- App.svelte -->
 <script lang="ts">
-  import { layerOptions, setLayerClient, useLayerClient, useStack } from "@stainless-code/svelte-layers";
+  import { setLayerClient, useStack } from "@stainless-code/svelte-layers";
   import ConfirmDialog from "./ConfirmDialog.svelte";
+  import { confirm } from "./confirm";
 
   setLayerClient();
-  const client = useLayerClient();
-  const stack = useStack("confirm");
-
-  const confirm = layerOptions({
-    stack: "confirm",
-    key: ["confirm", "remove"],
-    component: ConfirmDialog,
-  });
-
-  async function remove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
-    if (ok) deleteItem();
-  }
+  const stack = useStack({ stack: "confirm" });
 </script>
 
 {#each stack.current as s (s.id)}
   {@const call = stack.callFor(s)}
   {#if call}<ConfirmDialog {call} payload={s.payload} />{/if}
 {/each}
-<button type="button" onclick={() => void remove()}>Remove</button>
 ```
+
+```svelte
+<!-- RemoveButton.svelte -->
+<script lang="ts">
+  import { createLayer } from "@stainless-code/svelte-layers";
+  import { confirm } from "./confirm";
+
+  const c = createLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await c.open({ title: "Remove?" });
+    if (!ok) return;
+    deleteItem();
+  }
+</script>
+
+<button type="button" onclick={() => void handleRemove()}>Remove</button>
+```
+
+The store entry uses the same `createLayer` / `useStack` pattern with Svelte stores — import from `@stainless-code/svelte-layers/store` instead.
 
 ## Docs
 
 - [Svelte adapter (runes)](https://stainless-code.com/layers/adapters/svelte/runes)
+- [Svelte adapter (store)](https://stainless-code.com/layers/adapters/svelte/store)
 - [Getting started](https://stainless-code.com/layers/guides/getting-started)
 - [When to use Layers](https://stainless-code.com/layers/concepts/when-to-use)
 - [Stability & versioning](https://stainless-code.com/layers/concepts/stability)

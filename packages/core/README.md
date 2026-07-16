@@ -23,6 +23,7 @@ The zero-dependency, framework-agnostic core of Layers — the layer/stack engin
 import {
   LayerClient,
   layerOptions,
+  createLayer,
   createCallContext,
 } from "@stainless-code/layers";
 
@@ -32,15 +33,17 @@ const confirm = layerOptions<{ title: string }, boolean>({
   key: ["confirm", "remove"],
 });
 
+const c = createLayer(confirm, client);
+
 const stack = client.getStack("confirm");
 stack.subscribe(() => {
   for (const state of stack.getSnapshot()) {
     const call = createCallContext(stack, stack.getLayer(state.id)!, state);
-    // render the layer; call.end(response) resolves `await client.open(...)`.
+    // render the layer; call.end(response) resolves `await c.open(...)`.
   }
 });
 
-const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+const ok = await c.open({ title: "Remove?" });
 ```
 
 ## Docs

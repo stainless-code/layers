@@ -101,20 +101,17 @@ function App() {
 ```
 
 ```tsx
-// 3. Call and await — ConfirmResponse is inferred end-to-end
-import { useLayerClient } from "@stainless-code/preact-layers";
+// 3. Call & await
+import { useLayer } from "@stainless-code/preact-layers";
 import { confirm } from "./confirm";
 
 function Opener() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   return (
     <button
       type="button"
       onClick={async () => {
-        const ok: boolean = await client.open({
-          ...confirm,
-          payload: { title: "Remove?" },
-        });
+        const ok: boolean = await c.open({ title: "Remove?" });
         if (ok) deleteItem();
       }}
     >
@@ -124,65 +121,41 @@ function Opener() {
 }
 ```
 
+Low-level bag-form: `useLayerClient()` + `client.open({ ...confirm, payload })`.
+
 ## The `call` context
 
 Each layer component receives `call` (`end`/`dismiss`/`update`/`setRunning`/`settle`/`ended`/`index`/`stackSize`/`root`/`stackId`/`layerId`/`addBlocker`), `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, `dismissing`. Use `await call.end(response)` to resolve the caller's `await` and dismiss the layer (`Promise<boolean>` — `false` if a blocker vetoes). `setRunning(true|false)` flips `actionStatus` manually; `useMutationFlow` (below) wraps `setRunning` + `end` for the common save-then-close case.
 
 **Key vs id:** `key` is the logical identity (`find`/`upsert`/`gcTime`); each mount gets a unique instance `id`. Use `s.id` for list keys; `parallel` stacks may hold multiple same-key layers.
 
+## Wired handle: useLayer
+
+```tsx
+const c = useLayer(confirm);
+await c.open({ title: "Remove?" });
+```
+
 ## Subscribing to stacks
 
-### useStack
+### useStack / useQueuedStack
+
+Options-bag + optional trailing `client`; `select` (not `selector`):
 
 ```tsx
-import { useStack } from "@stainless-code/preact-layers";
-
-function ConfirmList() {
-  const states = useStack("confirm");
-  return (
-    <ul>
-      {states.map((s) => (
-        <li key={s.id}>{String(s.payload)}</li>
-      ))}
-    </ul>
-  );
-}
+const states = useStack({ stack: "confirm" });
+const count = useStack({ stack: "confirm", select: (s) => s.length });
+const queued = useQueuedStack({ stack: "confirm" });
 ```
 
-Optional `selector` and `compare` (default `Object.is`) limit re-renders when only a slice of the snapshot matters:
+### useLayerState / useLayerQueuedState
+
+Observe-only; returns `LayerState[]` for all same-key instances:
 
 ```tsx
-const count = useStack("confirm", (states) => states.length);
-const top = useStack("confirm", (states) => states.at(-1) ?? null);
-
-// Custom equality — e.g. shallow compare a derived object
-const summary = useStack(
-  "confirm",
-  (states) => ({ count: states.length, topKey: states.at(-1)?.key }),
-  (a, b) => a.count === b.count && a.topKey === b.topKey,
-);
+const states = useLayerState({ key: confirm.key, stack: "confirm" });
+const top = states.at(-1);
 ```
-
-### useLayer
-
-Subscribe to a single layer by key; returns `null` when not active. A `DataTag` key (from `layerOptions` / `layerKey`) infers response `R` and error `E`:
-
-```tsx
-import { useLayer } from "@stainless-code/preact-layers";
-import { confirm, type ConfirmPayload } from "./confirm";
-
-function ActiveConfirm() {
-  // The key infers response/error; provide P when reading a typed payload.
-  const state = useLayer<typeof confirm.key, ConfirmPayload>(
-    confirm.key,
-    "confirm",
-  );
-  if (!state) return null;
-  return <span>{state.payload.title}</span>;
-}
-```
-
-Optional third arg `compare` compares the previous and next matched `LayerState`. Unlike `useStack`, `useLayer` has no selector; use a custom comparison only when ignored state fields should not trigger a render.
 
 ### StackSubscribe
 
@@ -388,8 +361,11 @@ function ControlledSettings({
 | --------- | ---------------------- | ----------------------------------------------------------------- |
 | Component | `StackProvider`        | `{ client?, children }`                                           |
 | Hook      | `useLayerClient`       | `() => LayerClient`                                               |
-| Hook      | `useStack`             | `<T>(stackId?, selector?, compare?) => T`                         |
-| Hook      | `useLayer`             | `<Key, P?, D?>(key, stackId?, compare?) => LayerState \| null`    |
+| Hook      | `useLayer`             | `(options, client?) => WiredLayerHandle + state/queued/top`       |
+| Hook      | `useLayerState`        | `({ key, stack?, select?, compare? }, client?) => LayerState[]`   |
+| Hook      | `useLayerQueuedState`  | `({ key, stack?, select?, compare? }, client?) => LayerState[]`   |
+| Hook      | `useStack`             | `({ stack?, select?, compare? }, client?) => T`                   |
+| Hook      | `useQueuedStack`       | `({ stack?, select?, compare? }, client?) => T`                   |
 | Hook      | `useStackHandles`      | `(stack?, rootProps?) => StackHandles`                            |
 | Component | `StackOutlet`          | `{ stack?, rootProps? }`                                          |
 | Component | `StackSubscribe`       | `{ stack?, selector, children }`                                  |

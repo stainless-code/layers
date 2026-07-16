@@ -1,5 +1,5 @@
+import type { LayerState, StandardSchemaV1 } from "@stainless-code/layers";
 import { LayerClient, layerKey, layerOptions } from "@stainless-code/layers";
-import type { LayerState } from "@stainless-code/layers";
 /**
  * React adapter type-level inference tests. Compiled by `tsc --noEmit`
  * (tsconfig includes `tests-dom/**` + `.tsx`); never executed — vitest's
@@ -8,7 +8,8 @@ import type { LayerState } from "@stainless-code/layers";
  */
 import {
   createStackHook,
-  useLayer as useReactLayer,
+  useLayer,
+  useLayerState,
   useStack,
 } from "@stainless-code/react-layers";
 import type { AppStack } from "@stainless-code/react-layers";
@@ -31,6 +32,29 @@ const autoTagged = layerOptions<{ title: string }, boolean>({
   component: undefined,
 });
 
+const confirmOpts = layerOptions<{ title: string }, boolean>({
+  key: ["confirm", "count"],
+});
+
+const idSchema = {
+  "~standard": {
+    version: 1,
+    vendor: "test",
+    validate: (v: unknown) => ({
+      value: { id: Number((v as { id: string }).id) },
+    }),
+    types: undefined as unknown as {
+      input: { id: string };
+      output: { id: number };
+    },
+  },
+} as StandardSchemaV1<{ id: string }, { id: number }>;
+
+const validatedConfirm = {
+  key: ["v"],
+  validate: idSchema,
+};
+
 // `AppLayer` (declarative) infers `R` from `layerOptions`-built options — the
 // phantom `_response` carries `R`, so `onResolved` receives it with no generic.
 declare const _appHook: ReturnType<typeof createStackHook>;
@@ -48,56 +72,121 @@ function _appLayerInfersResponse() {
 void _appLayerInfersResponse;
 void client;
 
-// M1 — `useStack` selector return flows through; default is `LayerState[]`.
+// M1 — `useStack` select return flows through; default is `LayerState[]`.
 declare const nSelector: (states: LayerState[]) => { n: number };
 type _NSelectorReturn = ReturnType<typeof nSelector>;
 function useStackDefault() {
-  return useStack("s");
+  return useStack({ stack: "s" });
 }
 export type _UseStackDefaultLayerStates = Expect<
   Equal<ReturnType<typeof useStackDefault>, LayerState[]>
 >;
+function useStackWithSelect() {
+  return useStack<{ n: number }>({ stack: "s", select: nSelector });
+}
 export type _UseStackSelectorFlows = Expect<
-  Equal<ReturnType<typeof useStack<{ n: number }>>, { n: number }>
+  Equal<ReturnType<typeof useStackWithSelect>, { n: number }>
 >;
 export type _UseStackSelectorFromDecl = Expect<
   Equal<ReturnType<typeof useStack<_NSelectorReturn>>, { n: number }>
 >;
 function useStackAcceptsCompare() {
-  useStack("s", nSelector, (a, b) => a.n === b.n);
+  useStack({ stack: "s", select: nSelector, compare: (a, b) => a.n === b.n });
 }
 void useStackAcceptsCompare;
 function useStackRejectsBadCompare() {
   // @ts-expect-error compare must return boolean
-  useStack("s", nSelector, (_a, _b) => "bad");
+  useStack({ stack: "s", select: nSelector, compare: (_a, _b) => "bad" });
 }
 void useStackRejectsBadCompare;
 
-// M4 — `useLayer` honors a DataTag key: `R`/`E` inferred from the key alone.
-type _ReactUseLayerTagged = ReturnType<typeof useReactLayer<typeof removeKey>>;
-export type _UseLayerInfersResponse = Expect<
+// M4 — `useLayerState` honors a DataTag key: `R`/`E` inferred from the key alone.
+function useLayerStateTagged() {
+  return useLayerState({ key: removeKey });
+}
+type _ReactUseLayerStateTagged = ReturnType<typeof useLayerStateTagged>;
+export type _UseLayerStateInfersResponse = Expect<
   Equal<
-    _ReactUseLayerTagged,
-    LayerState<unknown, boolean, Error, unknown> | null
+    _ReactUseLayerStateTagged,
+    LayerState<unknown, boolean, Error, unknown>[]
   >
 >;
-// A plain (untagged) key keeps the historical `R = void` default.
-type _ReactUseLayerPlain = ReturnType<typeof useReactLayer<["plain"]>>;
-export type _UseLayerPlainVoid = Expect<
-  Equal<_ReactUseLayerPlain, LayerState<unknown, void, Error, unknown> | null>
+function useLayerStatePlain() {
+  return useLayerState({ key: ["plain"] as const });
+}
+type _ReactUseLayerStatePlain = ReturnType<typeof useLayerStatePlain>;
+export type _UseLayerStatePlainVoid = Expect<
+  Equal<_ReactUseLayerStatePlain, LayerState<unknown, void, Error, unknown>[]>
 >;
-export type _ReactUseLayerTaggedResponse = Expect<
+export type _ReactUseLayerStateTaggedResponse = Expect<
   Equal<
-    NonNullable<ReturnType<typeof useReactLayer<typeof removeKey>>>["response"],
+    NonNullable<_ReactUseLayerStateTagged[number]>["response"],
     boolean | undefined
   >
 >;
-export type _ReactUseLayerPlainResponse = Expect<
+export type _ReactUseLayerStatePlainResponse = Expect<
   Equal<
-    NonNullable<ReturnType<typeof useReactLayer<["plain"]>>>["response"],
+    NonNullable<_ReactUseLayerStatePlain[number]>["response"],
     void | undefined
   >
 >;
+
+// Wired `useLayer` — open infers `R` from layerOptions.
+function useConfirmLayer() {
+  return useLayer(confirmOpts);
+}
+function openViaUseLayer() {
+  const c = useConfirmLayer();
+  return c.open({ title: "n" });
+}
+export type _UseLayerOpenInfersResponse = Expect<
+  Equal<Awaited<ReturnType<typeof openViaUseLayer>>, boolean>
+>;
+
+// Wired `useLayer` — validated: open accepts INPUT; state uses OUTPUT.
+function useValidatedLayer() {
+  return useLayer(validatedConfirm);
+}
+function openViaValidatedUseLayer() {
+  const c = useValidatedLayer();
+  return c.open({ id: "1" });
+}
+void openViaValidatedUseLayer;
+export type _ValidatedUseLayerOpenAcceptsInput = Expect<
+  Equal<
+    Parameters<ReturnType<typeof useValidatedLayer>["open"]>[0],
+    { id: string }
+  >
+>;
+function openViaValidatedUseLayerWrongPayload() {
+  const c = useValidatedLayer();
+  // @ts-expect-error output shape is not the schema input
+  return c.open({ id: 1 });
+}
+void openViaValidatedUseLayerWrongPayload;
+export type _ValidatedUseLayerStatePayload = Expect<
+  Equal<
+    ReturnType<typeof useValidatedLayer>["state"][number]["payload"],
+    { id: number }
+  >
+>;
+
+// PayloadArg optionality on wired `useLayer`.
+const voidOpts = layerOptions<void, boolean>({ key: ["void"] });
+function useVoidLayer() {
+  return useLayer(voidOpts);
+}
+function openVoidUseLayerOmitted() {
+  return useVoidLayer().open();
+}
+void openVoidUseLayerOmitted;
+
+const reqOpts = layerOptions<{ title: string }>({ key: ["req"] });
+function openReqUseLayerOmitted() {
+  // @ts-expect-error payload is required for a payload with required fields
+  return useLayer(reqOpts).open();
+}
+void openReqUseLayerOmitted;
 
 // M4 — scoped `open` (createStackHook/useLayerGroup) infers `R` from a DataTag key.
 declare const appStack: AppStack;

@@ -24,7 +24,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
   type LayerComponentProps,
 } from "@stainless-code/preact-layers";
 
@@ -51,18 +51,25 @@ function App() {
   return (
     <StackProvider>
       <StackOutlet stack="confirm" />
+      <RemoveButton />
     </StackProvider>
   );
 }
 
 function RemoveButton() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok: boolean = await c.open({
+      title: "Remove?",
+      message: "Sure?",
+    });
+    if (!ok) return;
+    deleteItem();
+  }
+
   return (
-    <button
-      onClick={() =>
-        void client.open({ ...confirm, payload: { title: "Remove?" } })
-      }
-    >
+    <button type="button" onClick={() => void handleRemove()}>
       Remove
     </button>
   );

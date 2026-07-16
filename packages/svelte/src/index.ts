@@ -2,26 +2,76 @@ import type {
   DataTag,
   DefaultLayerError,
   ErrorOf,
+  InferValidatorOutput,
   LayerCallContext,
   LayerComponentProps,
   LayerGroupOptions,
+  LayerHandle,
   LayerKey,
+  LayerOptions,
   LayerState,
   OmitKeyof,
   OpenLayerOptions,
   ResponseOf,
+  ValidatedLayerHandle,
+  Validator,
 } from "@stainless-code/layers";
 import {
   childStackId,
   createCallContext,
+  createLayer as createLayerHandle,
   createLayerGroup,
   keySignature,
+  shallowArrayEqual,
   LayerClient,
 } from "@stainless-code/layers";
 // This runes entry requires Svelte 5.7's `createSubscriber`; the separate
 // `@stainless-code/svelte-layers/store` entry supports the store contract.
 import { getContext, onDestroy, setContext } from "svelte";
 import { createSubscriber } from "svelte/reactivity";
+
+/** Core headless factory — not the wired {@link createLayer}. */
+export { createLayer as createLayerHandle } from "@stainless-code/layers";
+export {
+  hashKey,
+  keySignature,
+  shallowArrayEqual,
+  Subscribable,
+  notifyManager,
+  ControlledPromise,
+  Layer,
+  LayerStack,
+  LayerClient,
+  layerOptions,
+  layerKey,
+  createCallContext,
+  childStackId,
+  createLayerGroup,
+  PayloadValidationError,
+  isPayloadValidationError,
+} from "@stainless-code/layers";
+
+export type {
+  Resolve,
+  Reject,
+  LayerHandle,
+  ValidatedLayerHandle,
+  LayerGroupHandle,
+  LayerGroupOptions,
+  DataTag,
+  InferDataTagResponse,
+  InferDataTagError,
+  ResponseOf,
+  ErrorOf,
+  StandardSchemaV1,
+  Validator,
+  InferValidatorInput,
+  InferValidatorOutput,
+  OpenValidatePayload,
+  ValidationIssue,
+} from "@stainless-code/layers";
+
+export type * from "@stainless-code/layers";
 
 const LAYER_CLIENT_KEY = Symbol("layers.client");
 
@@ -52,11 +102,55 @@ export function useLayerClient(): LayerClient {
   return c;
 }
 
-export * from "@stainless-code/layers";
-
 function defaultSelector(states: LayerState[]): LayerState[] {
   return states;
 }
+
+type NoValidateOptions<Opts> = Opts extends { validate: Validator<unknown> }
+  ? never
+  : Opts;
+
+export interface UseStackOptions<T = LayerState[]> {
+  stack?: string;
+  select?: (states: LayerState[]) => T;
+  compare?: (a: T, b: T) => boolean;
+}
+
+export interface UseLayerStateOptions<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+> {
+  key: Key;
+  stack?: string;
+  select?: (states: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[]) => U;
+  compare?: (a: U, b: U) => boolean;
+}
+
+export type WiredLayerHandle<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = LayerHandle<P, R, E, D, RP> & {
+  readonly state: LayerState<P, R, E, D>[];
+  readonly queued: LayerState<P, R, E, D>[];
+  readonly top: LayerState<P, R, E, D> | null;
+};
+
+export type WiredValidatedLayerHandle<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = ValidatedLayerHandle<V, R, E, D, RP> & {
+  readonly state: LayerState<InferValidatorOutput<V>, R, E, D>[];
+  readonly queued: LayerState<InferValidatorOutput<V>, R, E, D>[];
+  readonly top: LayerState<InferValidatorOutput<V>, R, E, D> | null;
+};
 
 /** Exposes a stack through Svelte 5 runes reactivity. */
 export interface SvelteStack<RootProps = unknown, T = LayerState[]> {
@@ -79,68 +173,20 @@ export interface SvelteStack<RootProps = unknown, T = LayerState[]> {
   ): LayerCallContext<unknown, unknown, RootProps> | null;
 }
 
-/**
- * Exposes a {@link LayerClient} stack through Svelte 5 runes reactivity.
- *
- * @param client Client to observe. Omit it to use {@link useLayerClient}.
- * @param stackId Stack to observe.
- * @param selector Derives the exposed value from the stack snapshot.
- * @param compare Determines whether a selected value changed.
- * @returns A reactive stack accessor.
- * @default `stackId` is `"default"`; `selector` is identity; `compare` is
- * `Object.is`.
- * @example
- * ```svelte
- * <script>
- *   import { useStack } from "@stainless-code/svelte-layers";
- *
- *   const stack = useStack("confirm");
- * </script>
- * {#each stack.current as state (state.id)}
- *   {@const call = stack.callFor(state)}
- *   {#if call}<Confirm {call} />{/if}
- * {/each}
- * ```
- */
-export function useStack<RootProps = unknown, T = LayerState[]>(
-  client: LayerClient,
-  stackId?: string,
-  selector?: (states: LayerState[]) => T,
-  compare?: (a: T, b: T) => boolean,
-): SvelteStack<RootProps, T>;
-export function useStack<RootProps = unknown, T = LayerState[]>(
-  stackId?: string,
-  selector?: (states: LayerState[]) => T,
-  compare?: (a: T, b: T) => boolean,
-): SvelteStack<RootProps, T>;
-export function useStack<RootProps = unknown, T = LayerState[]>(
-  clientOrStackId?: LayerClient | string,
-  stackIdOrSelector?: string | ((states: LayerState[]) => T),
-  selectorOrCompare?: ((states: LayerState[]) => T) | ((a: T, b: T) => boolean),
-  compareArg?: (a: T, b: T) => boolean,
+function makeSvelteStack<RootProps, T>(
+  stack: ReturnType<LayerClient["getStack"]>,
+  getSource: () => LayerState[],
+  select: (states: LayerState[]) => T,
+  compare: (a: T, b: T) => boolean,
 ): SvelteStack<RootProps, T> {
-  const explicit = clientOrStackId instanceof LayerClient;
-  const client = explicit ? clientOrStackId : useLayerClient();
-  const stackId =
-    ((explicit ? stackIdOrSelector : clientOrStackId) as string | undefined) ??
-    "default";
-  const selector =
-    ((explicit ? selectorOrCompare : stackIdOrSelector) as
-      | ((states: LayerState[]) => T)
-      | undefined) ?? (defaultSelector as unknown as (s: LayerState[]) => T);
-  const compare =
-    ((explicit ? compareArg : selectorOrCompare) as
-      | ((a: T, b: T) => boolean)
-      | undefined) ?? Object.is;
-  const stack = client.getStack(stackId);
   let cache: { base: LayerState[]; value: T } | null = null;
 
   // Preserve selector output identity while the base snapshot is unchanged or
   // `compare` considers a new result equal, preventing object/array churn.
-  const select = (base: LayerState[]): T => {
+  const runSelect = (base: LayerState[]): T => {
     const prev = cache;
     if (prev && prev.base === base) return prev.value;
-    const next = selector(base);
+    const next = select(base);
     if (prev && compare(prev.value, next)) {
       cache = { base, value: prev.value };
       return prev.value;
@@ -149,21 +195,22 @@ export function useStack<RootProps = unknown, T = LayerState[]>(
     return next;
   };
 
-  select(stack.getSnapshot());
+  runSelect(getSource());
 
   const subscribe = createSubscriber((update: () => void) =>
     stack.subscribe(() => {
       const prevValue = cache?.value;
-      select(stack.getSnapshot());
+      runSelect(getSource());
       if (prevValue === undefined || !compare(prevValue, cache!.value)) {
         update();
       }
     }),
   );
+
   return {
     get current() {
       subscribe();
-      return select(stack.getSnapshot());
+      return runSelect(getSource());
     },
     callFor(state, rootProps) {
       const layer = stack.getLayer(state.id);
@@ -180,78 +227,205 @@ export function useStack<RootProps = unknown, T = LayerState[]>(
 }
 
 /**
- * Exposes one active layer through Svelte 5 runes reactivity.
+ * Exposes a {@link LayerClient} stack through Svelte 5 runes reactivity.
  *
- * @param client Client to observe. Omit it to use {@link useLayerClient}.
- * @param key Layer key to match.
- * @param stackId Stack to search.
- * @param compare Determines whether the matched state changed.
- * @returns A reactive accessor whose `current` is `null` while inactive.
- * @default `stackId` is `"default"`; `compare` is `Object.is`.
+ * @param opts Stack id, selector, and compare options.
+ * @param client Optional client override; defaults to {@link useLayerClient}.
+ * @returns A reactive stack accessor.
+ * @default `stack` is `"default"`; `select` is identity; `compare` is
+ * `Object.is`.
+ * @example
+ * ```svelte
+ * <script>
+ *   import { useStack } from "@stainless-code/svelte-layers";
+ *
+ *   const stack = useStack({ stack: "confirm" });
+ * </script>
+ * {#each stack.current as state (state.id)}
+ *   {@const call = stack.callFor(state)}
+ *   {#if call}<Confirm {call} />{/if}
+ * {/each}
+ * ```
  */
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  client: LayerClient,
-  key: Key,
-  stackId?: string,
-  compare?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): SvelteStack<unknown, LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>;
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  key: Key,
-  stackId?: string,
-  compare?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): SvelteStack<unknown, LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>;
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  clientOrKey: LayerClient | Key,
-  keyOrStackId?: Key | string,
-  stackIdOrCompare?:
-    | string
-    | ((
-        a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-        b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-      ) => boolean),
-  compareArg?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): SvelteStack<
-  unknown,
-  LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null
-> {
-  const explicit = clientOrKey instanceof LayerClient;
-  const client = explicit ? clientOrKey : useLayerClient();
-  const key = (explicit ? keyOrStackId : clientOrKey) as Key;
-  const stackId =
-    ((explicit ? stackIdOrCompare : keyOrStackId) as string | undefined) ??
-    "default";
-  const compare =
-    ((explicit ? compareArg : stackIdOrCompare) as
-      | ((
-          a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-          b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-        ) => boolean)
-      | undefined) ?? Object.is;
-  const sig = keySignature(key);
-  return useStack(
-    client,
-    stackId,
-    (states) =>
-      (states.find((s) => keySignature(s.key) === sig) ?? null) as LayerState<
-        P,
-        ResponseOf<Key>,
-        ErrorOf<Key>,
-        D
-      > | null,
+export function useStack<RootProps = unknown, T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): SvelteStack<RootProps, T> {
+  const resolved = client ?? useLayerClient();
+  const stackId = opts.stack ?? "default";
+  const stack = resolved.getStack(stackId);
+  const select =
+    opts.select ?? (defaultSelector as unknown as (s: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  return makeSvelteStack(stack, () => stack.getSnapshot(), select, compare);
+}
+
+/**
+ * Exposes a stack's queued snapshot through Svelte 5 runes reactivity.
+ */
+export function createQueuedStack<RootProps = unknown, T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): SvelteStack<RootProps, T> {
+  const resolved = client ?? useLayerClient();
+  const stackId = opts.stack ?? "default";
+  const stack = resolved.getStack(stackId);
+  const select =
+    opts.select ?? (defaultSelector as unknown as (s: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  return makeSvelteStack(
+    stack,
+    () => stack.getQueuedSnapshot(),
+    select,
     compare,
-  ) as SvelteStack<
-    unknown,
-    LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null
-  >;
+  );
+}
+
+/**
+ * Observe all mounted layers matching a key.
+ *
+ * A {@link DataTag} key infers its response and error types.
+ */
+export function createLayerState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(
+  opts: UseLayerStateOptions<Key, P, D, U>,
+  client?: LayerClient,
+): SvelteStack<unknown, U> {
+  const sig = keySignature(opts.key);
+  return useStack<unknown, U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+/** Observe all queued layers matching a key. */
+export function createLayerQueuedState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(
+  opts: UseLayerStateOptions<Key, P, D, U>,
+  client?: LayerClient,
+): SvelteStack<unknown, U> {
+  const sig = keySignature(opts.key);
+  return createQueuedStack<unknown, U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+function createLayerImpl<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP> {
+  const resolved = client ?? useLayerClient();
+  const stackId = options.stack ?? "default";
+  const sig = keySignature(options.key);
+  const selectByKey = (states: LayerState[]) =>
+    states.filter((s) => keySignature(s.key) === sig) as LayerState<
+      P,
+      R,
+      E,
+      D
+    >[];
+  const stateObs = useStack<RP, LayerState<P, R, E, D>[]>(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const queuedObs = createQueuedStack<RP, LayerState<P, R, E, D>[]>(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const handle = createLayerHandle(options, resolved);
+  Object.defineProperties(handle, {
+    state: {
+      get(): LayerState<P, R, E, D>[] {
+        return stateObs.current;
+      },
+      enumerable: true,
+    },
+    queued: {
+      get(): LayerState<P, R, E, D>[] {
+        return queuedObs.current;
+      },
+      enumerable: true,
+    },
+    top: {
+      get(): LayerState<P, R, E, D> | null {
+        return stateObs.current.at(-1) ?? null;
+      },
+      enumerable: true,
+    },
+  });
+  return handle as WiredLayerHandle<P, R, E, D, RP>;
+}
+
+/** Wired handle: wraps core {@link createLayerHandle} with runes reactivity. */
+export function createLayer<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<InferValidatorOutput<V>, R, E, D, RP> & {
+    key: LayerKey;
+    validate: V;
+  },
+  client?: LayerClient,
+): WiredValidatedLayerHandle<V, R, E, D, RP>;
+
+export function createLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: NoValidateOptions<LayerOptions<P, R, E, D, RP> & { key: LayerKey }>,
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP>;
+
+export function createLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP> {
+  return createLayerImpl(options, client);
 }
 
 export interface MutationRun<R> {
@@ -365,7 +539,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
     client.dismissAll(group.stackId);
   });
 
-  const stack = useStack<RootProps>(client, stackId);
+  const stack = useStack<RootProps>({ stack: stackId });
   const open = (<
     P2,
     R2 = void,

@@ -25,7 +25,7 @@ import {
   LayerClientContext,
   StackOutlet,
   layerOptions,
-  useLayerClient,
+  useLayer,
   type LayerComponentProps,
 } from "@stainless-code/solid-layers";
 
@@ -56,11 +56,16 @@ function App() {
 }
 
 function RemoveButton() {
-  const c = useLayerClient();
+  const c = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await c.open({ title: "Remove?", message: "Sure?" });
+    if (!ok) return;
+    deleteItem();
+  }
+
   return (
-    <button
-      onClick={() => void c.open({ ...confirm, payload: { title: "Remove?" } })}
-    >
+    <button type="button" onClick={() => void handleRemove()}>
       Remove
     </button>
   );

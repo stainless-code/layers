@@ -5,7 +5,7 @@ import { LayerClient } from "./layerClient";
 import { layerOptions } from "./layerOptions";
 import { LayerStack } from "./layerStack";
 import { notifyManager } from "./notifyManager";
-import { hashKey, keySignature } from "./utils";
+import { hashKey, keySignature, shallowArrayEqual } from "./utils";
 
 describe("hashKey / keySignature", () => {
   it("is stable across key-object key order", () => {
@@ -15,6 +15,15 @@ describe("hashKey / keySignature", () => {
     expect(keySignature(["confirm", "x"])).not.toBe(
       keySignature(["confirm", "y"]),
     );
+  });
+});
+
+describe("shallowArrayEqual", () => {
+  it("treats equal element refs as equal even when the array is new", () => {
+    const a = { id: 1 };
+    const b = { id: 2 };
+    expect(shallowArrayEqual([a, b], [a, b])).toBe(true);
+    expect(shallowArrayEqual([a, b], [a, { id: 2 }])).toBe(false);
   });
 });
 
@@ -256,6 +265,91 @@ describe("LayerStack — scope serial", () => {
     });
     stack.open({ key: ["a"], payload: { n: 1 } });
     expect(stack.cancelQueued(["missing"], false)).toBe(false);
+  });
+
+  it("cancelQueued by id removes exact queued instance", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    const a = stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["k"], payload: { n: 2 } });
+    const c = stack.open({ key: ["k"], payload: { n: 3 } });
+    const cp = c.promise.promise;
+    expect(stack.cancelQueued(["k"], false, { id: c.id })).toBe(true);
+    expect(await cp).toBe(false);
+    expect(stack.getQueuedSnapshot()).toHaveLength(1);
+    expect(stack.getQueuedSnapshot()[0]?.id).toBe(b.id);
+    expect(stack.getSnapshot()[0]?.id).toBe(a.id);
+    await stack.dismiss(a, true);
+    void b;
+  });
+
+  it("cancelQueued by id returns false for unknown id", () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    stack.open({ key: ["a"], payload: { n: 1 } });
+    stack.open({ key: ["k"], payload: { n: 2 } });
+    expect(stack.cancelQueued(["k"], false, { id: "missing" })).toBe(false);
+  });
+
+  it("cancelQueued without id cancels FIFO head", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["k"], payload: { n: 2 } });
+    const c = stack.open({ key: ["k"], payload: { n: 3 } });
+    const bp = b.promise.promise;
+    expect(stack.cancelQueued(["k"], false)).toBe(true);
+    expect(await bp).toBe(false);
+    expect(stack.getQueuedSnapshot()).toHaveLength(1);
+    expect(stack.getQueuedSnapshot()[0]?.id).toBe(c.id);
+  });
+
+  it("cancelQueued by id returns false for mounted layer", () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    const a = stack.open({ key: ["a"], payload: { n: 1 } });
+    expect(stack.cancelQueued(["a"], false, { id: a.id })).toBe(false);
+  });
+
+  it("cancelQueued by id returns false when id is queued under a different key", () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["b"], payload: { n: 2 } });
+    expect(stack.cancelQueued(["k"], false, { id: b.id })).toBe(false);
+    expect(stack.getQueuedSnapshot()[0]?.id).toBe(b.id);
+  });
+
+  it("cancelQueued by id removes middle of three same-key queued", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["k"], payload: { n: 2 } });
+    const c = stack.open({ key: ["k"], payload: { n: 3 } });
+    const d = stack.open({ key: ["k"], payload: { n: 4 } });
+    const cp = c.promise.promise;
+    expect(stack.cancelQueued(["k"], false, { id: c.id })).toBe(true);
+    expect(await cp).toBe(false);
+    expect(stack.getQueuedSnapshot().map((l) => l.id)).toEqual([b.id, d.id]);
+  });
+
+  it("cancelQueued with empty opts cancels FIFO head", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["k"], payload: { n: 2 } });
+    const c = stack.open({ key: ["k"], payload: { n: 3 } });
+    const bp = b.promise.promise;
+    expect(stack.cancelQueued(["k"], false, {})).toBe(true);
+    expect(await bp).toBe(false);
+    expect(stack.getQueuedSnapshot()[0]?.id).toBe(c.id);
   });
 });
 

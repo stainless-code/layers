@@ -9,8 +9,8 @@ import { effect, effectScope } from "vue";
 
 import {
   provideLayerClient,
-  useLayer,
   useLayerClient,
+  useLayerState,
   useStack,
 } from "./index";
 
@@ -19,7 +19,7 @@ describe("useStack (vue)", () => {
     const client = new LayerClient();
     const scope = effectScope();
     scope.run(() => {
-      const stack = useStack(client, "confirm");
+      const stack = useStack({ stack: "confirm" }, client);
       let last: number | undefined;
       effect(() => {
         last = stack.value.length;
@@ -31,11 +31,14 @@ describe("useStack (vue)", () => {
     scope.stop();
   });
 
-  it("with a selector returns the selected slice", () => {
+  it("with a select returns the selected slice", () => {
     const client = new LayerClient();
     const scope = effectScope();
     scope.run(() => {
-      const stack = useStack(client, "confirm", (states) => states.length);
+      const stack = useStack(
+        { stack: "confirm", select: (states) => states.length },
+        client,
+      );
       expect(stack.value).toBe(0);
       client.open({ key: ["a"], payload: 1, stack: "confirm" });
       expect(stack.value).toBe(1);
@@ -43,15 +46,16 @@ describe("useStack (vue)", () => {
     scope.stop();
   });
 
-  it("useLayer returns the matching layer state or null", () => {
+  it("useLayerState returns matching layer states as an array", () => {
     const client = new LayerClient();
     const scope = effectScope();
     scope.run(() => {
-      const layer = useLayer(client, ["a"], "confirm");
-      expect(layer.value).toBeNull();
+      const layer = useLayerState({ key: ["a"], stack: "confirm" }, client);
+      expect(layer.value).toHaveLength(0);
       client.open({ key: ["a"], payload: 1, stack: "confirm" });
-      expect(layer.value?.payload).toBe(1);
-      expect(layer.value?.key).toEqual(["a"]);
+      expect(layer.value).toHaveLength(1);
+      expect(layer.value[0]?.payload).toBe(1);
+      expect(layer.value[0]?.key).toEqual(["a"]);
     });
     scope.stop();
   });
@@ -60,7 +64,7 @@ describe("useStack (vue)", () => {
     const client = new LayerClient();
     const scope = effectScope();
     scope.run(() => {
-      const stack = useStack(client, "confirm");
+      const stack = useStack({ stack: "confirm" }, client);
       effect(() => {
         void stack.value;
       });

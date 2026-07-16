@@ -111,6 +111,26 @@ noticeStack.subscribe(() => {
 void client.open(maintenanceNotice);
 ```
 
+## Wired handles (`createLayer`)
+
+For explicit-client / headless callers, `createLayer(options, client)` binds identity and returns a `LayerHandle` (or `ValidatedLayerHandle` when `options.validate` is set):
+
+```ts
+import { LayerClient, layerOptions, createLayer } from "@stainless-code/layers";
+
+const client = new LayerClient();
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+});
+
+const c = createLayer(confirm, client);
+const ok = await c.open({ title: "Remove?" });
+c.dismiss(false, { id: c.current?.id });
+```
+
+Stack-level ops via `c.stack.*`. `current` is live-checked. Validated I/O: [glossary](../../../../docs/glossary.md).
+
 ## Key inference
 
 `layerOptions<P, R>(...)` is a zero-runtime, spreadable options helper; it has no `.call()` method. It brands `key` with `DataTag<Key, R, E>`, so `open()` infers the response and error types. To brand only a key:
@@ -215,10 +235,10 @@ const serialClient = new LayerClient({
 // only one confirm pending/active at a time; later open() queues (phase: "queued")
 const stack = serialClient.getStack("confirm");
 stack.getQueuedSnapshot(); // inspect queued layers
-stack.cancelQueued(["confirm", "remove"], false); // resolve without mounting
+stack.cancelQueued(["confirm", "remove"], false); // FIFO head; pass `{ id }` for exact queued
 ```
 
-Serial scope allows only one `pending` or `active` layer; later opens remain unmounted until their turn. `cancelQueued` resolves a waiting caller without mounting its layer. `gcTime` caches dismissed data after removal, so reopening the same key restores `data` without rerunning `loadFn`.
+Serial scope allows only one `pending` or `active` layer; later opens remain unmounted until their turn. `cancelQueued` resolves a waiting caller without mounting (FIFO, or `{ id }` for exact). `gcTime` caches dismissed data after removal, so reopening the same key restores `data` without rerunning `loadFn`.
 
 ## Nested layers
 
@@ -252,6 +272,7 @@ The complete public API surface:
 | Infrastructure classes           | `Subscribable`, `ControlledPromise`                                                                                           |
 | Validation class                 | `PayloadValidationError`                                                                                                      |
 | Declaration and inference        | `layerOptions`, `layerKey`, `DataTag`, `InferDataTagResponse`, `InferDataTagError`, `ResponseOf`, `ErrorOf`                   |
+| Wired handles                    | `createLayer`, `LayerHandle`, `ValidatedLayerHandle`                                                                          |
 | Rendering seam                   | `createCallContext`, `LayerCallContext`, `LayerComponentProps`, `LayerComponent`                                              |
 | Nested layers                    | `createLayerGroup`, `childStackId`, `LayerGroupOptions`, `LayerGroupHandle`                                                   |
 | Identity and notification values | `hashKey`, `keySignature`, `notifyManager`                                                                                    |

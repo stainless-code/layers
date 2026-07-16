@@ -50,24 +50,32 @@ export const confirm = layerOptions({
 ```vue
 <!-- App.vue -->
 <script setup lang="ts">
-import {
-  provideLayerClient,
-  StackOutlet,
-  useLayerClient,
-} from "@stainless-code/vue-layers";
-import { confirm } from "./confirm";
+import { provideLayerClient, StackOutlet } from "@stainless-code/vue-layers";
 
 provideLayerClient();
-const client = useLayerClient();
-
-async function remove() {
-  const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
-  if (ok) deleteItem();
-}
 </script>
 <template>
   <StackOutlet stack="confirm" />
-  <button @click="remove">Remove</button>
+</template>
+```
+
+```vue
+<!-- RemoveButton.vue -->
+<script setup lang="ts">
+import { useLayer } from "@stainless-code/vue-layers";
+import { confirm } from "./confirm";
+
+const c = useLayer(confirm);
+
+async function handleRemove() {
+  const ok = await c.open({ title: "Remove?" });
+  if (!ok) return;
+  deleteItem();
+}
+</script>
+
+<template>
+  <button type="button" @click="handleRemove()">Remove</button>
 </template>
 ```
 

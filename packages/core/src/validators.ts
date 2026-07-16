@@ -22,6 +22,12 @@ export type InferValidatorOutput<V> =
       ? O
       : never;
 
+/** Schema/parser **input** for validated `open` / {@link ValidatedLayerHandle}. */
+export type OpenValidatePayload<V extends Validator<unknown>> =
+  V extends StandardSchemaV1
+    ? StandardSchemaV1.InferInput<V>
+    : InferValidatorInput<V>;
+
 function isStandardSchema(v: unknown): v is StandardSchemaV1 {
   return typeof v === "object" && v !== null && "~standard" in v;
 }

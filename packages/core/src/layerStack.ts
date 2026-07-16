@@ -76,7 +76,7 @@ export class LayerStack<
 
   find(key: LayerKey): Layer<P, R, E, D> | undefined {
     const sig = keySignature(key);
-    return this.#layers.find((l) => keySignature(l.key) === sig);
+    return this.#layers.findLast((l) => keySignature(l.key) === sig);
   }
 
   addBlocker(fn: StackBlockerFn): () => void {
@@ -348,13 +348,18 @@ export class LayerStack<
     }
   }
 
-  /** Resolves and removes a serially queued layer without mounting it. */
-  cancelQueued(key: LayerKey, response: R): boolean {
+  /**
+   * Resolves and removes a serially queued layer without mounting it (skips blockers).
+   * No `id` → FIFO head for the key; `{ id }` → exact queued match.
+   */
+  cancelQueued(key: LayerKey, response: R, opts?: { id?: string }): boolean {
     return notifyManager.batch(() => {
       const sig = keySignature(key);
-      const idx = this.#scopeQueue.findIndex(
-        (entry) => keySignature(entry.layer.key) === sig,
-      );
+      const idx = this.#scopeQueue.findIndex((entry) => {
+        if (keySignature(entry.layer.key) !== sig) return false;
+        if (opts?.id !== undefined) return entry.layer.id === opts.id;
+        return true;
+      });
       if (idx === -1) {
         return false;
       }

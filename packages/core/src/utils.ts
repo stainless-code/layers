@@ -24,3 +24,19 @@ export function hashKey(key: LayerKey): string {
 export function keySignature(key: LayerKey): string {
   return hashKey(key);
 }
+
+/**
+ * Element-wise `Object.is` for arrays.
+ * Keeps key-filtered snapshot selections stable when `filter()` reallocates
+ * but the matched element refs are unchanged.
+ */
+export function shallowArrayEqual<T>(a: T, b: T): boolean {
+  if (Object.is(a, b)) return true;
+  if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) {
+    return false;
+  }
+  for (let i = 0; i < a.length; i++) {
+    if (!Object.is(a[i], b[i])) return false;
+  }
+  return true;
+}

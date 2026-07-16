@@ -39,11 +39,11 @@ function activeIdsEqual(a: LayerState[], b: LayerState[]): boolean {
 }
 
 function ActiveList() {
-  const active = useStack(
-    "s",
-    (states) => states.filter((l) => l.phase === "active"),
-    activeIdsEqual,
-  );
+  const active = useStack({
+    stack: "s",
+    select: (states) => states.filter((l) => l.phase === "active"),
+    compare: activeIdsEqual,
+  });
   return (
     <ul data-testid="active-list">
       {active.map((s) => (

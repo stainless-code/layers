@@ -92,20 +92,17 @@ function App() {
 ```
 
 ```tsx
-// 3. Call & await — response type (boolean) is inferred end-to-end
-import { useLayerClient } from "@stainless-code/react-layers";
+// 3. Call & await
+import { useLayer } from "@stainless-code/react-layers";
 import { confirm } from "./confirm";
 
 function Opener() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   return (
     <button
       type="button"
       onClick={async () => {
-        const ok: boolean = await client.open({
-          ...confirm,
-          payload: { title: "Remove?" },
-        });
+        const ok: boolean = await c.open({ title: "Remove?" });
         if (ok) deleteItem();
       }}
     >
@@ -115,21 +112,44 @@ function Opener() {
 }
 ```
 
+Low-level: `client.open({ ...confirm, payload })` or core `createLayer(confirm, client)`.
+
 ## The `call` context
 
 Each layer component receives `call` (`end`/`dismiss`/`update`/`setRunning`/`settle`/`ended`/`index`/`stackSize`/`root`/`stackId`/`layerId`/`addBlocker`), `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, `dismissing`. Use `await call.end(response)` to resolve the caller's `await` and dismiss the layer (`Promise<boolean>` — `false` if a blocker vetoes). `setRunning(true|false)` flips `actionStatus` manually; `useMutationFlow` (below) wraps `setRunning` + `end` for the common save-then-close case.
 
 **Key vs id:** `key` is the logical identity (`find`/`upsert`/`gcTime`); each mount gets a unique instance `id`. Use `s.id` for React list keys; `parallel` stacks may hold multiple same-key layers.
 
-## Subscribing to stacks
-
-### useStack
+## Wired handle: useLayer
 
 ```tsx
-import { useStack } from "@stainless-code/react-layers";
+import { useLayer } from "@stainless-code/react-layers";
+import { confirm } from "./confirm";
+
+function Opener() {
+  const c = useLayer(confirm);
+  return (
+    <button type="button" onClick={() => void c.open({ title: "Remove?" })}>
+      Remove
+    </button>
+  );
+}
+```
+
+Validated I/O: [glossary](../../../../docs/glossary.md).
+
+## Subscribing to stacks
+
+### useStack / useQueuedStack
+
+Options-bag + optional trailing `client`. `select` (not `selector`) projects the snapshot; `compare` defaults to `Object.is`:
+
+```tsx
+import { useStack, useQueuedStack } from "@stainless-code/react-layers";
 
 function ConfirmList() {
-  const states = useStack("confirm");
+  const states = useStack({ stack: "confirm" });
+  const queued = useQueuedStack({ stack: "confirm" });
   return (
     <ul>
       {states.map((s) => (
@@ -140,40 +160,32 @@ function ConfirmList() {
 }
 ```
 
-Optional `selector` and `compare` (default `Object.is`) limit re-renders when only a slice of the snapshot matters:
-
 ```tsx
-const count = useStack("confirm", (states) => states.length);
-const top = useStack("confirm", (states) => states.at(-1) ?? null);
-
-// Custom equality — e.g. shallow compare a derived object
-const summary = useStack(
-  "confirm",
-  (states) => ({ count: states.length, topKey: states.at(-1)?.key }),
-  (a, b) => a.count === b.count && a.topKey === b.topKey,
-);
+const count = useStack({ stack: "confirm", select: (s) => s.length });
+const top = useStack({ stack: "confirm", select: (s) => s.at(-1) ?? null });
 ```
 
-### useLayer
+### useLayerState / useLayerQueuedState
 
-Subscribe to a single layer by key; returns `null` when not active. A `DataTag` key (from `layerOptions` / `layerKey`) infers response `R` and error `E`:
+Observe-only (no control). Returns `LayerState[]` for all same-key mounted / queued instances:
 
 ```tsx
-import { useLayer } from "@stainless-code/react-layers";
+import {
+  useLayerState,
+  useLayerQueuedState,
+} from "@stainless-code/react-layers";
 import { confirm, type ConfirmPayload } from "./confirm";
 
 function ActiveConfirm() {
-  // The key infers response/error; provide P when reading a typed payload.
-  const state = useLayer<typeof confirm.key, ConfirmPayload>(
-    confirm.key,
-    "confirm",
-  );
-  if (!state) return null;
-  return <span>{state.payload.title}</span>;
+  const states = useLayerState<typeof confirm.key, ConfirmPayload>({
+    key: confirm.key,
+    stack: "confirm",
+  });
+  const top = states.at(-1);
+  if (!top) return null;
+  return <span>{top.payload.title}</span>;
 }
 ```
-
-Optional third arg `compare` compares the previous and next matched `LayerState`. Unlike `useStack`, `useLayer` has no selector; use a custom comparison only when ignored state fields should not trigger a render.
 
 ### StackSubscribe
 
@@ -375,30 +387,35 @@ function ControlledSettings({
 
 ## Adapter API
 
-| Kind      | Name                   | Signature / shape                                                 |
-| --------- | ---------------------- | ----------------------------------------------------------------- |
-| Component | `StackProvider`        | `{ client?, children }`                                           |
-| Hook      | `useLayerClient`       | `() => LayerClient`                                               |
-| Hook      | `useStack`             | `<T>(stackId?, selector?, compare?) => T`                         |
-| Hook      | `useLayer`             | `<Key, P?, D?>(key, stackId?, compare?) => LayerState \| null`    |
-| Hook      | `useStackHandles`      | `(stack?, rootProps?) => StackHandles`                            |
-| Component | `StackOutlet`          | `{ stack?, rootProps? }`                                          |
-| Component | `StackSubscribe`       | `{ stack?, selector, children }`                                  |
-| Hook      | `useMutationFlow`      | `<P, R, RootProps?>(call) => MutationFlow<R>`                     |
-| Hook      | `useLayerGroup`        | `<P, R, RootProps?>(call, options?) => LayerGroup`                |
-| Factory   | `createStackHook`      | `<HostProps>({ stack?, client?, Host? }) => StackHook<HostProps>` |
-| Type      | `StackHandles`         | `{ states, getCall }`                                             |
-| Type      | `MutationRun<R>`       | `{ orEnd(response) }`                                             |
-| Type      | `MutationFlow<R>`      | `{ pending, run }`                                                |
-| Type      | `ScopedOpen`           | `open` with `stack` pre-bound                                     |
-| Type      | `LayerGroup`           | `{ open, dismissAll, states, Outlet, stackId }`                   |
-| Type      | `AppStack`             | `{ open, dismissAll, states }`                                    |
-| Type      | `AppLayerProps<P, R>`  | `{ options, open, payload, onResolved? }`                         |
-| Type      | `StackHook<HostProps>` | `{ StackProvider, useAppStack, AppHost, AppLayer }`               |
+| Kind      | Name                        | Signature / shape                                                 |
+| --------- | --------------------------- | ----------------------------------------------------------------- |
+| Component | `StackProvider`             | `{ client?, children }`                                           |
+| Hook      | `useLayerClient`            | `() => LayerClient`                                               |
+| Hook      | `useLayer`                  | `(options, client?) => WiredLayerHandle + state/queued/top`       |
+| Hook      | `useLayerState`             | `({ key, stack?, select?, compare? }, client?) => LayerState[]`   |
+| Hook      | `useLayerQueuedState`       | `({ key, stack?, select?, compare? }, client?) => LayerState[]`   |
+| Hook      | `useStack`                  | `({ stack?, select?, compare? }, client?) => T`                   |
+| Hook      | `useQueuedStack`            | `({ stack?, select?, compare? }, client?) => T`                   |
+| Hook      | `useStackHandles`           | `(stack?, rootProps?) => StackHandles`                            |
+| Component | `StackOutlet`               | `{ stack?, rootProps? }`                                          |
+| Component | `StackSubscribe`            | `{ stack?, selector, children }`                                  |
+| Hook      | `useMutationFlow`           | `<P, R, RootProps?>(call) => MutationFlow<R>`                     |
+| Hook      | `useLayerGroup`             | `<P, R, RootProps?>(call, options?) => LayerGroup`                |
+| Factory   | `createStackHook`           | `<HostProps>({ stack?, client?, Host? }) => StackHook<HostProps>` |
+| Type      | `WiredLayerHandle`          | `LayerHandle` + `state`/`queued`/`top`                            |
+| Type      | `WiredValidatedLayerHandle` | validated `WiredLayerHandle`                                      |
+| Type      | `StackHandles`              | `{ states, getCall }`                                             |
+| Type      | `MutationRun<R>`            | `{ orEnd(response) }`                                             |
+| Type      | `MutationFlow<R>`           | `{ pending, run }`                                                |
+| Type      | `ScopedOpen`                | `open` with `stack` pre-bound                                     |
+| Type      | `LayerGroup`                | `{ open, dismissAll, states, Outlet, stackId }`                   |
+| Type      | `AppStack`                  | `{ open, dismissAll, states }`                                    |
+| Type      | `AppLayerProps<P, R>`       | `{ options, open, payload, onResolved? }`                         |
+| Type      | `StackHook<HostProps>`      | `{ StackProvider, useAppStack, AppHost, AppLayer }`               |
 
 ## Core re-exports (same import path)
 
-Core exports are available from `@stainless-code/react-layers`, including `LayerClient`, `LayerStack`, `layerOptions`, `layerKey`, `LayerState`, `LayerComponentProps`, `LayerCallContext`, `createLayerGroup`, `DataTag`, `ResponseOf`, and `ErrorOf`:
+Core exports are available from `@stainless-code/react-layers`, including `LayerClient`, `LayerStack`, `layerOptions`, `layerKey`, `createLayer`, `LayerHandle`, `ValidatedLayerHandle`, `LayerState`, `LayerComponentProps`, `LayerCallContext`, `createLayerGroup`, `DataTag`, `ResponseOf`, and `ErrorOf`:
 
 - **Key inference:** `layerOptions` / `layerKey` `DataTag` branding — `await client.open(...)` infers `R`.
 - **Singleton + live updates:** `upsert: true` on `open`; `client.getStack(id).update(layer, patch)`.

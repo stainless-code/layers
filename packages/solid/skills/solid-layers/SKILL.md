@@ -97,20 +97,17 @@ function App() {
 ```
 
 ```tsx
-// 3. Call & await — response type (boolean) is inferred end-to-end
-import { useLayerClient } from "@stainless-code/solid-layers";
+// 3. Call & await
+import { useLayer } from "@stainless-code/solid-layers";
 import { confirm } from "./confirm";
 
 function Opener() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   return (
     <button
       type="button"
       onClick={async () => {
-        const ok = await client.open({
-          ...confirm,
-          payload: { title: "Remove?" },
-        });
+        const ok = await c.open({ title: "Remove?" });
         if (ok) deleteItem();
       }}
     >
@@ -120,59 +117,42 @@ function Opener() {
 }
 ```
 
+Low-level bag-form: `useLayerClient()` + `client.open({ ...confirm, payload })`. Idiomatic `create*` aliases for observe/stack hooks (`createStack`, `createLayerState`, `createQueuedStack`, `createLayerQueuedState`). Wired handle stays `useLayer`; headless factory is core `createLayer`.
+
 ## The `call` context
 
 Each layer component receives `call` (`end`/`dismiss`/`update`/`setRunning`/`settle`/`ended`/`index`/`stackSize`/`root`/`stackId`/`layerId`/`addBlocker`), `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, and `dismissing`. Use `await call.end(response)` to resolve the caller's `await` and dismiss the layer (`Promise<boolean>` — `false` if a blocker vetoes). `setRunning(true|false)` flips `actionStatus` manually; `useMutationFlow` (below) wraps `setRunning` + `end` for the common save-then-close case.
 
 **Key vs id:** `key` is the logical identity (`find`/`upsert`/`gcTime`); each mount gets a unique instance `id`. `StackOutlet` keys by `id` so state changes update props in place; `parallel` stacks may hold multiple same-key layers.
 
+## Wired handle: useLayer
+
+```tsx
+const c = useLayer(confirm);
+await c.open({ title: "Remove?" });
+// c.state() / c.queued() / c.top() — accessors
+```
+
 ## Subscribing to stacks
 
-Both hooks accept an explicit `LayerClient` first or read it from `LayerClientContext` through `useLayerClient()`. Call their returned `Accessor`s inside JSX, a component, or `createEffect`. Pass stable strings as stack ids; the hooks subscribe once per invocation rather than tracking a changing id expression.
+Options-bag + optional trailing `client`; `select` (not `selector`). Call accessors inside JSX or `createEffect`.
 
-### useStack
-
-```tsx
-import { useStack } from "@stainless-code/solid-layers";
-import { For } from "solid-js";
-
-function ConfirmList() {
-  const states = useStack("confirm");
-  return <For each={states()}>{(s) => <li>{String(s.payload)}</li>}</For>;
-}
-```
-
-Optional `selector` and `compare` (default `Object.is`) limit updates when only a slice of the snapshot matters:
+### useStack / useQueuedStack
 
 ```tsx
-const count = useStack("confirm", (states) => states.length);
-const top = useStack("confirm", (states) => states.at(-1) ?? null);
-
-const summary = useStack(
-  "confirm",
-  (states) => ({ count: states.length, topKey: states.at(-1)?.key }),
-  (a, b) => a.count === b.count && a.topKey === b.topKey,
-);
+const states = useStack({ stack: "confirm" });
+const count = useStack({ stack: "confirm", select: (s) => s.length });
+const queued = useQueuedStack({ stack: "confirm" });
 ```
 
-### useLayer
+### useLayerState / useLayerQueuedState
 
-Subscribe to a single layer by key; the accessor returns `null` when not active. A `DataTag` key (from `layerOptions` / `layerKey`) infers response `R` and error `E`:
+Observe-only; `Accessor<LayerState[]>` for all same-key instances:
 
 ```tsx
-import { useLayer } from "@stainless-code/solid-layers";
-import { confirm, type ConfirmPayload } from "./confirm";
-
-function ActiveConfirm() {
-  const state = useLayer<typeof confirm.key, ConfirmPayload>(
-    confirm.key,
-    "confirm",
-  );
-  return <span>{state()?.payload.title}</span>;
-}
+const states = useLayerState({ key: confirm.key, stack: "confirm" });
+const top = () => states().at(-1);
 ```
-
-Optional third arg `compare` compares the previous and next matched `LayerState`. Unlike `useStack`, `useLayer` has no selector.
 
 ### StackSubscribe
 
@@ -366,26 +346,29 @@ function ControlledSettings(props: { open: boolean; onClose: () => void }) {
 
 ## Adapter API
 
-| Kind      | Name                   | Signature / shape                                                        |
-| --------- | ---------------------- | ------------------------------------------------------------------------ |
-| Context   | `LayerClientContext`   | `Context<LayerClient \| undefined>`                                      |
-| Hook      | `useLayerClient`       | `() => LayerClient`                                                      |
-| Hook      | `useStack`             | `<T>(stackId?, selector?, compare?) => Accessor<T>`                      |
-| Hook      | `useLayer`             | `<Key, P?, D?>(key, stackId?, compare?) => Accessor<LayerState \| null>` |
-| Hook      | `useStackHandles`      | `(stack?, rootProps?) => StackHandles`                                   |
-| Component | `StackOutlet`          | `{ stack?, rootProps? }`                                                 |
-| Component | `StackSubscribe`       | `{ stack?, selector, children: (value: Accessor<T>) => JSX }`            |
-| Hook      | `useMutationFlow`      | `<P, R, RootProps?>(call) => MutationFlow<R>`                            |
-| Hook      | `useLayerGroup`        | `<P, R, RootProps?>(call, options?) => LayerGroup`                       |
-| Factory   | `createStackHook`      | `<HostProps>({ stack?, client?, Host? }) => StackHook<HostProps>`        |
-| Type      | `StackHandles`         | `{ states: Accessor<LayerState[]>, getCall }`                            |
-| Type      | `MutationRun<R>`       | `{ orEnd(response) }`                                                    |
-| Type      | `MutationFlow<R>`      | `{ pending: Accessor<boolean>, run }`                                    |
-| Type      | `ScopedOpen`           | `open` with `stack` pre-bound                                            |
-| Type      | `LayerGroup`           | `{ open, dismissAll, states, Outlet, stackId }`                          |
-| Type      | `AppStack`             | `{ open, dismissAll, states }`                                           |
-| Type      | `AppLayerProps<P, R>`  | `{ options, open, payload, onResolved? }`                                |
-| Type      | `StackHook<HostProps>` | `{ StackProvider, useAppStack, AppHost, AppLayer }`                      |
+| Kind      | Name                   | Signature / shape                                                         |
+| --------- | ---------------------- | ------------------------------------------------------------------------- |
+| Context   | `LayerClientContext`   | `Context<LayerClient \| undefined>`                                       |
+| Hook      | `useLayerClient`       | `() => LayerClient`                                                       |
+| Hook      | `useLayer`             | `(options, client?) => WiredLayerHandle accessors + state/queued/top`     |
+| Hook      | `useLayerState`        | `({ key, stack?, select?, compare? }, client?) => Accessor<LayerState[]>` |
+| Hook      | `useLayerQueuedState`  | `({ key, stack?, select?, compare? }, client?) => Accessor<LayerState[]>` |
+| Hook      | `useStack`             | `({ stack?, select?, compare? }, client?) => Accessor<T>`                 |
+| Hook      | `useQueuedStack`       | `({ stack?, select?, compare? }, client?) => Accessor<T>`                 |
+| Hook      | `useStackHandles`      | `(stack?, rootProps?) => StackHandles`                                    |
+| Component | `StackOutlet`          | `{ stack?, rootProps? }`                                                  |
+| Component | `StackSubscribe`       | `{ stack?, selector, children: (value: Accessor<T>) => JSX }`             |
+| Hook      | `useMutationFlow`      | `<P, R, RootProps?>(call) => MutationFlow<R>`                             |
+| Hook      | `useLayerGroup`        | `<P, R, RootProps?>(call, options?) => LayerGroup`                        |
+| Factory   | `createStackHook`      | `<HostProps>({ stack?, client?, Host? }) => StackHook<HostProps>`         |
+| Type      | `StackHandles`         | `{ states: Accessor<LayerState[]>, getCall }`                             |
+| Type      | `MutationRun<R>`       | `{ orEnd(response) }`                                                     |
+| Type      | `MutationFlow<R>`      | `{ pending: Accessor<boolean>, run }`                                     |
+| Type      | `ScopedOpen`           | `open` with `stack` pre-bound                                             |
+| Type      | `LayerGroup`           | `{ open, dismissAll, states, Outlet, stackId }`                           |
+| Type      | `AppStack`             | `{ open, dismissAll, states }`                                            |
+| Type      | `AppLayerProps<P, R>`  | `{ options, open, payload, onResolved? }`                                 |
+| Type      | `StackHook<HostProps>` | `{ StackProvider, useAppStack, AppHost, AppLayer }`                       |
 
 ## Core re-exports (same import path)
 

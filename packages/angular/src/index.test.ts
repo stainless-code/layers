@@ -37,6 +37,14 @@ mock.module("@angular/core", () => ({
     });
     return sig;
   },
+  computed: <T>(fn: () => T) => {
+    const sig = Object.assign(() => fn(), {
+      asReadonly() {
+        return sig;
+      },
+    });
+    return sig;
+  },
   effect: (fn: (onCleanup: (cleanup: () => void) => void) => void) => {
     fn((cleanup) => {
       cleanups.push(cleanup);
@@ -44,17 +52,31 @@ mock.module("@angular/core", () => ({
   },
 }));
 
-let useLayer: typeof import("./index").useLayer;
+let injectLayer: typeof import("./index").injectLayer;
+let injectLayerState: typeof import("./index").injectLayerState;
+let injectQueuedStack: typeof import("./index").injectQueuedStack;
+let injectLayerQueuedState: typeof import("./index").injectLayerQueuedState;
+let injectStack: typeof import("./index").injectStack;
 let useStack: typeof import("./index").useStack;
 let LAYER_CLIENT: typeof import("./index").LAYER_CLIENT;
 let provideLayerClient: typeof import("./index").provideLayerClient;
 let useLayerClient: typeof import("./index").useLayerClient;
 let LayerClient: typeof import("@stainless-code/layers").LayerClient;
+let layerOptions: typeof import("@stainless-code/layers").layerOptions;
 
 beforeAll(async () => {
-  ({ useLayer, useStack, LAYER_CLIENT, provideLayerClient, useLayerClient } =
-    await import("./index"));
-  ({ LayerClient } = await import("@stainless-code/layers"));
+  ({
+    injectLayer,
+    injectLayerState,
+    injectQueuedStack,
+    injectLayerQueuedState,
+    injectStack,
+    useStack,
+    LAYER_CLIENT,
+    provideLayerClient,
+    useLayerClient,
+  } = await import("./index"));
+  ({ LayerClient, layerOptions } = await import("@stainless-code/layers"));
 });
 
 function runCleanups() {
@@ -66,33 +88,93 @@ function runCleanups() {
 describe("useStack (angular)", () => {
   it("returns a signal that mirrors the stack", () => {
     const client = new LayerClient();
-    const stack = useStack(client, "confirm");
+    const stack = useStack({ stack: "confirm" }, client);
     expect(stack()).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
     expect(stack()).toHaveLength(1);
     expect(stack()[0]?.payload).toBe(1);
   });
 
-  it("with a selector returns the selected slice", () => {
+  it("with select returns the selected slice", () => {
     const client = new LayerClient();
-    const stack = useStack(client, "confirm", (states) => states.length);
+    const stack = useStack(
+      { stack: "confirm", select: (states) => states.length },
+      client,
+    );
     expect(stack()).toBe(0);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
     expect(stack()).toBe(1);
   });
 
-  it("useLayer returns the matching layer state or null", () => {
+  it("injectStack is an alias of useStack", () => {
     const client = new LayerClient();
-    const layer = useLayer(client, ["a"], "confirm");
-    expect(layer()).toBeNull();
+    const stack = injectStack({ stack: "confirm" }, client);
+    expect(stack()).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
-    expect(layer()?.payload).toBe(1);
-    expect(layer()?.key).toEqual(["a"]);
+    expect(stack()).toHaveLength(1);
+  });
+
+  it("injectLayerState returns matching mounted layers as an array", () => {
+    const client = new LayerClient();
+    const layer = injectLayerState({ key: ["a"], stack: "confirm" }, client);
+    expect(layer()).toEqual([]);
+    client.open({ key: ["a"], payload: 1, stack: "confirm" });
+    expect(layer()).toHaveLength(1);
+    expect(layer()[0]?.payload).toBe(1);
+    expect(layer()[0]?.key).toEqual(["a"]);
+  });
+
+  it("injectQueuedStack mirrors queued snapshot", () => {
+    const client = new LayerClient({
+      defaultStackOptions: {
+        confirm: { scope: { strategy: "serial" } },
+      },
+    });
+    const queued = injectQueuedStack(
+      { stack: "confirm", select: (s) => s.length },
+      client,
+    );
+    expect(queued()).toBe(0);
+    void client.open({ key: ["a"], payload: 1, stack: "confirm" });
+    void client.open({ key: ["b"], payload: 2, stack: "confirm" });
+    expect(queued()).toBe(1);
+  });
+
+  it("injectLayerQueuedState filters queued layers by key", () => {
+    const client = new LayerClient({
+      defaultStackOptions: {
+        confirm: { scope: { strategy: "serial" } },
+      },
+    });
+    const queued = injectLayerQueuedState(
+      { key: ["a"], stack: "confirm", select: (s) => s.length },
+      client,
+    );
+    void client.open({ key: ["a"], payload: 1, stack: "confirm" });
+    void client.open({ key: ["a"], payload: 2, stack: "confirm" });
+    expect(queued()).toBe(1);
+  });
+
+  it("injectLayer wires createLayer with reactive state/queued/top", () => {
+    const client = new LayerClient();
+    const opts = layerOptions<{ n: number }, boolean>({
+      key: ["wired"],
+      stack: "confirm",
+    });
+    const handle = injectLayer(opts, client);
+    expect(handle.state()).toEqual([]);
+    expect(handle.queued()).toEqual([]);
+    expect(handle.top()).toBeNull();
+    expect(handle.current).toBeNull();
+    void handle.open({ n: 1 });
+    expect(handle.state()).toHaveLength(1);
+    expect(handle.top()?.payload).toEqual({ n: 1 });
+    expect(handle.current).not.toBeNull();
   });
 
   it("cleans up the subscription on context destroy", () => {
     const client = new LayerClient();
-    useStack(client, "confirm");
+    useStack({ stack: "confirm" }, client);
     expect(client.getStack("confirm").size).toBe(1);
     runCleanups();
     expect(client.getStack("confirm").size).toBe(0);
@@ -101,21 +183,21 @@ describe("useStack (angular)", () => {
   it("without client resolves from DI and mirrors the stack", () => {
     const client = new LayerClient();
     injectionRegistry.set(LAYER_CLIENT, client);
-    const stack = useStack("confirm");
+    const stack = useStack({ stack: "confirm" });
     expect(stack()).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
     expect(stack()).toHaveLength(1);
     expect(stack()[0]?.payload).toBe(1);
   });
 
-  it("useLayer without client resolves from DI", () => {
+  it("injectLayerState without client resolves from DI", () => {
     const client = new LayerClient();
     injectionRegistry.set(LAYER_CLIENT, client);
-    const layer = useLayer(["a"], "confirm");
-    expect(layer()).toBeNull();
+    const layer = injectLayerState({ key: ["a"], stack: "confirm" });
+    expect(layer()).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
-    expect(layer()?.payload).toBe(1);
-    expect(layer()?.key).toEqual(["a"]);
+    expect(layer()).toHaveLength(1);
+    expect(layer()[0]?.payload).toBe(1);
   });
 });
 
