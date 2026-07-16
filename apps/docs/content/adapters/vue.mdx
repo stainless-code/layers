@@ -39,7 +39,7 @@ Hooks must run inside `setup()` or an `effectScope()` so `onScopeDispose` can te
 
 ## Render a stack
 
-`StackOutlet` renders registered `component` entries. For scoped-slot-style subscriptions, use `StackSubscribe` or `useStack(stack, selector)` directly in `setup()`.
+`StackOutlet` renders registered `component` entries. For scoped-slot-style subscriptions, use `StackSubscribe` or `useStack({ stack, select })` directly in `setup()`.
 
 ## Confirm dialog
 
@@ -94,12 +94,15 @@ async function remove() {
 
 ## Primitives
 
+Options bag plus optional trailing `LayerClient`. **Drive** with `useLayer(options)`; **observe** with `useLayerState({ key, … })`.
+
 | Export | Role |
 | ------ | ---- |
-| `useStack(stackId?, selector?, compare?)` | `Readonly<Ref<T>>` of the selected stack slice |
-| `useLayer(key, stackId?, compare?)` | `Readonly<Ref<LayerState \| null>>` for one active key |
-
-Both accept an optional leading `LayerClient` argument.
+| `useStack({ stack?, select?, compare? }, client?)` | `Readonly<Ref<T>>` of the selected stack slice |
+| `useQueuedStack({ stack?, select?, compare? }, client?)` | Queued snapshot as `Readonly<Ref<T>>` |
+| `useLayer(options, client?)` | **Drive** — wired handle refs + `open()` / `dismiss()` + reactive `state` / `queued` / `top` |
+| `useLayerState({ key, stack?, select?, compare? }, client?)` | **Observe** — `Readonly<Ref<LayerState[]>>` for mounted same-key layers |
+| `useLayerQueuedState({ key, stack?, select?, compare? }, client?)` | **Observe** — queued same-key layers |
 
 ## Ergonomic APIs
 

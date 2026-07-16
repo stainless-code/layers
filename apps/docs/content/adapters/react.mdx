@@ -88,10 +88,15 @@ function RemoveButton() {
 
 ## Primitives
 
+Stack hooks take an options bag plus optional trailing `LayerClient`. **Drive** hooks bind a layer definition and expose `open()` / `dismiss()`; **observe** hooks read matching states only.
+
 | Export | Role |
 | ------ | ---- |
-| `useStack(stackId?, selector?, compare?)` | Subscribe to a stack slice via `useSyncExternalStore` |
-| `useLayer(key, stackId?, compare?)` | Active layer matching a key, or `null` |
+| `useStack({ stack?, select?, compare? }, client?)` | Subscribe to a stack slice via `useSyncExternalStore` |
+| `useQueuedStack({ stack?, select?, compare? }, client?)` | Queued snapshot slice |
+| `useLayer(options, client?)` | **Drive** — wired handle with `open()`, `dismiss()`, plus reactive `state` / `queued` / `top` |
+| `useLayerState({ key, stack?, select?, compare? }, client?)` | **Observe** — mounted layers matching `key` (`LayerState[]`) |
+| `useLayerQueuedState({ key, stack?, select?, compare? }, client?)` | **Observe** — queued layers matching `key` |
 
 ## Ergonomic APIs
 

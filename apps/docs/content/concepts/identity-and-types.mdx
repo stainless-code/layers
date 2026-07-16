@@ -14,6 +14,24 @@ Two opens with the same `key` share **logical identity**; each still gets a uniq
 | **Key** | Logical identity. `find`, `upsert`, and `gcTime` operate on `keySignature(key)`. Multiple live layers may share a key in a `parallel` stack. |
 | **Instance id** (`LayerState.id`) | Physical, unique id of one `Layer` instance (`` `${hashKey(key)}#n` ``). Used for rendering keys and instance lookup/removal (`getLayer`, `#remove`). |
 
+:::note[`find` returns the topmost match]
+`LayerStack.find(key)` walks the stack and returns the **last** layer with that key signature — the topmost instance when several share a key in a `parallel` stack. Wired handles route `dismiss`/`update` without `{ id }` through this same lookup.
+:::
+
+## Wired handle path
+
+Besides `client.open({ …layerOptions, payload })`, bind a declaration with `createLayer(options, client)` (headless) or `useLayer(options)` (adapter). Payload-only `open`/`upsert` infer `R` from the same `DataTag` on `options.key`:
+
+```tsx
+import { useLayer } from "@stainless-code/react-layers";
+
+const confirmLayer = useLayer(confirm);
+const ok = await confirmLayer.open({ title: "Remove?" });
+//    ^? boolean
+```
+
+Pass `{ id: state.id }` on `dismiss`/`update`/`cancelQueued` when targeting a specific instance — `current` on the handle is the caller's last `open`, not an implicit default for stack ops.
+
 ## DataTag — typed `await open`
 
 `layerOptions` brands its `key` with a `DataTag`, so `LayerClient.open` infers the response type with no explicit generic:

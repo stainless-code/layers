@@ -30,6 +30,7 @@ From `LayerClient` down to `keySignature` — every term in code, docs, and issu
     - **Action status** — independent axis (`idle` | `running`) for in-layer mutations, separate from `phase` and `transition`.
     - **open** — push a layer onto a stack; returns `Promise<R>` resolved by `dismiss`. The caller `await`s the user's decision.
     - **dismiss** — async (`Promise<boolean>`): consult blockers (unless `{ force: true }`), then resolve the layer's promise with a response, flip `ended`, set `phase: "dismissed"` + `transition: "exiting"`, then remove after `exitingDelay` or `call.settle()` (whichever first). Return `true` if dismissed, `false` if vetoed.
+    - **cancelQueued** — resolve and remove a serial `queued` layer without mounting; skips blockers. Omit `{ id }` → FIFO head for the key; pass `{ id }` → exact queued instance.
     - **dismissing** — `LayerState.dismissing`: `true` while a user-intent dismiss is consulting blockers; `false` on veto or removal. Use to disable close UI during async confirm.
   </AccordionItem>
   <AccordionItem title="Blocking & dismissal">
@@ -43,10 +44,19 @@ From `LayerClient` down to `keySignature` — every term in code, docs, and issu
     - **gcTime** — keep dismissed layers in a cache so re-opening the same key restores `data` without re-running `loadFn`. One slot per key (last-dismissed-wins); evicted after `gcTime` with explicit teardown.
     - **loadFn** — optional async load run on `open`; cancelable via `AbortController`; `pending` → `active` with `data` on success, `error` on throw.
   </AccordionItem>
+  <AccordionItem title="Layer handles">
+    - **createLayer** — core factory: `options` + `client` → headless `LayerHandle` / `ValidatedLayerHandle` (layer ops + `stack`/`client`/`options`/`current` escapes; no reactive field).
+    - **LayerHandle** — return of plain `createLayer`. `open`/`upsert` take payload only; `dismiss` takes `{ id?, force? }`; `update` / `cancelQueued` take `{ id? }` (see **cancelQueued**).
+    - **ValidatedLayerHandle** — when `options.validate` is set: `open`/`upsert` = schema **input**; `current`/`update` = parsed **output**. Wired adapters also expose reactive `state`/`queued`/`top` as output.
+    - **useLayer** — adapter wired handle (`createLayer` + reactive `state`/`queued`/`top`). Svelte: `createLayer`; Angular: `injectLayer`.
+    - **useLayerState** / **useLayerQueuedState** / **useQueuedStack** — observe-only (mounted per-key / queued per-key / queued whole-stack); return `LayerState[]` (or framework wrappers). Renamed/added vs the old singular `useLayer(key, …)`.
+    - **current** — live-checked bound instance on a handle (`Layer | null`); correlation + explicit `{ id }` — not a hidden control default.
+    - **Drive vs observe** — **drive** = wired handle (`useLayer` / `injectLayer` / `createLayer`) for `open`/`upsert`/`dismiss`/`update`/`cancelQueued`; **observe** = `useLayerState` / `useLayerQueuedState` / `useQueuedStack` / `useStack` for reactive snapshots without control. Both paths are first-class; `client.open({ …layerOptions, payload })` remains valid.
+  </AccordionItem>
   <AccordionItem title="Adapters & rendering">
-    - **Observer / selector** — adapters subscribe to `LayerStack.getSnapshot()` and project via a selector (React `useSyncExternalStore`, Solid `from`, Angular `signal`, Vue `shallowRef`, Svelte runes).
+    - **Observer / selector** — adapters subscribe to `LayerStack.getSnapshot()` and project via a selector (React/Preact `useSyncExternalStore`, Solid `from`, Angular `signal`, Vue `shallowRef`, Svelte runes).
     - **Options helper** (`layerOptions`) — identity function carrying `<P, R, E, D>` generics so `LayerClient.open` infers the response type end-to-end.
-    - **Outlet** — renders the active stack. React, Preact, Solid, and Vue ship `StackOutlet`; Angular exposes `renderStack(vcr)`; Svelte renders from `useStack().current` + `callFor`. See [adapter ergonomics](/adapters#adapter-ergonomics).
+    - **Outlet** — renders the active stack. React, Preact, and Solid ship `StackOutlet`; Angular exposes `renderStack(vcr)`; Vue ships `StackOutlet`; Svelte renders from `useStack().current` + `callFor`. See [adapter ergonomics](/adapters#adapter-ergonomics).
     - **Stack handles** (`useStackHandles`) — headless `{ states, getCall }` for custom hosts (React/Preact/Solid/Angular/Vue; Svelte's `useStack()` already returns `.current` + `callFor`). `StackOutlet` is the registered-component convenience built on it where shipped.
     - **Validator** (`validate`) — a Standard Schema or sync `(input) => output` fn that parses/validates a layer's `payload` at `open`; the layer stores the parsed output. Failure rejects `open` with a `PayloadValidationError`.
   </AccordionItem>

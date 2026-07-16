@@ -15,7 +15,7 @@
 
   setLayerClient();
   const client = useLayerClient();
-  const toastStack = useStack("example-toast");
+  const toastStack = useStack({ stack: "example-toast" });
 
   const toast = layerOptions<ToastPayload, void>({
     stack: "example-toast",

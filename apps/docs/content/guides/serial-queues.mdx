@@ -78,8 +78,26 @@ function QueueIndicator() {
 }
 ```
 
+In adapters, observe queued layers with `useLayerQueuedState({ key, stack })` (per-key) or `useQueuedStack({ stack })` (whole stack) — both return `LayerState[]` for `phase: "queued"` rows. Wired handles expose the same slice as `.queued` on `useLayer(options)`.
+
+## Cancel a queued layer
+
+`cancelQueued` resolves and removes a `queued` layer without mounting — blockers do not apply. Omit `{ id }` to drop the FIFO head for that key; pass `{ id: state.id }` to target one queued instance:
+
+```ts lineNumbers
+const stack = client.getStack("confirm");
+
+// FIFO head for this key
+stack.cancelQueued(["confirm", "remove"], false);
+
+// exact queued row
+stack.cancelQueued(["confirm", "remove"], false, { id: queuedState.id }); // [!code highlight]
+```
+
+On a wired handle, `confirmLayer.cancelQueued(false)` is FIFO for the bound key; `confirmLayer.cancelQueued(false, { id })` targets one row.
+
 ## Edge cases
 
 - **`dismissAll`** drains the queue — queued callers resolve without mounting.
-- **`cancelQueued`** removes a queued layer without ever mounting it; blockers do not apply.
+- **`cancelQueued`** — see above; also on `LayerHandle` / `useLayer(options)`.
 - Default scope is `"parallel"` — layers stack freely. See [Stacks, scope, and gcTime](/concepts/stacks-scope-gc).

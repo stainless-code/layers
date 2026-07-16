@@ -16,7 +16,7 @@
 
   setLayerClient();
   const client = useLayerClient();
-  const confirmStack = useStack("example-confirm");
+  const confirmStack = useStack({ stack: "example-confirm" });
 
   const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
     stack: "example-confirm",

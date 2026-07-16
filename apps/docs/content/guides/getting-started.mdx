@@ -103,4 +103,30 @@ function useRemove() {
 }
 ```
 
+**Recommended:** wire the declaration with `useLayer(options)` — same inference, payload-only `open`, plus reactive `state`/`queued`/`top` for UI:
+
+```tsx
+import { useLayer } from "@stainless-code/react-layers";
+
+function RemoveButton() {
+  const confirmLayer = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
+      /* … */
+    }
+  }
+
+  return (
+    <button type="button" onClick={() => void handleRemove()}>
+      Remove
+    </button>
+  );
+}
+```
+
+See [Glossary](/concepts/glossary) for drive vs observe.
+
 > **Both payload and response are optional.** The response type `R` defaults to `void` (fire-and-forget), and `payload` is omittable whenever the layer needs no input. For a fire-and-forget layer, declare it with `layerOptions({ stack, key, component })` and call `client.open(about)` — the layer dismisses itself via `call.dismiss()`.

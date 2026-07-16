@@ -25,6 +25,7 @@ npm i @stainless-code/layers
 | `layerKey()` | Brand a key alone: `layerKey<R>()(key)` |
 | `DataTag`, `InferDataTagResponse`, `ResponseOf`, `ErrorOf` | Compile-time key branding helpers |
 | `createCallContext()` | Build the imperative `call` handle (`end`, `dismiss`, `update`, `settle`, `addBlocker`, …) |
+| `createLayer()` | Wire `layerOptions` + `LayerClient` → headless `LayerHandle` / `ValidatedLayerHandle` |
 | `createLayerGroup()` | Child stack scoped to a parent layer's lifetime |
 | `notifyManager` | `{ batch, batchCalls }` — coalesce notifications inside a tick |
 | `Register` | Module augmentation interface for app-wide `DefaultLayerError` |
@@ -65,6 +66,18 @@ const ok = await client.open({
   payload: { title: "Remove item?" },
 });
 ```
+
+Or bind the declaration once with `createLayer` — payload-only `open`, plus `stack`/`client`/`current` escapes:
+
+```ts
+import { createLayer } from "@stainless-code/layers";
+
+const c = createLayer(confirm, client);
+const ok = await c.open({ title: "Remove item?" });
+//    ^? boolean
+```
+
+`createLayer` has no reactive fields — adapters add `state`/`queued`/`top` via `useLayer` (see [Adapter hooks](/reference/adapter-hooks)).
 
 ## App-wide error typing
 

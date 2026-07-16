@@ -24,7 +24,7 @@ npm i @stainless-code/preact-layers
 | Package | `@stainless-code/preact-layers` |
 | Peer | `preact` (not `react`) |
 | JSX runtime | Built with `h` — no `react/jsx-runtime` dependency |
-| API names | Identical — `StackProvider`, `useLayerClient`, `useStack`, `useLayer`, `StackOutlet`, `StackSubscribe`, `useStackHandles`, `useMutationFlow`, `useLayerGroup`, `createStackHook` |
+| API names | Identical — `StackProvider`, `useLayerClient`, `useStack`, `useLayer`, `useLayerState`, `StackOutlet`, `StackSubscribe`, `useStackHandles`, `useMutationFlow`, `useLayerGroup`, `createStackHook` |
 
 ## Client
 
@@ -86,6 +86,10 @@ function RemoveButton() {
   );
 }
 ```
+
+## Primitives
+
+Same options-bag contract as [React](/adapters/react) — `useStack({ stack, select, compare })`, `useLayer(options)` to drive, `useLayerState({ key, stack, … })` to observe.
 
 ## Ergonomic APIs
 

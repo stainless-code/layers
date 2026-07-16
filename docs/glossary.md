@@ -35,8 +35,8 @@ Ubiquitous language for the `@stainless-code/layers` domain. Keep terms stable a
 - **Child stack** — the stack a layer group opens onto; id derived from the parent's `stackId` + `layerId` via `childStackId` (`` `${parentStackId}~${parentLayerId}~${name}` ``).
 - **Validator** (`validate`) — a Standard Schema or sync `(input) => output` fn that parses/validates a layer's `payload` at `open`; the layer stores the parsed output. Failure rejects `open` with a `PayloadValidationError`.
 - **createLayer** — core factory: `options` + `client` → headless `LayerHandle` / `ValidatedLayerHandle` (layer ops + `stack`/`client`/`options`/`current` escapes; no reactive field).
-- **LayerHandle** — return of plain `createLayer`. `open`/`upsert` take payload only; `dismiss`/`update` take optional `{ id?, force? }`; `cancelQueued` takes `{ id? }` (see **cancelQueued**).
-- **ValidatedLayerHandle** — when `options.validate` is set: `open`/`upsert` = schema **input**; `state`/`update`/`current` = parsed **output**.
+- **LayerHandle** — return of plain `createLayer`. `open`/`upsert` take payload only; `dismiss` takes `{ id?, force? }`; `update` / `cancelQueued` take `{ id? }` (see **cancelQueued**).
+- **ValidatedLayerHandle** — when `options.validate` is set: `open`/`upsert` = schema **input**; `current`/`update` = parsed **output**. Wired adapters also expose reactive `state`/`queued`/`top` as output.
 - **useLayer** — adapter wired handle (`createLayer` + reactive `state`/`queued`/`top`). Svelte: `createLayer`; Angular: `injectLayer`.
 - **useLayerState** / **useLayerQueuedState** / **useQueuedStack** — observe-only (mounted per-key / queued per-key / queued whole-stack); return `LayerState[]` (or framework wrappers). Renamed/added vs the old singular `useLayer(key, …)`.
 - **current** — live-checked bound instance on a handle (`Layer | null`); correlation + explicit `{ id }` — not a hidden control default.

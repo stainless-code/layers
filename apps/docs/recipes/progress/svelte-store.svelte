@@ -16,7 +16,7 @@
 
   setLayerClient();
   const client = useLayerClient();
-  const progressStack = useStack("example-progress");
+  const progressStack = useStack({ stack: "example-progress" });
 
   const progress = layerOptions<ProgressPayload, void>({
     stack: "example-progress",

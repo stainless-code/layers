@@ -17,7 +17,7 @@
 
   setLayerClient();
   const client = useLayerClient();
-  const drawerStack = useStack("example-drawer");
+  const drawerStack = useStack({ stack: "example-drawer" });
 
   const drawer = layerOptions<DrawerPayload, DrawerResponse>({
     stack: "example-drawer",

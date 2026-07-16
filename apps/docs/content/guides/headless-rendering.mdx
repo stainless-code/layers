@@ -143,7 +143,7 @@ const { states, getCall } = useStackHandles("modal");
 <script lang="ts">
   import { useStack } from "@stainless-code/svelte-layers";
 
-  const stack = useStack("modal");</script>
+  const stack = useStack({ stack: "modal" });</script>
 
 {#each stack.current as s (s.id)}
   {@const call = stack.callFor(s)}
@@ -162,7 +162,7 @@ const { states, getCall } = useStackHandles("modal");
 
   setLayerClient();
   const client = useLayerClient();
-  const stack = useStack("modal");</script>
+  const stack = useStack({ stack: "modal" });</script>
 
 {#each $stack as s (s.id)}
   {@const call = callFor(client, "modal", s)}
@@ -239,11 +239,11 @@ import { useStack } from "@stainless-code/angular-layers";
 
 @Component({ template: `<span>{{ count() }} open</span>` })
 class OpenCount {
-  count = useStack("modal", (s) => s.length);
+  count = useStack({ stack: "modal", select: (s) => s.length });
 }
 ```
 
-No `StackSubscribe` — `useStack(stack, selector)` signal is the equivalent.
+No `StackSubscribe` — `useStack({ stack, select })` as a signal is the equivalent.
 
 </Tab>
 <Tab title="Vue" icon="/icons/vue.svg">
@@ -267,12 +267,12 @@ import { StackSubscribe } from "@stainless-code/vue-layers";
 <script lang="ts">
   import { useStack } from "@stainless-code/svelte-layers";
 
-  const count = useStack("modal", (s) => s.length);</script>
+  const count = useStack({ stack: "modal", select: (s) => s.length });</script>
 
 <span>{count.current} open</span>
 ```
 
-No `StackSubscribe` — `useStack(stack, selector)` with `.current` is the equivalent.
+No `StackSubscribe` — `useStack({ stack, select })` with `.current` is the equivalent.
 
 </Tab>
 <Tab title="Svelte (store)" icon="/icons/svelte.svg">
@@ -281,7 +281,7 @@ No `StackSubscribe` — `useStack(stack, selector)` with `.current` is the equiv
 <script lang="ts">
   import { useStack } from "@stainless-code/svelte-layers/store";
 
-  const count = useStack("modal", (s) => s.length);</script>
+  const count = useStack({ stack: "modal", select: (s) => s.length });</script>
 
 <span>{$count} open</span>
 ```
@@ -291,7 +291,7 @@ No `StackSubscribe` — subscribe to the selector `Readable` with `$count`.
 </Tab>
 </Tabs>
 
-For fully-typed selector output in Vue, prefer `useStack(stack, selector)` in `setup()`.
+For fully-typed selector output in Vue, prefer `useStack({ stack, select })` in `setup()`.
 
 ## Adapter equivalents
 
@@ -307,7 +307,7 @@ For fully-typed selector output in Vue, prefer `useStack(stack, selector)` in `s
 Svelte's `useStack()` already returns the headless pair — `.current` for states and `callFor` for call contexts. No separate `useStackHandles` export.
 :::
 
-Angular has no `StackSubscribe`; `useStack(stack, selector)` as a signal is the idiomatic equivalent.
+Angular has no `StackSubscribe`; `useStack({ stack, select })` as a signal is the idiomatic equivalent.
 
 ## When to skip StackOutlet
 

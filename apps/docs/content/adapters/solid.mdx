@@ -104,12 +104,17 @@ function App() {
 
 ## Primitives
 
+Options bag plus optional trailing `LayerClient`. **Drive** with `useLayer(options)`; **observe** with `useLayerState({ key, … })`. Solid-idiomatic aliases: `createStack`, `createQueuedStack`, `createLayerState`, `createLayerQueuedState`.
+
 | Export | Role |
 | ------ | ---- |
-| `useStack(stackId?, selector?, compare?)` | `Accessor<T>` of the selected stack slice |
-| `useLayer(key, stackId?, compare?)` | `Accessor<LayerState \| null>` for one active key |
+| `useStack({ stack?, select?, compare? }, client?)` | `Accessor<T>` of the selected stack slice |
+| `useQueuedStack({ stack?, select?, compare? }, client?)` | Queued snapshot accessor |
+| `useLayer(options, client?)` | **Drive** — wired handle accessors + `open()` / `dismiss()` + reactive `state` / `queued` / `top` |
+| `useLayerState({ key, stack?, select?, compare? }, client?)` | **Observe** — `Accessor<LayerState[]>` for mounted same-key layers |
+| `useLayerQueuedState({ key, stack?, select?, compare? }, client?)` | **Observe** — queued same-key layers |
 
-Both accept an optional leading `LayerClient` argument. Read accessors with `()` — e.g. `useStack("confirm")()`.
+Read accessors with `()` — e.g. `useStack({ stack: "confirm" })()`.
 
 ## Ergonomic APIs
 

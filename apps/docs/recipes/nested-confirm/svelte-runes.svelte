@@ -39,7 +39,7 @@
 App.svelte — host wiring:
   setLayerClient();
   const client = useLayerClient();
-  const parentStack = useStack("example-nested");
+  const parentStack = useStack({ stack: "example-nested" });
   const parentDialog = layerOptions({ stack: "example-nested", key: ["example-nested", "parent"], component: ParentDialog });
   {#each parentStack.current as state (state.id)}
     {@const call = parentStack.callFor(state)}

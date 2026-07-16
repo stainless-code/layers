@@ -18,7 +18,7 @@
 
   setLayerClient();
   const client = useLayerClient();
-  const animatedStack = useStack("example-animated");
+  const animatedStack = useStack({ stack: "example-animated" });
 
   const animated = layerOptions<AnimatedPayload, void>({
     stack: "example-animated",

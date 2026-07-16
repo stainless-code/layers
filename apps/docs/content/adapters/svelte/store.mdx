@@ -39,7 +39,7 @@ Import client/stack APIs from **one** entry only. Mixing `@stainless-code/svelte
 
 ## Render a stack
 
-`useStack()` returns a `Readable<T>`. Subscribe with `$stack` in components. Pair each state with the standalone `callFor(client, stackId, state)`:
+`useStack({ stack })` returns a `Readable<T>`. Subscribe with `$stack` in components. Pair each state with the standalone `callFor(client, stackId, state)`:
 
 ```svelte
 <script>
@@ -52,7 +52,7 @@ Import client/stack APIs from **one** entry only. Mixing `@stainless-code/svelte
 
   setLayerClient();
   const client = useLayerClient();
-  const stack = useStack("confirm");
+  const stack = useStack({ stack: "confirm" });
 </script>
 
 {#each $stack as state (state.id)}
@@ -80,7 +80,7 @@ Import client/stack APIs from **one** entry only. Mixing `@stainless-code/svelte
 
   setLayerClient();
   const client = useLayerClient();
-  const confirmStack = useStack("confirm");
+  const confirmStack = useStack({ stack: "confirm" });
 
   const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
     stack: "confirm",
@@ -108,15 +108,17 @@ Import client/stack APIs from **one** entry only. Mixing `@stainless-code/svelte
 
 ## Primitives
 
+Options bag plus optional trailing `LayerClient`. **Drive** with `createLayer(options)`; **observe** with `createLayerState({ key, … })`. Queued counterparts: `createQueuedStack`, `createLayerQueuedState`.
+
 | Export | Role |
 | ------ | ---- |
 | `setLayerClient(client?)` | Provide a `LayerClient` via Svelte context |
 | `useLayerClient()` | Read the nearest context client |
-| `useStack(stackId?, selector?, compare?)` | `Readable<T>` of the selected stack slice |
-| `useLayer(key, stackId?, compare?)` | `Readable<LayerState \| null>` for one active key |
+| `useStack({ stack?, select?, compare? }, client?)` | `Readable<T>` of the selected stack slice |
+| `createLayer(options, client?)` | **Drive** — wired handle stores + `open()` / `dismiss()` + reactive `state` / `queued` / `top` |
+| `createLayerState({ key, stack?, select?, compare? }, client?)` | **Observe** — `Readable<LayerState[]>` for mounted same-key layers |
+| `createLayerQueuedState({ key, stack?, select?, compare? }, client?)` | **Observe** — queued same-key layers |
 | `callFor(client, stackId, state, rootProps?)` | Standalone call-context builder |
-
-Both `useStack` and `useLayer` accept an optional leading `LayerClient` argument.
 
 ## Ergonomic APIs
 

@@ -27,7 +27,7 @@ function Toast({
   payload,
   transition,
 }: LayerComponentProps<{ message: string }, void>) {
-  const states = useStack("example-toast");
+  const states = useStack({ stack: "example-toast" });
   const myIndex = states.findIndex((s) => s.id === call.layerId);
   const slot = states.filter(
     (s, i) => i < myIndex && s.transition !== "exiting",

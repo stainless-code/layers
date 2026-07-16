@@ -24,7 +24,7 @@
   const layerClient = new LayerClient();
 
   setLayerClient(layerClient);
-  const profileStack = useStack("example-async-loadfn");
+  const profileStack = useStack({ stack: "example-async-loadfn" });
 
   const profile = layerOptions<ProfilePayload, ProfileResponse, never, Profile>({
     stack: "example-async-loadfn",

@@ -250,7 +250,7 @@ async function remove() {
 
   setLayerClient();
   const client = useLayerClient();
-  const stack = useStack("confirm");
+  const stack = useStack({ stack: "confirm" });
 
   async function remove() {
     const ok = await client.open({
@@ -286,7 +286,7 @@ export const svelteStoreCode = `<script lang="ts">
 
   setLayerClient();
   const client = useLayerClient();
-  const stack = useStack("confirm");
+  const stack = useStack({ stack: "confirm" });
 
   async function remove() {
     const ok = await client.open({

@@ -54,7 +54,7 @@ export class AppComponent {
 }
 ```
 
-`useStack(stack, selector)` returns a readonly `Signal` — the idiomatic equivalent of `StackSubscribe`.
+`useStack({ stack, select })` returns a readonly `Signal` — the idiomatic equivalent of `StackSubscribe`.
 
 ## Confirm dialog
 
@@ -113,15 +113,18 @@ export class AppComponent {
 
 ## Primitives
 
+Options bag plus optional trailing `LayerClient`. **Drive** with `injectLayer(options)` (`useLayer` alias); **observe** with `injectLayerState({ key, … })`. Angular-idiomatic aliases: `injectStack`, `injectQueuedStack`, `injectLayerQueuedState`. Must run in an injection context.
+
 | Export | Role |
 | ------ | ---- |
 | `LAYER_CLIENT` | `InjectionToken<LayerClient>` |
 | `provideLayerClient(client?)` | `FactoryProvider` for `LAYER_CLIENT` |
-| `useLayerClient()` | Inject the app client (injection context required) |
-| `useStack(stackId?, selector?, compare?)` | Readonly `Signal<T>` of the selected stack slice |
-| `useLayer(key, stackId?, compare?)` | `Signal<LayerState \| null>` for one active key |
-
-Both `useStack` and `useLayer` accept an optional leading `LayerClient` argument. Must run in an injection context.
+| `useLayerClient()` | Inject the app client |
+| `useStack({ stack?, select?, compare? }, client?)` | Readonly `Signal<T>` of the selected stack slice |
+| `useQueuedStack({ stack?, select?, compare? }, client?)` | Queued snapshot signal |
+| `injectLayer(options, client?)` | **Drive** — wired handle signals + `open()` / `dismiss()` + reactive `state` / `queued` / `top` |
+| `injectLayerState({ key, stack?, select?, compare? }, client?)` | **Observe** — `Signal<LayerState[]>` for mounted same-key layers |
+| `injectLayerQueuedState({ key, stack?, select?, compare? }, client?)` | **Observe** — queued same-key layers |
 
 ## Ergonomic APIs
 

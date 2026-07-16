@@ -58,7 +58,7 @@
 App.svelte — host wiring:
   setLayerClient();
   const client = useLayerClient();
-  const parentStack = useStack("example-blockers-force");
+  const parentStack = useStack({ stack: "example-blockers-force" });
   const edit = layerOptions({ stack: "example-blockers-force", key: ["example-blockers-force", "parent"], component: EditDialog });
   {#each $parentStack as state (state.id)}
     {@const call = callFor(client, "example-blockers-force", state)}

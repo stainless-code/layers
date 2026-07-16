@@ -27,7 +27,7 @@
 
   setLayerClient(layerClient);
   const client = useLayerClient();
-  const onboardingStack = useStack(STACK_ID);
+  const onboardingStack = useStack({ stack: STACK_ID });
 
   const steps = [
     layerOptions<StepPayload, void>({

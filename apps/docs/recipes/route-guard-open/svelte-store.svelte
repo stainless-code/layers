@@ -18,7 +18,7 @@
   const layerClient = new LayerClient();
 
   setLayerClient(layerClient);
-  const guardStack = useStack("example-route-guard");
+  const guardStack = useStack({ stack: "example-route-guard" });
 
   const guard = layerOptions<GuardPayload, GuardResponse>({
     stack: "example-route-guard",

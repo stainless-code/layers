@@ -41,13 +41,13 @@ Import client/stack APIs from **one** entry only. Mixing this package with `@sta
 
 ## Render a stack
 
-`useStack()` returns a `SvelteStack` with `.current` (the selected snapshot) and `.callFor(state)` (the call context). No `StackOutlet` — iterate in your markup:
+`useStack({ stack })` returns a `SvelteStack` with `.current` (the selected snapshot) and `.callFor(state)` (the call context). No `StackOutlet` — iterate in your markup:
 
 ```svelte
 <script>
   import { useStack } from "@stainless-code/svelte-layers";
 
-  const stack = useStack("confirm");
+  const stack = useStack({ stack: "confirm" });
 </script>
 
 {#each stack.current as state (state.id)}
@@ -58,7 +58,7 @@ Import client/stack APIs from **one** entry only. Mixing this package with `@sta
 {/each}
 ```
 
-`useStack().current` + `callFor` is the headless equivalent of `useStackHandles` — no separate export.
+`useStack({ stack }).current` + `callFor` is the headless equivalent of `useStackHandles` — no separate export.
 
 ## Confirm dialog
 
@@ -76,7 +76,7 @@ Import client/stack APIs from **one** entry only. Mixing this package with `@sta
 
   setLayerClient();
   const client = useLayerClient();
-  const confirmStack = useStack("confirm");
+  const confirmStack = useStack({ stack: "confirm" });
 
   const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
     stack: "confirm",
@@ -104,14 +104,16 @@ Import client/stack APIs from **one** entry only. Mixing this package with `@sta
 
 ## Primitives
 
+Options bag plus optional trailing `LayerClient`. **Drive** with `createLayer(options)`; **observe** with `createLayerState({ key, … })`. Queued counterparts: `createQueuedStack`, `createLayerQueuedState`.
+
 | Export | Role |
 | ------ | ---- |
 | `setLayerClient(client?)` | Provide a `LayerClient` via Svelte context |
 | `useLayerClient()` | Read the nearest context client |
-| `useStack(stackId?, selector?, compare?)` | `SvelteStack` with `.current` and `.callFor(state)` |
-| `useLayer(key, stackId?, compare?)` | `SvelteStack` whose `.current` is one `LayerState \| null` |
-
-Both accept an optional leading `LayerClient` argument.
+| `useStack({ stack?, select?, compare? }, client?)` | `SvelteStack` with `.current` and `.callFor(state)` |
+| `createLayer(options, client?)` | **Drive** — wired handle + `open()` / `dismiss()` + reactive `state` / `queued` / `top` |
+| `createLayerState({ key, stack?, select?, compare? }, client?)` | **Observe** — `SvelteStack` whose `.current` is mounted same-key `LayerState[]` |
+| `createLayerQueuedState({ key, stack?, select?, compare? }, client?)` | **Observe** — queued same-key layers |
 
 ## Ergonomic APIs
 

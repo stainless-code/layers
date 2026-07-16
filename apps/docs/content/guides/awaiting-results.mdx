@@ -25,21 +25,29 @@ You can also brand a key alone with `layerKey<R>()(key)` when options are inline
 
 ## Open from your framework
 
-The `open` call is the same everywhere — only client access differs:
+`client.open({ …layerOptions, payload })` works everywhere. Adapters also ship a **wired handle** — `useLayer(options)` (Svelte: `createLayer`; Angular: `injectLayer`) — for payload-only `open` plus reactive `state`/`queued`/`top`:
 
 <Tabs>
 <Tab title="React" icon="/icons/react.svg">
 
 ```tsx lineNumbers
-import { useLayerClient } from "@stainless-code/react-layers";
+import { useLayer } from "@stainless-code/react-layers";
 
-function useRemove() {
-  const client = useLayerClient();
-  return async () => {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+function RemoveButton() {
+  const confirmLayer = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await confirmLayer.open({ title: "Remove?" }); //    ^? boolean
+    if (ok) {
       /* … */
     }
-  };
+  }
+
+  return (
+    <button type="button" onClick={() => void handleRemove()}>
+      Remove
+    </button>
+  );
 }
 ```
 

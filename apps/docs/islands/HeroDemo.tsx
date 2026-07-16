@@ -152,7 +152,7 @@ function HeroToast({
   payload,
   transition,
 }: LayerComponentProps<{ message: string }, void>) {
-  const states = useStack("hero-toast");
+  const states = useStack({ stack: "hero-toast" });
   const myIndex = states.findIndex((s) => s.id === call.layerId);
   const slot = states.filter(
     (s, i) => i < myIndex && s.transition !== "exiting",

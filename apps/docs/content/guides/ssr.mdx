@@ -35,7 +35,7 @@ The runes entry's `createSubscriber` only starts the stack subscription when `.c
 
 - Server HTML will **not** include open layers — mount `StackOutlet` (or your headless renderer) in client-hydrated subtrees.
 - Initial `transition` on hydration should be `"settled"` when SSR layer rendering lands.
-- On React/Preact, `getServerSnapshot` is `[]` passed through your selector (identity → `[]`, `useLayer` → `null`, `s => s.length` → `0`).
+- On React/Preact, `getServerSnapshot` is `[]` passed through your selector (identity → `[]`, `useLayerState` default → `[]`, `s => s.length` → `0`).
 
 :::note
 Revisit proactive server guards only if a concrete SSR listener leak surfaces in production.

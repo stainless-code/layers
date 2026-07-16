@@ -50,7 +50,7 @@ Each adapter takes the core as a **direct dependency** and re-exports it, so a c
 
 ## Subscription model
 
-Adapters subscribe to `LayerStack.getSnapshot()` and project via a selector. On React and Preact, `useStack(stackId, selector, compare)` wraps `useSyncExternalStore(stack.subscribe, getSnapshot, getServerSnapshot)`. The snapshot is cached on `LayerStack` (stable ref between mutations); the hook memoizes selector output with `compare`-equality (default `Object.is`) so object/array selectors don't churn.
+Adapters subscribe to `LayerStack.getSnapshot()` and project via a selector. On React and Preact, `useStack({ stack, select, compare })` wraps `useSyncExternalStore(stack.subscribe, getSnapshot, getServerSnapshot)`. The snapshot is cached on `LayerStack` (stable ref between mutations); the hook memoizes selector output with `compare`-equality (default `Object.is`) so object/array selectors don't churn.
 
 :::note
 This page describes the framework-free engine. Per-adapter ergonomics (`StackOutlet`, `useLayerGroup`, `useMutationFlow`, and more) live in the [Adapters](/adapters) section.

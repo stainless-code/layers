@@ -51,12 +51,12 @@ class LayerStack {
   getQueuedSnapshot(): LayerState[];
   subscribe(listener: () => void): () => void;
 
-  find(key: LayerKey): Layer | undefined;
+  find(key: LayerKey): Layer | undefined; // topmost same-key (findLast)
   getLayer(id: string): Layer | undefined;
   dismiss(layer, response?, opts?: DismissOptions): Promise<boolean>;
   dismissAll(response?, opts?: DismissAllOptions): Promise<void>;
   addBlocker(fn: StackBlockerFn): () => void;
-  cancelQueued(key: LayerKey, response): boolean;
+  cancelQueued(key: LayerKey, response, opts?: { id?: string }): boolean;
   settle(layer): void;
   setRunning(layer, running: boolean): void;
   update(layer, patch: Partial<P>): void;
@@ -68,8 +68,9 @@ class LayerStack {
 | `getSnapshot` | Stable-ref snapshot of mounted layers (`pending`/`active`/`dismissed`/`error`) |
 | `getQueuedSnapshot` | Serial-scope queue — layers waiting behind an active layer |
 | `subscribe` | Register for snapshot changes (batched via `notifyManager`) |
-| `find` | Lookup by logical key (key signature) |
+| `find` | Topmost mounted layer for a logical key (key signature; `findLast`) |
 | `dismiss` | Resolve one layer; returns whether dismissal succeeded (blockers may veto) |
+| `cancelQueued` | Resolve a serial `queued` layer without mounting; omit `{ id }` → FIFO head for the key, `{ id }` → exact queued instance |
 | `addBlocker` | Stack-scoped dismiss gate; returns a disposer |
 
 ## LayerState
@@ -143,6 +144,33 @@ class PayloadValidationError extends Error {
 
 function isPayloadValidationError(value: unknown): value is PayloadValidationError;
 ```
+
+## createLayer
+
+Wire `layerOptions` + a `LayerClient` into a headless handle. Adapters wrap this in reactive `useLayer` / `injectLayer` / `createLayer`.
+
+```ts
+function createLayer<P, R, …>(
+  options: LayerOptions<P, R, …> & { key: LayerKey },
+  client: LayerClient,
+): LayerHandle<P, R, …>;
+
+function createLayer<V extends Validator<unknown>, R, …>(
+  options: LayerOptions<InferValidatorOutput<V>, R, …> & { key: LayerKey; validate: V },
+  client: LayerClient,
+): ValidatedLayerHandle<V, R, …>;
+```
+
+```ts
+const confirm = createLayer(confirmOptions, client);
+const ok = await confirm.open({ title: "Remove?" });
+confirm.dismiss(false);
+confirm.cancelQueued(undefined, { id: "queued-id" }); // optional exact match
+```
+
+<AutoTypeTable path="../../packages/core/src/createLayer.ts" name="LayerHandle" />
+
+When `options.validate` is set, `ValidatedLayerHandle` narrows `open`/`upsert` to schema **input** and `current`/`update` to parsed **output**.
 
 ## createCallContext
 
