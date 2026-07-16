@@ -123,33 +123,34 @@ LayerClient
 
 1. **Declare** — `layerOptions<P, R>({ stack, key, ... })` brands the key with a `DataTag` for response inference.
 2. **Observe** — subscribe to a stack snapshot; use `createCallContext(stack, layer, state)` to wire `call.end` / `call.dismiss` in your renderer.
-3. **Call** — `await client.open({ ...options, payload })`; resolution happens when something calls `call.end(response)` or `stack.dismiss(layer, response)`.
+3. **Call** — `await client.open({ ...options, payload })` or `createLayer(options, client).open(payload)` (no spread); resolution happens when something calls `call.end(response)` or `stack.dismiss(layer, response)`.
 
 ## Public API
 
 ### Classes
 
-| Export                       | Role                                                                                                                                                                                                              |
-| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`LayerClient`**            | App-wide orchestrator. `open()`, `getStack()`, `getStackIds()`, `subscribeStacks()`, `dismissAll()`, `ensureStack()`, `bindChildStack()`                                                                          |
-| **`LayerStack`**             | One named surface. `getSnapshot()`, `getQueuedSnapshot()`, `subscribe()`, `getLayer()`, `find()`, `open()`, `dismiss()`, `dismissAll()`, `addBlocker()`, `update()`, `setRunning()`, `settle()`, `cancelQueued()` |
-| **`Layer`**                  | One frame: `id`, `key`, `state`, `promise` (`ControlledPromise<R>`), `abortController`, `addBlocker()`, `setRunning()`, `resolve()` / `reject()` / `abort()`                                                      |
-| **`Subscribable`**           | Base subscription primitive (`subscribe()`, `size`) used by stacks                                                                                                                                                |
-| **`ControlledPromise<T>`**   | Promise with external `resolve` / `reject` (`Resolve`, `Reject` types)                                                                                                                                            |
-| **`PayloadValidationError`** | Thrown when `validate` fails at `open`                                                                                                                                                                            |
+| Export                       | Role                                                                                                                                                                                                                                                                            |
+| ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **`LayerClient`**            | App-wide orchestrator. `open()`, `getStack()`, `getStackIds()`, `subscribeStacks()`, `dismissAll()`, `ensureStack()`, `bindChildStack()`                                                                                                                                        |
+| **`LayerStack`**             | One named surface. `getSnapshot()`, `getQueuedSnapshot()`, `subscribe()`, `getLayer()`, `find()` (topmost same-key), `open()`, `dismiss()`, `dismissAll()`, `addBlocker()`, `update()`, `setRunning()`, `settle()`, `cancelQueued()` (FIFO; optional `{ id }` for exact queued) |
+| **`Layer`**                  | One frame: `id`, `key`, `state`, `promise` (`ControlledPromise<R>`), `abortController`, `addBlocker()`, `setRunning()`, `resolve()` / `reject()` / `abort()`                                                                                                                    |
+| **`Subscribable`**           | Base subscription primitive (`subscribe()`, `size`) used by stacks                                                                                                                                                                                                              |
+| **`ControlledPromise<T>`**   | Promise with external `resolve` / `reject` (`Resolve`, `Reject` types)                                                                                                                                                                                                          |
+| **`PayloadValidationError`** | Thrown when `validate` fails at `open`                                                                                                                                                                                                                                          |
 
 ### Functions
 
-| Export                                 | Role                                                                                       |
-| -------------------------------------- | ------------------------------------------------------------------------------------------ |
-| **`layerOptions()`**                   | Brand a reusable options object; `key` carries a `DataTag` so `open()` infers `R` / `E`    |
-| **`layerKey()`**                       | Brand a key alone: `layerKey<R>()(key)`                                                    |
-| **`createCallContext()`**              | Build the imperative `call` handle (`end`, `dismiss`, `update`, `settle`, `addBlocker`, …) |
-| **`createLayerGroup()`**               | Child stack scoped to a parent layer's lifetime (`open`, `dismissAll`, `dispose`)          |
-| **`childStackId()`**                   | Derive a collision-free child stack id from a parent `call`                                |
-| **`hashKey()`** / **`keySignature()`** | Stable string identity for a `LayerKey`                                                    |
-| **`isPayloadValidationError()`**       | Narrow `PayloadValidationError`                                                            |
-| **`notifyManager`**                    | `{ batch, batchCalls }` — dedupe notifications inside a batch                              |
+| Export                                 | Role                                                                                                   |
+| -------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| **`layerOptions()`**                   | Brand a reusable options object; `key` carries a `DataTag` so `open()` infers `R` / `E`                |
+| **`createLayer()`**                    | `options` + `client` → `LayerHandle` / `ValidatedLayerHandle` (see [glossary](../../docs/glossary.md)) |
+| **`layerKey()`**                       | Brand a key alone: `layerKey<R>()(key)`                                                                |
+| **`createCallContext()`**              | Build the imperative `call` handle (`end`, `dismiss`, `update`, `settle`, `addBlocker`, …)             |
+| **`createLayerGroup()`**               | Child stack scoped to a parent layer's lifetime (`open`, `dismissAll`, `dispose`)                      |
+| **`childStackId()`**                   | Derive a collision-free child stack id from a parent `call`                                            |
+| **`hashKey()`** / **`keySignature()`** | Stable string identity for a `LayerKey`                                                                |
+| **`isPayloadValidationError()`**       | Narrow `PayloadValidationError`                                                                        |
+| **`notifyManager`**                    | `{ batch, batchCalls }` — dedupe notifications inside a batch                                          |
 
 ### Key inference (`DataTag`)
 
@@ -157,7 +158,7 @@ LayerClient
 
 ### Payload validation
 
-Optional `validate` on `layerOptions` or `open` — a **`StandardSchemaV1`** schema or sync **`Validator`** fn (`(input: unknown) => output`, throws on invalid). Parsed synchronously at `open`; failure rejects with **`PayloadValidationError`** (`issues: ReadonlyArray<ValidationIssue>`). Input/output inference: **`InferValidatorInput`**, **`InferValidatorOutput`**.
+Optional `validate` on `layerOptions` or `open` — a **`StandardSchemaV1`** schema or sync **`Validator`** fn (`(input: unknown) => output`, throws on invalid). Parsed synchronously at `open`; failure rejects with **`PayloadValidationError`** (`issues: ReadonlyArray<ValidationIssue>`). Input/output inference: **`InferValidatorInput`**, **`InferValidatorOutput`**, **`OpenValidatePayload`** (validated handle `open` arg).
 
 ### App-wide error typing
 
@@ -181,7 +182,7 @@ Notable per-stack options: `scope: { strategy: "serial" | "parallel" }`, `gcTime
 
 ### Snapshots & lifecycle (types)
 
-**`LayerState`**, **`LayerPhase`** (`pending` \| `queued` \| `active` \| `dismissed` \| `error`), **`LayerTransition`** (`entering` \| `settled` \| `exiting`), **`LayerActionStatus`**, **`LayerCallContext`**, **`LayerComponentProps`**, **`LayerComponent`**, **`LayerKey`**.
+**`LayerState`**, **`LayerPhase`** (`pending` \| `queued` \| `active` \| `dismissed` \| `error`), **`LayerTransition`** (`entering` \| `settled` \| `exiting`), **`LayerActionStatus`**, **`LayerCallContext`**, **`LayerComponentProps`**, **`LayerComponent`**, **`LayerKey`**, **`LayerHandle`**, **`ValidatedLayerHandle`**.
 
 Transitions complete on **whichever fires first** of `{ enteringDelay/exitingDelay elapsed, call.settle() }`. Serial stacks queue later opens (`phase: "queued"`, visible via `getQueuedSnapshot()`).
 

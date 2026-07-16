@@ -2,27 +2,77 @@ import type {
   DataTag,
   DefaultLayerError,
   ErrorOf,
+  InferValidatorOutput,
   LayerCallContext,
   LayerComponentProps,
   LayerGroupOptions,
+  LayerHandle,
   LayerKey,
+  LayerOptions,
   LayerState,
   OmitKeyof,
   OpenLayerOptions,
   ResponseOf,
+  ValidatedLayerHandle,
+  Validator,
 } from "@stainless-code/layers";
 import {
   childStackId,
   createCallContext,
+  createLayer as createLayerHandle,
   createLayerGroup,
   keySignature,
+  shallowArrayEqual,
   LayerClient,
 } from "@stainless-code/layers";
 // This entry keeps the Svelte 3+ store contract; the package root uses Svelte
 // 5.7's `createSubscriber` for runes-aware reads instead.
 import { getContext, onDestroy, setContext } from "svelte";
-import { readable, writable } from "svelte/store";
+import { derived, readable, writable } from "svelte/store";
 import type { Readable } from "svelte/store";
+
+/** Core headless factory — not the wired {@link createLayer}. */
+export { createLayer as createLayerHandle } from "@stainless-code/layers";
+export {
+  hashKey,
+  keySignature,
+  shallowArrayEqual,
+  Subscribable,
+  notifyManager,
+  ControlledPromise,
+  Layer,
+  LayerStack,
+  LayerClient,
+  layerOptions,
+  layerKey,
+  createCallContext,
+  childStackId,
+  createLayerGroup,
+  PayloadValidationError,
+  isPayloadValidationError,
+} from "@stainless-code/layers";
+
+export type {
+  Resolve,
+  Reject,
+  LayerHandle,
+  ValidatedLayerHandle,
+  LayerGroupHandle,
+  LayerGroupOptions,
+  DataTag,
+  InferDataTagResponse,
+  InferDataTagError,
+  ResponseOf,
+  ErrorOf,
+  StandardSchemaV1,
+  Validator,
+  InferValidatorInput,
+  InferValidatorOutput,
+  OpenValidatePayload,
+  ValidationIssue,
+} from "@stainless-code/layers";
+
+export type * from "@stainless-code/layers";
 
 const LAYER_CLIENT_KEY = Symbol("layers.client");
 
@@ -53,10 +103,91 @@ export function useLayerClient(): LayerClient {
   return c;
 }
 
-export * from "@stainless-code/layers";
-
 function defaultSelector(states: LayerState[]): LayerState[] {
   return states;
+}
+
+type NoValidateOptions<Opts> = Opts extends { validate: Validator<unknown> }
+  ? never
+  : Opts;
+
+export interface UseStackOptions<T = LayerState[]> {
+  stack?: string;
+  select?: (states: LayerState[]) => T;
+  compare?: (a: T, b: T) => boolean;
+}
+
+export interface UseLayerStateOptions<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+> {
+  key: Key;
+  stack?: string;
+  select?: (states: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[]) => U;
+  compare?: (a: U, b: U) => boolean;
+}
+
+export type WiredLayerStoreHandle<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = LayerHandle<P, R, E, D, RP> & {
+  state: Readable<LayerState<P, R, E, D>[]>;
+  queued: Readable<LayerState<P, R, E, D>[]>;
+  top: Readable<LayerState<P, R, E, D> | null>;
+};
+
+export type WiredValidatedLayerStoreHandle<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = ValidatedLayerHandle<V, R, E, D, RP> & {
+  state: Readable<LayerState<InferValidatorOutput<V>, R, E, D>[]>;
+  queued: Readable<LayerState<InferValidatorOutput<V>, R, E, D>[]>;
+  top: Readable<LayerState<InferValidatorOutput<V>, R, E, D> | null>;
+};
+
+function makeReadableStack<T>(
+  stack: ReturnType<LayerClient["getStack"]>,
+  getSource: () => LayerState[],
+  select: (states: LayerState[]) => T,
+  compare: (a: T, b: T) => boolean,
+): Readable<T> {
+  let cache: { base: LayerState[]; value: T } | null = null;
+
+  // Preserve selector output identity while the base snapshot is unchanged or
+  // `compare` considers a new result equal, preventing object/array churn.
+  const runSelect = (base: LayerState[]): T => {
+    const prev = cache;
+    if (prev && prev.base === base) return prev.value;
+    const next = select(base);
+    if (prev && compare(prev.value, next)) {
+      cache = { base, value: prev.value };
+      return prev.value;
+    }
+    cache = { base, value: next };
+    return next;
+  };
+
+  return readable(runSelect(getSource()), (set) => {
+    const unsubscribe = stack.subscribe(() => {
+      const prevValue = cache?.value;
+      const next = runSelect(getSource());
+      if (prevValue === undefined || !compare(prevValue, next)) {
+        set(next);
+      }
+    });
+    // Re-read on the first subscriber so an idle store cannot expose a stale
+    // value.
+    set(runSelect(getSource()));
+    return unsubscribe;
+  });
 }
 
 /**
@@ -65,12 +196,10 @@ function defaultSelector(states: LayerState[]): LayerState[] {
  * Use `$stack` in components to subscribe. Pair each state with {@link callFor}
  * when rendering a layer.
  *
- * @param client Client to observe. Omit it to use {@link useLayerClient}.
- * @param stackId Stack to observe.
- * @param selector Derives the store value from the stack snapshot.
- * @param compare Determines whether a selected value changed.
+ * @param opts Stack id, selector, and compare options.
+ * @param client Optional client override; defaults to {@link useLayerClient}.
  * @returns A readable store of the selected stack value.
- * @default `stackId` is `"default"`; `selector` is identity; `compare` is
+ * @default `stack` is `"default"`; `select` is identity; `compare` is
  * `Object.is`.
  * @example
  * ```svelte
@@ -82,7 +211,7 @@ function defaultSelector(states: LayerState[]): LayerState[] {
  *   } from "@stainless-code/svelte-layers/store";
  *
  *   const client = useLayerClient();
- *   const stack = useStack(client, "confirm");
+ *   const stack = useStack({ stack: "confirm" });
  * </script>
  * {#each $stack as state (state.id)}
  *   {@const call = callFor(client, "confirm", state)}
@@ -91,137 +220,154 @@ function defaultSelector(states: LayerState[]): LayerState[] {
  * ```
  */
 export function useStack<T = LayerState[]>(
-  client: LayerClient,
-  stackId?: string,
-  selector?: (states: LayerState[]) => T,
-  compare?: (a: T, b: T) => boolean,
-): Readable<T>;
-export function useStack<T = LayerState[]>(
-  stackId?: string,
-  selector?: (states: LayerState[]) => T,
-  compare?: (a: T, b: T) => boolean,
-): Readable<T>;
-export function useStack<T = LayerState[]>(
-  clientOrStackId?: LayerClient | string,
-  stackIdOrSelector?: string | ((states: LayerState[]) => T),
-  selectorOrCompare?: ((states: LayerState[]) => T) | ((a: T, b: T) => boolean),
-  compareArg?: (a: T, b: T) => boolean,
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
 ): Readable<T> {
-  const explicit = clientOrStackId instanceof LayerClient;
-  const client = explicit ? clientOrStackId : useLayerClient();
-  const stackId =
-    ((explicit ? stackIdOrSelector : clientOrStackId) as string | undefined) ??
-    "default";
-  const selector =
-    ((explicit ? selectorOrCompare : stackIdOrSelector) as
-      | ((states: LayerState[]) => T)
-      | undefined) ??
-    (defaultSelector as unknown as (states: LayerState[]) => T);
-  const compare =
-    ((explicit ? compareArg : selectorOrCompare) as
-      | ((a: T, b: T) => boolean)
-      | undefined) ?? Object.is;
-
-  const stack = client.getStack(stackId);
-  let cache: { base: LayerState[]; value: T } | null = null;
-
-  // Preserve selector output identity while the base snapshot is unchanged or
-  // `compare` considers a new result equal, preventing object/array churn.
-  const select = (base: LayerState[]): T => {
-    const prev = cache;
-    if (prev && prev.base === base) return prev.value;
-    const next = selector(base);
-    if (prev && compare(prev.value, next)) {
-      cache = { base, value: prev.value };
-      return prev.value;
-    }
-    cache = { base, value: next };
-    return next;
-  };
-
-  return readable(select(stack.getSnapshot()), (set) => {
-    const unsubscribe = stack.subscribe(() => {
-      const prevValue = cache?.value;
-      const next = select(stack.getSnapshot());
-      if (prevValue === undefined || !compare(prevValue, next)) {
-        set(next);
-      }
-    });
-    // Re-read on the first subscriber so an idle store cannot expose a stale
-    // value.
-    set(select(stack.getSnapshot()));
-    return unsubscribe;
-  });
+  const resolved = client ?? useLayerClient();
+  const stackId = opts.stack ?? "default";
+  const stack = resolved.getStack(stackId);
+  const select =
+    opts.select ?? (defaultSelector as unknown as (states: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  return makeReadableStack(stack, () => stack.getSnapshot(), select, compare);
 }
 
-/**
- * Exposes one active layer as a Svelte readable store.
- *
- * @param client Client to observe. Omit it to use {@link useLayerClient}.
- * @param key Layer key to match.
- * @param stackId Stack to search.
- * @param compare Determines whether the matched state changed.
- * @returns A readable store that yields `null` while the layer is inactive.
- * @default `stackId` is `"default"`; `compare` is `Object.is`.
- */
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  client: LayerClient,
-  key: Key,
-  stackId?: string,
-  compare?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Readable<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>;
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  key: Key,
-  stackId?: string,
-  compare?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Readable<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>;
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  clientOrKey: LayerClient | Key,
-  keyOrStackId?: Key | string,
-  stackIdOrCompare?:
-    | string
-    | ((
-        a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-        b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-      ) => boolean),
-  compareArg?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Readable<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null> {
-  const explicit = clientOrKey instanceof LayerClient;
-  const client = explicit ? clientOrKey : useLayerClient();
-  const key = (explicit ? keyOrStackId : clientOrKey) as Key;
-  const stackId =
-    ((explicit ? stackIdOrCompare : keyOrStackId) as string | undefined) ??
-    "default";
-  const compare =
-    ((explicit ? compareArg : stackIdOrCompare) as
-      | ((
-          a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-          b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-        ) => boolean)
-      | undefined) ?? Object.is;
-
-  const sig = keySignature(key);
-  return useStack(
-    client,
-    stackId,
-    (states) =>
-      (states.find((s) => keySignature(s.key) === sig) ?? null) as LayerState<
-        P,
-        ResponseOf<Key>,
-        ErrorOf<Key>,
-        D
-      > | null,
+/** Exposes a stack's queued snapshot as a Svelte readable store. */
+export function createQueuedStack<T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): Readable<T> {
+  const resolved = client ?? useLayerClient();
+  const stackId = opts.stack ?? "default";
+  const stack = resolved.getStack(stackId);
+  const select =
+    opts.select ?? (defaultSelector as unknown as (states: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  return makeReadableStack(
+    stack,
+    () => stack.getQueuedSnapshot(),
+    select,
     compare,
   );
+}
+
+/** Observe all mounted layers matching a key. */
+export function createLayerState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(opts: UseLayerStateOptions<Key, P, D, U>, client?: LayerClient): Readable<U> {
+  const sig = keySignature(opts.key);
+  return useStack<U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+/** Observe all queued layers matching a key. */
+export function createLayerQueuedState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(opts: UseLayerStateOptions<Key, P, D, U>, client?: LayerClient): Readable<U> {
+  const sig = keySignature(opts.key);
+  return createQueuedStack<U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+function createLayerImpl<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerStoreHandle<P, R, E, D, RP> {
+  const resolved = client ?? useLayerClient();
+  const stackId = options.stack ?? "default";
+  const sig = keySignature(options.key);
+  const selectByKey = (states: LayerState[]) =>
+    states.filter((s) => keySignature(s.key) === sig) as LayerState<
+      P,
+      R,
+      E,
+      D
+    >[];
+  const handle = createLayerHandle(options, resolved);
+  const state = useStack(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const queued = createQueuedStack(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const top = derived(state, ($s) => $s.at(-1) ?? null);
+  Object.assign(handle, { state, queued, top });
+  return handle as WiredLayerStoreHandle<P, R, E, D, RP>;
+}
+
+/** Wired handle: wraps core {@link createLayerHandle} with store reactivity. */
+export function createLayer<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<InferValidatorOutput<V>, R, E, D, RP> & {
+    key: LayerKey;
+    validate: V;
+  },
+  client?: LayerClient,
+): WiredValidatedLayerStoreHandle<V, R, E, D, RP>;
+
+export function createLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: NoValidateOptions<LayerOptions<P, R, E, D, RP> & { key: LayerKey }>,
+  client?: LayerClient,
+): WiredLayerStoreHandle<P, R, E, D, RP>;
+
+export function createLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerStoreHandle<P, R, E, D, RP> {
+  return createLayerImpl(options, client);
 }
 
 /**
@@ -299,6 +445,14 @@ export function useMutationFlow<P, R, RootProps = unknown>(
   };
 }
 
+export interface LayerGroup {
+  open: ScopedOpen;
+  dismissAll: (response?: unknown) => void;
+  /** The child stack store — render `{#each $stack as s}` and pair with `callFor(client, stackId, s)`. */
+  stack: Readable<LayerState[]>;
+  stackId: string;
+}
+
 /** Open a layer on a pre-bound stack, with {@link DataTag} response and error inference. */
 export interface ScopedOpen {
   <P, R, E = DefaultLayerError, D = unknown, RootProps = unknown>(
@@ -312,14 +466,6 @@ export interface ScopedOpen {
   <P, R = void, E = DefaultLayerError, D = unknown, RootProps = unknown>(
     options: OmitKeyof<OpenLayerOptions<P, R, E, D, RootProps>, "stack">,
   ): Promise<R>;
-}
-
-export interface LayerGroup {
-  open: ScopedOpen;
-  dismissAll: (response?: unknown) => void;
-  /** The child stack store — render `{#each $stack as s}` and pair with `callFor(client, stackId, s)`. */
-  stack: Readable<LayerState[]>;
-  stackId: string;
 }
 
 /**
@@ -340,7 +486,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
     client.dismissAll(group.stackId);
   });
 
-  const stack = useStack(client, stackId);
+  const stack = useStack({ stack: stackId });
   const open = (<
     P2,
     R2 = void,

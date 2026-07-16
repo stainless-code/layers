@@ -1,12 +1,23 @@
 import { layerKey } from "@stainless-code/layers";
-import type { LayerCallContext } from "@stainless-code/layers";
+import type {
+  LayerCallContext,
+  LayerState,
+  StandardSchemaV1,
+} from "@stainless-code/layers";
 /**
  * Svelte runes adapter type-level inference tests. Compiled by `tsc --noEmit`
  * as part of the src program; never executed. Registered as a knip entry so its
  * exports are not flagged.
  */
 import type { MutationFlow } from "@stainless-code/svelte-layers";
-import { useLayerGroup, useMutationFlow } from "@stainless-code/svelte-layers";
+import {
+  createLayer,
+  createLayerState,
+  layerOptions,
+  useLayerGroup,
+  useMutationFlow,
+  useStack,
+} from "@stainless-code/svelte-layers";
 
 /** Invariant mutual-assignability check. */
 export type Equal<A, B> =
@@ -47,3 +58,72 @@ export type _LayerGroupOpenInfersResponse = Expect<
   Equal<Awaited<ReturnType<typeof openGroupTagged>>, boolean>
 >;
 void group;
+
+declare const nSelector: (states: LayerState[]) => { n: number };
+function useStackDefault() {
+  return useStack({ stack: "s" });
+}
+export type _UseStackDefaultLayerStates = Expect<
+  Equal<ReturnType<typeof useStackDefault>["current"], LayerState[]>
+>;
+function useStackWithSelect() {
+  return useStack({ stack: "s", select: nSelector });
+}
+export type _UseStackSelectorFlows = Expect<
+  Equal<ReturnType<typeof useStackWithSelect>["current"], { n: number }>
+>;
+
+function useLayerStateTagged() {
+  return createLayerState({ key: removeKey });
+}
+type _SvelteCreateLayerStateTagged = ReturnType<typeof useLayerStateTagged>;
+export type _CreateLayerStateInfersResponse = Expect<
+  Equal<
+    _SvelteCreateLayerStateTagged["current"],
+    LayerState<unknown, boolean, Error, unknown>[]
+  >
+>;
+
+const idSchema = {
+  "~standard": {
+    version: 1,
+    vendor: "test",
+    validate: (v: unknown) => ({
+      value: { id: Number((v as { id: string }).id) },
+    }),
+    types: undefined as unknown as {
+      input: { id: string };
+      output: { id: number };
+    },
+  },
+} as StandardSchemaV1<{ id: string }, { id: number }>;
+
+const validatedConfirm = {
+  key: ["v"],
+  validate: idSchema,
+};
+
+function useValidatedLayer() {
+  return createLayer(validatedConfirm);
+}
+export type _ValidatedCreateLayerOpenAcceptsInput = Expect<
+  Equal<
+    Parameters<ReturnType<typeof useValidatedLayer>["open"]>[0],
+    { id: string }
+  >
+>;
+export type _ValidatedCreateLayerStatePayload = Expect<
+  Equal<
+    ReturnType<typeof useValidatedLayer>["state"][number]["payload"],
+    { id: number }
+  >
+>;
+
+const voidOpts = layerOptions<void, boolean>({ key: ["void"] });
+function useVoidLayer() {
+  return createLayer(voidOpts);
+}
+function openVoidCreateLayerOmitted() {
+  return useVoidLayer().open();
+}
+void openVoidCreateLayerOmitted;

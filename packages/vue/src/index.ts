@@ -2,24 +2,32 @@ import type {
   DataTag,
   DefaultLayerError,
   ErrorOf,
+  InferValidatorOutput,
   LayerCallContext,
   LayerComponentProps,
   LayerGroupOptions,
+  LayerHandle,
   LayerKey,
   LayerOptions,
+  LayerStack,
   LayerState,
   OmitKeyof,
   OpenLayerOptions,
   ResponseOf,
+  ValidatedLayerHandle,
+  Validator,
 } from "@stainless-code/layers";
 import {
   childStackId,
   createCallContext,
+  createLayer,
   createLayerGroup,
   keySignature,
+  shallowArrayEqual,
   LayerClient,
 } from "@stainless-code/layers";
 import {
+  computed,
   defineComponent,
   Fragment,
   h,
@@ -29,7 +37,14 @@ import {
   shallowRef,
   watch,
 } from "vue";
-import type { Component, InjectionKey, PropType, Ref, SlotsType } from "vue";
+import type {
+  Component,
+  ComputedRef,
+  InjectionKey,
+  PropType,
+  Ref,
+  SlotsType,
+} from "vue";
 
 export * from "@stainless-code/layers";
 
@@ -66,68 +81,70 @@ function defaultSelector(states: LayerState[]): LayerState[] {
   return states;
 }
 
-/**
- * Exposes a {@link LayerClient} stack as a readonly Vue ref.
- *
- * Call it inside `setup()` or an `effectScope()` so `onScopeDispose` can clean
- * up the stack subscription.
- *
- * @param client Client to observe. Omit it to use {@link useLayerClient}.
- * @param stackId Stack to observe.
- * @param selector Derives the ref value from the stack snapshot.
- * @param compare Determines whether a selected value changed.
- * @returns A readonly ref of the selected stack value.
- * @default `stackId` is `"default"`; `selector` is identity; `compare` is
- * `Object.is`.
- * @example
- * ```ts
- * import { useStack } from "@stainless-code/vue-layers";
- *
- * const stack = useStack("confirm");
- * console.log(stack.value);
- * ```
- */
-export function useStack<T = LayerState[]>(
-  client: LayerClient,
-  stackId?: string,
-  selector?: (states: LayerState[]) => T,
-  compare?: (a: T, b: T) => boolean,
-): Readonly<Ref<T>>;
-export function useStack<T = LayerState[]>(
-  stackId?: string,
-  selector?: (states: LayerState[]) => T,
-  compare?: (a: T, b: T) => boolean,
-): Readonly<Ref<T>>;
-export function useStack<T = LayerState[]>(
-  clientOrStackId?: LayerClient | string,
-  stackIdOrSelector?: string | ((states: LayerState[]) => T),
-  selectorOrCompare?: ((states: LayerState[]) => T) | ((a: T, b: T) => boolean),
-  compareArg?: (a: T, b: T) => boolean,
-): Readonly<Ref<T>> {
-  const explicit = clientOrStackId instanceof LayerClient;
-  const client = explicit ? clientOrStackId : useLayerClient();
-  const stackId =
-    ((explicit ? stackIdOrSelector : clientOrStackId) as string | undefined) ??
-    "default";
-  const selector =
-    ((explicit ? selectorOrCompare : stackIdOrSelector) as
-      | ((states: LayerState[]) => T)
-      | undefined) ??
-    (defaultSelector as unknown as (states: LayerState[]) => T);
-  const compare =
-    ((explicit ? compareArg : selectorOrCompare) as
-      | ((a: T, b: T) => boolean)
-      | undefined) ?? Object.is;
+type NoValidateOptions<Opts> = Opts extends { validate: Validator<unknown> }
+  ? never
+  : Opts;
 
-  const stack = client.getStack(stackId);
+export interface UseStackOptions<T = LayerState[]> {
+  stack?: string;
+  select?: (states: LayerState[]) => T;
+  compare?: (a: T, b: T) => boolean;
+}
+
+export interface UseLayerStateOptions<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+> {
+  key: Key;
+  stack?: string;
+  select?: (states: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[]) => U;
+  compare?: (a: U, b: U) => boolean;
+}
+
+export type WiredLayerHandle<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = LayerHandle<P, R, E, D, RP> & {
+  state: Readonly<Ref<LayerState<P, R, E, D>[]>>;
+  queued: Readonly<Ref<LayerState<P, R, E, D>[]>>;
+  top: Readonly<Ref<LayerState<P, R, E, D> | null>>;
+};
+
+export type WiredValidatedLayerHandle<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = ValidatedLayerHandle<V, R, E, D, RP> & {
+  state: Readonly<Ref<LayerState<InferValidatorOutput<V>, R, E, D>[]>>;
+  queued: Readonly<Ref<LayerState<InferValidatorOutput<V>, R, E, D>[]>>;
+  top: Readonly<Ref<LayerState<InferValidatorOutput<V>, R, E, D> | null>>;
+};
+
+/**
+ * Shared snapshot subscription primitive for mounted and queued stack hooks.
+ *
+ * Selector output is memoized against the stable snapshot reference so refs do
+ * not churn object or array selections.
+ */
+function useSnapshot<T>(
+  stack: LayerStack,
+  getSource: () => LayerState[],
+  select: (states: LayerState[]) => T,
+  compare: (a: T, b: T) => boolean,
+): Readonly<Ref<T>> {
   let cache: { base: LayerState[]; value: T } | null = null;
 
-  // Preserve selector output identity while the base snapshot is unchanged or
-  // `compare` considers a new result equal, preventing object/array churn.
-  const select = (base: LayerState[]): T => {
+  const runSelect = (base: LayerState[]): T => {
     const prev = cache;
     if (prev && prev.base === base) return prev.value;
-    const next = selector(base);
+    const next = select(base);
     if (prev && compare(prev.value, next)) {
       cache = { base, value: prev.value };
       return prev.value;
@@ -136,10 +153,10 @@ export function useStack<T = LayerState[]>(
     return next;
   };
 
-  const ref = shallowRef<T>(select(stack.getSnapshot()));
+  const ref = shallowRef<T>(runSelect(getSource()));
   const unsubscribe = stack.subscribe(() => {
     const prev = ref.value;
-    const next = select(stack.getSnapshot());
+    const next = runSelect(getSource());
     if (!compare(prev, next)) {
       ref.value = next;
     }
@@ -149,75 +166,172 @@ export function useStack<T = LayerState[]>(
 }
 
 /**
- * Exposes one active layer as a readonly Vue ref.
+ * Exposes a {@link LayerClient} stack as a readonly Vue ref.
  *
- * The subscription follows the current `setup()` or `effectScope()` lifetime.
+ * Call it inside `setup()` or an `effectScope()` so `onScopeDispose` can clean
+ * up the stack subscription.
  *
+ * @param opts Options bag: `stack`, `select`, `compare`.
  * @param client Client to observe. Omit it to use {@link useLayerClient}.
- * @param key Layer key to match.
- * @param stackId Stack to search.
- * @param compare Determines whether the matched state changed.
- * @returns A readonly ref whose value is `null` while the layer is inactive.
- * @default `stackId` is `"default"`; `compare` is `Object.is`.
+ * @returns A readonly ref of the selected stack value.
+ * @default `stack` is `"default"`; `select` is identity; `compare` is
+ * `Object.is`.
  */
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  client: LayerClient,
-  key: Key,
-  stackId?: string,
-  compare?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Readonly<Ref<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>>;
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  key: Key,
-  stackId?: string,
-  compare?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Readonly<Ref<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>>;
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  clientOrKey: LayerClient | Key,
-  keyOrStackId?: Key | string,
-  stackIdOrCompare?:
-    | string
-    | ((
-        a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-        b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-      ) => boolean),
-  compareArg?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Readonly<Ref<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>> {
-  const explicit = clientOrKey instanceof LayerClient;
-  const client = explicit ? clientOrKey : useLayerClient();
-  const key = (explicit ? keyOrStackId : clientOrKey) as Key;
-  const stackId =
-    ((explicit ? stackIdOrCompare : keyOrStackId) as string | undefined) ??
-    "default";
-  const compare =
-    ((explicit ? compareArg : stackIdOrCompare) as
-      | ((
-          a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-          b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-        ) => boolean)
-      | undefined) ?? Object.is;
+export function useStack<T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): Readonly<Ref<T>> {
+  const resolved = client ?? useLayerClient();
+  const stack = resolved.getStack(opts.stack ?? "default");
+  const select =
+    opts.select ?? (defaultSelector as unknown as (states: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  return useSnapshot(stack, () => stack.getSnapshot(), select, compare);
+}
 
-  const sig = keySignature(key);
-  return useStack(
+/** Exposes a stack's queued snapshot as a readonly Vue ref. */
+export function useQueuedStack<T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): Readonly<Ref<T>> {
+  const resolved = client ?? useLayerClient();
+  const stack = resolved.getStack(opts.stack ?? "default");
+  const select =
+    opts.select ?? (defaultSelector as unknown as (states: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  return useSnapshot(stack, () => stack.getQueuedSnapshot(), select, compare);
+}
+
+/**
+ * Observe all mounted layers matching a key.
+ *
+ * A {@link DataTag} key infers its response and error types.
+ */
+export function useLayerState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(
+  opts: UseLayerStateOptions<Key, P, D, U>,
+  client?: LayerClient,
+): Readonly<Ref<U>> {
+  const sig = keySignature(opts.key);
+  return useStack<U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
     client,
-    stackId,
-    (states) =>
-      (states.find((s) => keySignature(s.key) === sig) ?? null) as LayerState<
-        P,
-        ResponseOf<Key>,
-        ErrorOf<Key>,
-        D
-      > | null,
-    compare,
-  ) as Readonly<Ref<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>>;
+  );
+}
+
+/** Observe all queued layers matching a key. */
+export function useLayerQueuedState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(
+  opts: UseLayerStateOptions<Key, P, D, U>,
+  client?: LayerClient,
+): Readonly<Ref<U>> {
+  const sig = keySignature(opts.key);
+  return useQueuedStack<U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+function useLayerImpl<P, R, E = DefaultLayerError, D = unknown, RP = unknown>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP> & {
+  top: ComputedRef<LayerState<P, R, E, D> | null>;
+} {
+  const resolved = client ?? useLayerClient();
+  const stackId = options.stack ?? "default";
+  const sig = keySignature(options.key);
+  const selectByKey = (states: LayerState[]) =>
+    states.filter((s) => keySignature(s.key) === sig) as LayerState<
+      P,
+      R,
+      E,
+      D
+    >[];
+  const state = useStack<LayerState<P, R, E, D>[]>(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const queued = useQueuedStack<LayerState<P, R, E, D>[]>(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const top = computed(() => state.value.at(-1) ?? null);
+  const base = createLayer(options, resolved);
+  return {
+    ...base,
+    get current() {
+      return base.current;
+    },
+    state,
+    queued,
+    top,
+  };
+}
+
+/** Wired handle: `createLayer` + reactive `state`/`queued`/`top`. */
+export function useLayer<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<InferValidatorOutput<V>, R, E, D, RP> & {
+    key: LayerKey;
+    validate: V;
+  },
+  client?: LayerClient,
+): WiredValidatedLayerHandle<V, R, E, D, RP>;
+
+export function useLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: NoValidateOptions<LayerOptions<P, R, E, D, RP> & { key: LayerKey }>,
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP>;
+
+export function useLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP> {
+  return useLayerImpl(options, client);
 }
 
 type AnyComponent = Component<LayerComponentProps<never, never, never, never>>;
@@ -232,7 +346,7 @@ export const StackOutlet = defineComponent({
   setup(props) {
     const client = useLayerClient();
     const stk = client.getStack(props.stack);
-    const states = useStack(props.stack);
+    const states = useStack({ stack: props.stack });
     return () =>
       h(
         Fragment,
@@ -272,8 +386,8 @@ export interface StackSubscribeProps<T = LayerState[]> {
 /**
  * Render a selected stack value through a default scoped slot (cross-adapter
  * parity). The slot payload is `{ value: unknown }` — `defineComponent` can't
- * thread the selector's return type through a slot; prefer `useStack(stack,
- * selector)` in `setup()` for a fully-typed value.
+ * thread the selector's return type through a slot; prefer
+ * `useStack({ stack, select })` in `setup()` for a fully-typed value.
  *
  * @example
  * ```vue
@@ -295,7 +409,7 @@ export const StackSubscribe = defineComponent({
     default: (payload: { value: unknown }) => unknown;
   }>,
   setup(props, { slots }) {
-    const value = useStack(props.stack, props.selector);
+    const value = useStack({ stack: props.stack, select: props.selector });
     return () => slots.default?.({ value: value.value });
   },
 });
@@ -312,7 +426,7 @@ export function useStackHandles(
 ): StackHandles {
   const client = useLayerClient();
   const stk = client.getStack(stack);
-  const states = useStack(stack);
+  const states = useStack({ stack });
   const getCall = (
     state: LayerState,
   ): LayerCallContext<unknown, unknown, unknown> => {
@@ -423,7 +537,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
     client.dismissAll(group.stackId);
   });
 
-  const states = useStack(stackId);
+  const states = useStack({ stack: stackId });
   const open = <
     P2,
     R2 = void,
@@ -509,7 +623,7 @@ export function createStackHook<HostProps extends object = object>(
 
   function useAppStack(): AppStack {
     const client = useLayerClient();
-    const states = useStack(stackId);
+    const states = useStack({ stack: stackId });
     const open = <
       P,
       R = void,

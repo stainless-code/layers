@@ -10,16 +10,29 @@ mock.module("svelte", () => ({
   onDestroy: () => {},
 }));
 
+mock.module("svelte/reactivity", () => ({
+  createSubscriber: (_start: (update: () => void) => () => void) => () => {},
+}));
+
 let LayerClient: typeof import("@stainless-code/layers").LayerClient;
+let layerOptions: typeof import("@stainless-code/layers").layerOptions;
+let createLayer: typeof import("./index").createLayer;
+let createLayerState: typeof import("./index").createLayerState;
+let createQueuedStack: typeof import("./index").createQueuedStack;
 let setLayerClient: typeof import("./index").setLayerClient;
-let useLayer: typeof import("./index").useLayer;
 let useLayerClient: typeof import("./index").useLayerClient;
 let useStack: typeof import("./index").useStack;
 
 beforeAll(async () => {
-  ({ LayerClient } = await import("@stainless-code/layers"));
-  ({ setLayerClient, useLayer, useLayerClient, useStack } =
-    await import("./index"));
+  ({ LayerClient, layerOptions } = await import("@stainless-code/layers"));
+  ({
+    createLayer,
+    createLayerState,
+    createQueuedStack,
+    setLayerClient,
+    useLayerClient,
+    useStack,
+  } = await import("./index"));
 });
 
 beforeEach(() => {
@@ -43,7 +56,7 @@ describe("setLayerClient / useLayerClient", () => {
 describe("useStack (svelte 5 runes)", () => {
   it("current mirrors the stack snapshot (value contract)", () => {
     const client = new LayerClient();
-    const stack = useStack(client, "confirm");
+    const stack = useStack({ stack: "confirm" }, client);
     expect(stack.current).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
     expect(stack.current).toHaveLength(1);
@@ -52,7 +65,7 @@ describe("useStack (svelte 5 runes)", () => {
 
   it("callFor builds a call context that ends the layer", async () => {
     const client = new LayerClient();
-    const stack = useStack(client, "confirm");
+    const stack = useStack({ stack: "confirm" }, client);
     const pending = client.open<number, boolean>({
       key: ["b"],
       payload: 2,
@@ -65,41 +78,83 @@ describe("useStack (svelte 5 runes)", () => {
     expect(await pending).toBe(true);
   });
 
-  it("with a selector returns the selected slice", () => {
+  it("with select returns the selected slice", () => {
     const client = new LayerClient();
-    const stack = useStack(client, "confirm", (states) => states.length);
+    const stack = useStack(
+      { stack: "confirm", select: (states) => states.length },
+      client,
+    );
     expect(stack.current).toBe(0);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
     expect(stack.current).toBe(1);
   });
 
-  it("useLayer returns the matching layer state or null", () => {
+  it("createLayerState returns matching layer states as an array", () => {
     const client = new LayerClient();
-    const layer = useLayer(client, ["a"], "confirm");
-    expect(layer.current).toBeNull();
+    const layer = createLayerState({ key: ["a"], stack: "confirm" }, client);
+    expect(layer.current).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
-    expect(layer.current?.payload).toBe(1);
-    expect(layer.current?.key).toEqual(["a"]);
+    expect(layer.current).toHaveLength(1);
+    expect(layer.current[0]?.payload).toBe(1);
+    expect(layer.current[0]?.key).toEqual(["a"]);
+  });
+
+  it("createQueuedStack reads queued snapshot", () => {
+    const client = new LayerClient({
+      defaultStackOptions: {
+        default: { scope: { strategy: "serial" } },
+      },
+    });
+    const queued = createQueuedStack(
+      { stack: "default", select: (s) => s.length },
+      client,
+    );
+    expect(queued.current).toBe(0);
+    void client.open({ key: ["a"], payload: 1 });
+    void client.open({ key: ["b"], payload: 2 });
+    expect(queued.current).toBe(1);
   });
 
   it("useStack reads client from context when omitted", () => {
     const client = new LayerClient();
     setLayerClient(client);
-    const stack = useStack("confirm");
+    const stack = useStack({ stack: "confirm" });
     expect(stack.current).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
     expect(stack.current).toHaveLength(1);
     expect(stack.current[0]?.payload).toBe(1);
   });
 
-  it("useLayer reads client from context when omitted", () => {
+  it("createLayerState reads client from context when omitted", () => {
     const client = new LayerClient();
     setLayerClient(client);
-    const layer = useLayer(["a"], "confirm");
-    expect(layer.current).toBeNull();
+    const layer = createLayerState({ key: ["a"], stack: "confirm" });
+    expect(layer.current).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
-    expect(layer.current?.payload).toBe(1);
-    expect(layer.current?.key).toEqual(["a"]);
+    expect(layer.current).toHaveLength(1);
+    expect(layer.current[0]?.payload).toBe(1);
+  });
+
+  it("createLayer exposes handle control and reactive state", async () => {
+    const client = new LayerClient();
+    setLayerClient(client);
+    const opts = layerOptions<{ msg: string }, void>({
+      key: ["toast"],
+      exitingDelay: 0,
+    });
+    const handle = createLayer(opts);
+    expect(handle.state).toEqual([]);
+    expect(handle.top).toBeNull();
+    expect(handle.current).toBeNull();
+
+    const pending = handle.open({ msg: "hi" });
+    expect(handle.state).toHaveLength(1);
+    expect(handle.top?.payload.msg).toBe("hi");
+    expect(handle.current).not.toBeNull();
+
+    await handle.dismiss(undefined as void);
+    expect(await pending).toBeUndefined();
+    expect(handle.state).toEqual([]);
   });
 
   // The reactive auto-update + subscription cleanup need a Svelte component

@@ -9,6 +9,7 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 
 ## Backlog (grill before building)
 
+- **`LayerStack.setOptions`** — mutate `scope`/`gcTime`/`dismissAllMode` post-construction so `handle.stack.setOptions(...)` works.
 - **Multi-TypeScript type-test matrix** — run `.test-d` across TS versions in CI to guard the inference surface (DataTag / overloads). Low effort, high ROI.
 - **Infer `D` from `loadFn`** — type a layer's `data` from the `loadFn` return without an explicit generic. Needs a dedicated type pass (interacts with the `const Key` inference).
 - **`initialSnapshot` (SSR rehydration)** — seed a stack so layers render server-side and hydrate (layers are client-only today; the `transition` axis would hydrate as `settled`).

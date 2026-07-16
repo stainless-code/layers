@@ -49,7 +49,7 @@ import {
   layerOptions,
   StackProvider,
   StackOutlet,
-  useLayerClient,
+  useLayer,
   type LayerComponentProps,
 } from "@stainless-code/react-layers";
 
@@ -85,17 +85,26 @@ function App() {
   );
 }
 
-// 3. Call & await — the response type is inferred.
+// 3. Call & await.
 function useRemove() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   return async () => {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+    const ok = await c.open({ title: "Remove?" });
     //    ^? boolean
     if (ok) {
       /* … */
     }
   };
 }
+```
+
+Low-level alternative — spread identity into the bag-form `client.open`:
+
+```tsx
+import { useLayerClient } from "@stainless-code/react-layers";
+
+const client = useLayerClient();
+await client.open({ ...confirm, payload: { title: "Remove?" } });
 ```
 
 **Both payload and response are optional.** The response type `R` defaults to `void` (fire-and-forget), and `payload` is omittable whenever the layer needs no input — when `P` is `void`/`unknown`, or you type it `… | undefined`:
@@ -114,8 +123,9 @@ client.open(about); // fire-and-forget; the layer dismisses itself via call.dism
 ## Concepts
 
 - Headless `LayerClient` → named `LayerStack`s → `Layer`s; each adapter subscribes via `useSyncExternalStore` (or the library or framework equivalent) + a selector.
-- `layerOptions<P, R>()` / `layerKey<R>()` carry the response type end-to-end (via `DataTag`) so `await client.open(...)` infers it — no explicit generic.
-- Optional `validate` (a [Standard Schema](https://standardschema.dev) or a sync `(input) => output` fn) parses untrusted `payload` at `open`; failure rejects with `PayloadValidationError` (narrow via `isPayloadValidationError`).
+- **`useLayer(options)`** — wired handle (drive + observe). **`useLayerState`** / **`useLayerQueuedState`** / **`useQueuedStack`** — observe-only. Core **`createLayer(options, client)`** for non-UI clients. See [glossary](docs/glossary.md).
+- `layerOptions<P, R>()` / `layerKey<R>()` carry the response type end-to-end (via `DataTag`) so `await open(...)` infers it — no explicit generic.
+- Optional `validate` (a [Standard Schema](https://standardschema.dev) or a sync `(input) => output` fn) parses untrusted `payload` at `open`; failure rejects with `PayloadValidationError` (narrow via `isPayloadValidationError`). Validated handles: `open` = schema **input**, `state`/`current` = **output** ([glossary](docs/glossary.md)).
 - App-wide error type via `Register` module augmentation (`DefaultLayerError`, `Error` by default).
 - Ergonomic wrappers on every adapter — `useLayerGroup`, `useMutationFlow`, `createStackHook` (Angular/Svelte render differently; see [adapter ergonomics](docs/architecture.md#adapter-ergonomics)).
 - Named stacks; `upsert` for singletons; `update` for live payload patches; `scope: { strategy: 'serial' }` queues (`getQueuedSnapshot`).

@@ -93,15 +93,15 @@ provideLayerClient();
 ```
 
 ```vue
-<!-- Opener.vue — call & await; ConfirmResponse is inferred end-to-end -->
+<!-- Opener.vue -->
 <script setup lang="ts">
-import { useLayerClient } from "@stainless-code/vue-layers";
+import { useLayer } from "@stainless-code/vue-layers";
 import { confirm } from "./confirm";
 
-const client = useLayerClient();
+const c = useLayer(confirm);
 
 async function handleRemove() {
-  const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+  const ok = await c.open({ title: "Remove?" });
   if (!ok) return;
   deleteItem();
 }
@@ -111,6 +111,8 @@ async function handleRemove() {
   <button type="button" @click="handleRemove()">Remove</button>
 </template>
 ```
+
+Low-level bag-form: `useLayerClient()` + `client.open({ ...confirm, payload })`.
 
 `payload` is optional when its type is `void`, `unknown`, `undefined`, or a union containing `undefined`; responses default to `void`. This no-payload, fire-and-forget layer omits `payload`, does not await the returned promise, and dismisses without a response:
 
@@ -166,53 +168,48 @@ Each layer component receives `call` (`end`/`dismiss`/`update`/`setRunning`/`set
 
 **Key vs id:** `key` is the logical identity (`find`/`upsert`/`gcTime`); each mount gets a unique instance `id`. Use `s.id` for `v-for` keys; `parallel` stacks may hold multiple same-key layers.
 
+## Wired handle: useLayer
+
+```ts
+const c = useLayer(confirm);
+await c.open({ title: "Remove?" });
+```
+
 ## Subscribing to stacks
 
-### useStack
+### useStack / useQueuedStack
 
-Returns a `Readonly<Ref<T>>` — auto-unwraps in templates; use `.value` in `<script setup>`.
+Options-bag + optional trailing `client`; `select` (not `selector`). Returns `Readonly<Ref<T>>`:
 
 ```vue
 <script setup lang="ts">
-import { useStack } from "@stainless-code/vue-layers";
+import { useStack, useQueuedStack } from "@stainless-code/vue-layers";
 
-const stack = useStack("confirm");
-const count = useStack("confirm", (states) => states.length);
-const top = useStack("confirm", (states) => states.at(-1) ?? null);
+const stack = useStack({ stack: "confirm" });
+const count = useStack({ stack: "confirm", select: (s) => s.length });
+const queued = useQueuedStack({ stack: "confirm" });
 </script>
-
-<template>
-  <ul>
-    <li v-for="s in stack" :key="s.id">{{ s.payload }}</li>
-  </ul>
-  <span>{{ count }} open</span>
-</template>
 ```
 
-Optional `selector` and `compare` (default `Object.is`) limit ref updates when only a slice of the snapshot matters.
+### useLayerState / useLayerQueuedState
 
-### useLayer
-
-Subscribe to a single layer by key; ref value is `null` when not active. A `DataTag` key (from `layerOptions` / `layerKey`) infers response `R` and error `E`:
+Observe-only; `Readonly<Ref<LayerState[]>>` for all same-key instances:
 
 ```vue
 <script setup lang="ts">
-import { useLayer } from "@stainless-code/vue-layers";
+import { useLayerState } from "@stainless-code/vue-layers";
 import { confirm } from "./confirm";
 
-const state = useLayer(confirm.key, "confirm");
+const states = useLayerState({ key: confirm.key, stack: "confirm" });
+const top = computed(() => states.value.at(-1));
 </script>
-
-<template>
-  <span v-if="state">{{ state.payload.title }}</span>
-</template>
 ```
 
-Optional third arg `compare` compares the previous and next matched `LayerState`. Unlike `useStack`, `useLayer` has no selector; use a custom comparison only when ignored state fields should not trigger an update.
+Optional `select` and `compare` (default `Object.is`) limit ref updates when only a slice matters.
 
 ### StackSubscribe
 
-Isolate a subscription in a scoped-slot component. The slot payload is `{ value: unknown }` — `defineComponent` cannot thread the selector's return type through a slot; prefer `useStack(stack, selector)` in `setup()` for a fully typed value:
+Isolate a subscription in a scoped-slot component. The slot payload is `{ value: unknown }` — prefer `useStack({ select })` in `setup()` for a fully typed ref:
 
 ```vue
 <script setup lang="ts">
@@ -411,26 +408,29 @@ const emit = defineEmits<{ close: [] }>();
 
 ## Adapter API
 
-| Kind      | Name                   | Signature / shape                                                                                                          |
-| --------- | ---------------------- | -------------------------------------------------------------------------------------------------------------------------- |
-| Function  | `provideLayerClient`   | `(client?: LayerClient) => LayerClient`                                                                                    |
-| Hook      | `useLayerClient`       | `() => LayerClient`                                                                                                        |
-| Hook      | `useStack`             | `<T = LayerState[]>(stackId?, selector?, compare?) => Readonly<Ref<T>>` or the same overload with a leading `client`       |
-| Hook      | `useLayer`             | `<Key, P?, D?>(key, stackId?, compare?) => Readonly<Ref<LayerState \| null>>` or the same overload with a leading `client` |
-| Hook      | `useStackHandles`      | `(stack?, rootProps?) => StackHandles`                                                                                     |
-| Component | `StackOutlet`          | `{ stack?, rootProps? }`                                                                                                   |
-| Component | `StackSubscribe`       | `{ stack?, selector }` — scoped slot `{ value: unknown }`                                                                  |
-| Hook      | `useMutationFlow`      | `<P, R, RootProps?>(call) => MutationFlow<R>`                                                                              |
-| Hook      | `useLayerGroup`        | `<P, R, RootProps?>(call, options?) => LayerGroup`                                                                         |
-| Factory   | `createStackHook`      | `<HostProps>({ stack?, client?, Host? }) => StackHook<HostProps>`                                                          |
-| Type      | `StackHandles`         | `{ states: Readonly<Ref<LayerState[]>>, getCall }`                                                                         |
-| Type      | `MutationRun<R>`       | `{ orEnd(response) }`                                                                                                      |
-| Type      | `MutationFlow<R>`      | `{ pending: Readonly<Ref<boolean>>, run }`                                                                                 |
-| Type      | `ScopedOpen`           | `open` with `stack` pre-bound                                                                                              |
-| Type      | `LayerGroup`           | `{ open, dismissAll, states, Outlet, stackId }`                                                                            |
-| Type      | `AppStack`             | `{ open, dismissAll, states }`                                                                                             |
-| Type      | `AppLayerProps<P, R>`  | `{ options, open, payload, onResolved? }`                                                                                  |
-| Type      | `StackHook<HostProps>` | `{ StackProvider, useAppStack, AppHost, AppLayer }`                                                                        |
+| Kind      | Name                   | Signature / shape                                                              |
+| --------- | ---------------------- | ------------------------------------------------------------------------------ |
+| Function  | `provideLayerClient`   | `(client?: LayerClient) => LayerClient`                                        |
+| Hook      | `useLayerClient`       | `() => LayerClient`                                                            |
+| Hook      | `useLayer`             | `(options, client?) => WiredLayerHandle refs + state/queued/top`               |
+| Hook      | `useLayerState`        | `({ key, stack?, select?, compare? }, client?) => Readonly<Ref<LayerState[]>>` |
+| Hook      | `useLayerQueuedState`  | `({ key, stack?, select?, compare? }, client?) => Readonly<Ref<LayerState[]>>` |
+| Hook      | `useStack`             | `({ stack?, select?, compare? }, client?) => Readonly<Ref<T>>`                 |
+| Hook      | `useQueuedStack`       | `({ stack?, select?, compare? }, client?) => Readonly<Ref<T>>`                 |
+| Hook      | `useStackHandles`      | `(stack?, rootProps?) => StackHandles`                                         |
+| Component | `StackOutlet`          | `{ stack?, rootProps? }`                                                       |
+| Component | `StackSubscribe`       | `{ stack?, selector }` — scoped slot `{ value: unknown }`                      |
+| Hook      | `useMutationFlow`      | `<P, R, RootProps?>(call) => MutationFlow<R>`                                  |
+| Hook      | `useLayerGroup`        | `<P, R, RootProps?>(call, options?) => LayerGroup`                             |
+| Factory   | `createStackHook`      | `<HostProps>({ stack?, client?, Host? }) => StackHook<HostProps>`              |
+| Type      | `StackHandles`         | `{ states: Readonly<Ref<LayerState[]>>, getCall }`                             |
+| Type      | `MutationRun<R>`       | `{ orEnd(response) }`                                                          |
+| Type      | `MutationFlow<R>`      | `{ pending: Readonly<Ref<boolean>>, run }`                                     |
+| Type      | `ScopedOpen`           | `open` with `stack` pre-bound                                                  |
+| Type      | `LayerGroup`           | `{ open, dismissAll, states, Outlet, stackId }`                                |
+| Type      | `AppStack`             | `{ open, dismissAll, states }`                                                 |
+| Type      | `AppLayerProps<P, R>`  | `{ options, open, payload, onResolved? }`                                      |
+| Type      | `StackHook<HostProps>` | `{ StackProvider, useAppStack, AppHost, AppLayer }`                            |
 
 Client-less subscriptions use `useLayerClient()` internally. Call `useStack`, `useLayer`, `useStackHandles`, `useMutationFlow`, and `useLayerGroup` inside `setup()` or `effectScope()`; subscriptions clean up via `onScopeDispose`.
 
