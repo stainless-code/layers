@@ -164,8 +164,6 @@ function subscribeStackSnapshot<T>(
 /**
  * Bridges a {@link LayerClient} stack into an Angular `Signal`.
  * Must run in an injection context because the subscription uses `effect()`.
- *
- * @param compare Equality check used to preserve the previous selection. Defaults to `Object.is`.
  */
 export function useStack<T = LayerState[]>(
   opts: UseStackOptions<T> = {},

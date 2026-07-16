@@ -155,14 +155,14 @@ All imports from `@stainless-code/preact-layers`.
 
 ### Wired handle & subscriptions
 
-| Export                                                                 | Role                                                        |
-| ---------------------------------------------------------------------- | ----------------------------------------------------------- |
-| **`useLayer(options, client?)`**                                       | Drive + observe. See [glossary](../../../docs/glossary.md). |
-| **`useLayerState({ key, stack?, select?, compare? }, client?)`**       | Observe-only, mounted, `LayerState[]`.                      |
-| **`useLayerQueuedState({ key, stack?, select?, compare? }, client?)`** | Observe-only, queued, `LayerState[]`.                       |
-| **`useStack({ stack?, select?, compare? }, client?)`**                 | Whole-stack mounted snapshot.                               |
-| **`useQueuedStack({ stack?, select?, compare? }, client?)`**           | Whole-stack queued snapshot.                                |
-| **`StackSubscribe({ stack?, selector, children })`**                   | Render-prop subscription.                                   |
+| Export                                                                 | Role                                                     |
+| ---------------------------------------------------------------------- | -------------------------------------------------------- |
+| **`useLayer(options, client?)`**                                       | Drive + observe. See [glossary](../../docs/glossary.md). |
+| **`useLayerState({ key, stack?, select?, compare? }, client?)`**       | Observe-only, mounted, `LayerState[]`.                   |
+| **`useLayerQueuedState({ key, stack?, select?, compare? }, client?)`** | Observe-only, queued, `LayerState[]`.                    |
+| **`useStack({ stack?, select?, compare? }, client?)`**                 | Whole-stack mounted snapshot.                            |
+| **`useQueuedStack({ stack?, select?, compare? }, client?)`**           | Whole-stack queued snapshot.                             |
+| **`StackSubscribe({ stack?, selector, children })`**                   | Render-prop subscription.                                |
 
 ```tsx
 const c = useLayer(confirm);

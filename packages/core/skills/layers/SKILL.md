@@ -129,7 +129,7 @@ const ok = await c.open({ title: "Remove?" });
 c.dismiss(false, { id: c.current?.id });
 ```
 
-Stack-level ops via `c.stack.*`. `current` is live-checked. Validated I/O: [glossary](../../../docs/glossary.md).
+Stack-level ops via `c.stack.*`. `current` is live-checked. Validated I/O: [glossary](../../../../docs/glossary.md).
 
 ## Key inference
 

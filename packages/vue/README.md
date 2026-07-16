@@ -158,7 +158,7 @@ Call inside `setup()` or an `effectScope()` — subscriptions clean up via `onSc
 
 | Export                                                                 | Returns                              | Role                                                                     |
 | ---------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
-| **`useLayer(options, client?)`**                                       | handle refs + `state`/`queued`/`top` | Drive + observe. See [glossary](../../../docs/glossary.md).              |
+| **`useLayer(options, client?)`**                                       | handle refs + `state`/`queued`/`top` | Drive + observe. See [glossary](../../docs/glossary.md).                 |
 | **`useLayerState({ key, stack?, select?, compare? }, client?)`**       | `Readonly<Ref<LayerState[]>>`        | Observe-only, mounted.                                                   |
 | **`useLayerQueuedState({ key, stack?, select?, compare? }, client?)`** | `Readonly<Ref<LayerState[]>>`        | Observe-only, queued.                                                    |
 | **`useStack({ stack?, select?, compare? }, client?)`**                 | `Readonly<Ref<T>>`                   | Whole-stack mounted.                                                     |

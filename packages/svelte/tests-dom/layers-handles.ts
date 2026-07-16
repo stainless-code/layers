@@ -13,10 +13,3 @@ export const dupOptions = layerOptions<{ n: number }, boolean>({
   component: undefined,
   exitingDelay: 0,
 });
-
-export const voidOptions = layerOptions<void, boolean>({
-  stack: "default",
-  key: ["void"],
-  component: undefined,
-  exitingDelay: 0,
-});

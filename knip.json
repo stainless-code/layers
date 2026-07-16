@@ -21,7 +21,8 @@
       "entry": [
         "src/**/*.test.ts",
         "src/**/*.test-d.ts",
-        "tests-dom/**/*.test.tsx"
+        "tests-dom/**/*.test.tsx",
+        "tests-dom/**/*.test-d.tsx"
       ],
       "project": ["src/**/*.ts", "tests-dom/**/*.tsx"]
     },
@@ -60,5 +61,9 @@
     }
   },
   "ignoreDependencies": ["@stainless-code/codemap", "@angular/core"],
-  "ignoreBinaries": ["lychee"]
+  "ignoreBinaries": ["lychee"],
+  "ignoreIssues": {
+    "packages/angular/src/index.ts": ["duplicates"],
+    "packages/solid/src/index.ts": ["duplicates"]
+  }
 }

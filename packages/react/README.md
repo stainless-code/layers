@@ -143,14 +143,14 @@ All imports from `@stainless-code/react-layers`.
 
 ### Wired handle & subscriptions
 
-| Export                                                                 | Signature                                | Role                                                                   |
-| ---------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
-| **`useLayer(options, client?)`**                                       | → `LayerHandle` + `state`/`queued`/`top` | Drive + observe. Validated I/O: [glossary](../../../docs/glossary.md). |
-| **`useLayerState({ key, stack?, select?, compare? }, client?)`**       | → `LayerState[]` (or selected `U`)       | Observe-only, mounted.                                                 |
-| **`useLayerQueuedState({ key, stack?, select?, compare? }, client?)`** | → `LayerState[]` (or selected `U`)       | Observe-only, queued.                                                  |
-| **`useStack({ stack?, select?, compare? }, client?)`**                 | → `T`                                    | Whole-stack mounted.                                                   |
-| **`useQueuedStack({ stack?, select?, compare? }, client?)`**           | → `T`                                    | Whole-stack queued.                                                    |
-| **`StackSubscribe({ stack?, selector, children })`**                   | render-prop                              | Isolate a subscription; pass selected value to `children`.             |
+| Export                                                                 | Signature                                | Role                                                                |
+| ---------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------- |
+| **`useLayer(options, client?)`**                                       | → `LayerHandle` + `state`/`queued`/`top` | Drive + observe. Validated I/O: [glossary](../../docs/glossary.md). |
+| **`useLayerState({ key, stack?, select?, compare? }, client?)`**       | → `LayerState[]` (or selected `U`)       | Observe-only, mounted.                                              |
+| **`useLayerQueuedState({ key, stack?, select?, compare? }, client?)`** | → `LayerState[]` (or selected `U`)       | Observe-only, queued.                                               |
+| **`useStack({ stack?, select?, compare? }, client?)`**                 | → `T`                                    | Whole-stack mounted.                                                |
+| **`useQueuedStack({ stack?, select?, compare? }, client?)`**           | → `T`                                    | Whole-stack queued.                                                 |
+| **`StackSubscribe({ stack?, selector, children })`**                   | render-prop                              | Isolate a subscription; pass selected value to `children`.          |
 
 ```tsx
 const c = useLayer(confirm);

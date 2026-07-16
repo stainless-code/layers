@@ -150,11 +150,7 @@ function snapshotFrom<T>(
   }) as Accessor<T>;
 }
 
-/**
- * Subscribe to a selected slice of a stack's mounted snapshot.
- *
- * @param compare Equality check used to preserve the previous selection. Defaults to `Object.is`.
- */
+/** Subscribe to a selected slice of a stack's mounted snapshot. */
 export function useStack<T = LayerState[]>(
   opts: UseStackOptions<T> = {},
   client?: LayerClient,
