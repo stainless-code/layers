@@ -13,16 +13,26 @@ mock.module("svelte", () => ({
 }));
 
 let LayerClient: typeof import("@stainless-code/layers").LayerClient;
+let layerOptions: typeof import("@stainless-code/layers").layerOptions;
 let callFor: typeof import("./store").callFor;
+let createLayer: typeof import("./store").createLayer;
+let createLayerState: typeof import("./store").createLayerState;
+let createQueuedStack: typeof import("./store").createQueuedStack;
 let setLayerClient: typeof import("./store").setLayerClient;
-let useLayer: typeof import("./store").useLayer;
 let useLayerClient: typeof import("./store").useLayerClient;
 let useStack: typeof import("./store").useStack;
 
 beforeAll(async () => {
-  ({ LayerClient } = await import("@stainless-code/layers"));
-  ({ callFor, setLayerClient, useLayer, useLayerClient, useStack } =
-    await import("./store"));
+  ({ LayerClient, layerOptions } = await import("@stainless-code/layers"));
+  ({
+    callFor,
+    createLayer,
+    createLayerState,
+    createQueuedStack,
+    setLayerClient,
+    useLayerClient,
+    useStack,
+  } = await import("./store"));
 });
 
 beforeEach(() => {
@@ -61,7 +71,7 @@ describe("setLayerClient / useLayerClient", () => {
 describe("useStack (svelte store)", () => {
   it("subscribes to stack snapshots and cleans up on unsubscribe", () => {
     const client = new LayerClient();
-    const store = useStack(client, "confirm");
+    const store = useStack({ stack: "confirm" }, client);
     const sub = subscribe(store);
 
     expect(sub.value).toEqual([]);
@@ -74,9 +84,12 @@ describe("useStack (svelte store)", () => {
     expect(client.getStack("confirm").size).toBe(0);
   });
 
-  it("with a selector returns the selected slice", () => {
+  it("with select returns the selected slice", () => {
     const client = new LayerClient();
-    const store = useStack(client, "confirm", (states) => states.length);
+    const store = useStack(
+      { stack: "confirm", select: (states) => states.length },
+      client,
+    );
     const sub = subscribe(store);
 
     expect(sub.value).toBe(0);
@@ -89,7 +102,7 @@ describe("useStack (svelte store)", () => {
   it("reads client from context when omitted", () => {
     const client = new LayerClient();
     setLayerClient(client);
-    const store = useStack("confirm");
+    const store = useStack({ stack: "confirm" });
     const sub = subscribe(store);
 
     expect(sub.value).toEqual([]);
@@ -98,17 +111,33 @@ describe("useStack (svelte store)", () => {
 
     sub.unsub();
   });
+
+  it("createQueuedStack subscribes to queued snapshot", () => {
+    const client = new LayerClient({
+      defaultStackOptions: {
+        default: { scope: { strategy: "serial" } },
+      },
+    });
+    const store = createQueuedStack({ select: (s) => s.length }, client);
+    const sub = subscribe(store);
+    expect(sub.value).toBe(0);
+    void client.open({ key: ["a"], payload: 1 });
+    void client.open({ key: ["b"], payload: 2 });
+    expect(sub.value).toBe(1);
+    sub.unsub();
+  });
 });
 
-describe("useLayer (svelte store)", () => {
-  it("yields null then the matching layer state", () => {
+describe("createLayerState (svelte store)", () => {
+  it("yields empty array then matching layer states", () => {
     const client = new LayerClient();
-    const store = useLayer(client, ["a"], "confirm");
+    const store = createLayerState({ key: ["a"], stack: "confirm" }, client);
     const sub = subscribe(store);
 
-    expect(sub.value).toBeNull();
+    expect(sub.value).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
-    expect(sub.value?.payload).toBe(1);
+    expect(sub.value).toHaveLength(1);
+    expect(sub.value[0]?.payload).toBe(1);
 
     sub.unsub();
   });
@@ -116,21 +145,51 @@ describe("useLayer (svelte store)", () => {
   it("reads client from context when omitted", () => {
     const client = new LayerClient();
     setLayerClient(client);
-    const store = useLayer(["a"], "confirm");
+    const store = createLayerState({ key: ["a"], stack: "confirm" });
     const sub = subscribe(store);
 
-    expect(sub.value).toBeNull();
+    expect(sub.value).toEqual([]);
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
-    expect(sub.value?.payload).toBe(1);
+    expect(sub.value).toHaveLength(1);
+    expect(sub.value[0]?.payload).toBe(1);
 
     sub.unsub();
+  });
+});
+
+describe("createLayer (svelte store)", () => {
+  it("exposes handle control and reactive state stores", async () => {
+    const client = new LayerClient();
+    setLayerClient(client);
+    const opts = layerOptions<{ msg: string }, void>({
+      key: ["toast"],
+      exitingDelay: 0,
+    });
+    const handle = createLayer(opts);
+    const state = subscribe(handle.state);
+    const top = subscribe(handle.top);
+
+    expect(state.value).toEqual([]);
+    expect(top.value).toBeNull();
+    expect(handle.current).toBeNull();
+
+    const pending = handle.open({ msg: "hi" });
+    expect(state.value).toHaveLength(1);
+    expect(top.value?.payload.msg).toBe("hi");
+
+    await handle.dismiss(undefined as void);
+    expect(await pending).toBeUndefined();
+    expect(state.value).toEqual([]);
+
+    state.unsub();
+    top.unsub();
   });
 });
 
 describe("callFor", () => {
   it("returns a call context for a live state and null for a bogus state", async () => {
     const client = new LayerClient();
-    const store = useStack(client, "confirm");
+    const store = useStack({ stack: "confirm" }, client);
     const sub = subscribe(store);
 
     const pending = client.open<number, boolean>({

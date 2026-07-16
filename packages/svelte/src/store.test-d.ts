@@ -1,5 +1,9 @@
 import { layerKey } from "@stainless-code/layers";
-import type { LayerCallContext } from "@stainless-code/layers";
+import type {
+  LayerCallContext,
+  LayerState,
+  StandardSchemaV1,
+} from "@stainless-code/layers";
 /**
  * Svelte store adapter type-level inference tests. Compiled by `tsc --noEmit`
  * as part of the src program; never executed. Registered as a knip entry so its
@@ -7,8 +11,11 @@ import type { LayerCallContext } from "@stainless-code/layers";
  */
 import type { MutationFlow } from "@stainless-code/svelte-layers/store";
 import {
+  createLayer,
+  createLayerState,
   useLayerGroup,
   useMutationFlow,
+  useStack,
 } from "@stainless-code/svelte-layers/store";
 import type { Readable } from "svelte/store";
 
@@ -51,3 +58,50 @@ export type _LayerGroupOpenInfersResponse = Expect<
   Equal<Awaited<ReturnType<typeof openGroupTagged>>, boolean>
 >;
 void group;
+
+declare const nSelector: (states: LayerState[]) => { n: number };
+function useStackDefault() {
+  return useStack({ stack: "s" });
+}
+export type _UseStackDefaultLayerStates = Expect<
+  Equal<
+    ReturnType<typeof useStackDefault> extends Readable<infer T> ? T : never,
+    LayerState[]
+  >
+>;
+
+function createLayerStateTagged() {
+  return createLayerState({ key: removeKey });
+}
+export type _StoreCreateLayerStateInfersResponse = Expect<
+  Equal<
+    ReturnType<typeof createLayerStateTagged> extends Readable<infer T>
+      ? T
+      : never,
+    LayerState<unknown, boolean, Error, unknown>[]
+  >
+>;
+
+const idSchema = {
+  "~standard": {
+    version: 1,
+    vendor: "test",
+    validate: (v: unknown) => ({
+      value: { id: Number((v as { id: string }).id) },
+    }),
+    types: undefined as unknown as {
+      input: { id: string };
+      output: { id: number };
+    },
+  },
+} as StandardSchemaV1<{ id: string }, { id: number }>;
+
+function useValidatedLayer() {
+  return createLayer({ key: ["v"], validate: idSchema });
+}
+export type _StoreValidatedCreateLayerOpenAcceptsInput = Expect<
+  Equal<
+    Parameters<ReturnType<typeof useValidatedLayer>["open"]>[0],
+    { id: string }
+  >
+>;

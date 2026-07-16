@@ -1,5 +1,5 @@
-import { layerKey } from "@stainless-code/layers";
-import { useLayer as useSolidLayer } from "@stainless-code/solid-layers";
+import { layerKey, layerOptions } from "@stainless-code/layers";
+import { useLayer, useLayerState } from "@stainless-code/solid-layers";
 /**
  * Solid adapter type-level inference tests. Compiled by `tsc --noEmit`;
  * never executed — bun's `*.test.ts` glob skips `*.test-d.ts`. Registered as a
@@ -20,17 +20,31 @@ type UnwrapAccessor<A> = A extends Accessor<infer T> ? T : never;
 // A DataTag-branded key carries its response type end-to-end.
 const removeKey = layerKey<boolean>()(["confirm", "remove"]);
 
-type _SolidUseLayerTagged = ReturnType<typeof useSolidLayer<typeof removeKey>>;
-export type _SolidUseLayerTaggedResponse = Expect<
+type _SolidUseLayerStateTagged = ReturnType<
+  typeof useLayerState<typeof removeKey>
+>;
+export type _SolidUseLayerStateTaggedResponse = Expect<
   Equal<
-    NonNullable<UnwrapAccessor<_SolidUseLayerTagged>>["response"],
+    NonNullable<UnwrapAccessor<_SolidUseLayerStateTagged>[number]>["response"],
     boolean | undefined
   >
 >;
-type _SolidUseLayerPlain = ReturnType<typeof useSolidLayer<["plain"]>>;
-export type _SolidUseLayerPlainResponse = Expect<
+type _SolidUseLayerStatePlain = ReturnType<typeof useLayerState<["plain"]>>;
+export type _SolidUseLayerStatePlainResponse = Expect<
   Equal<
-    NonNullable<UnwrapAccessor<_SolidUseLayerPlain>>["response"],
+    NonNullable<UnwrapAccessor<_SolidUseLayerStatePlain>[number]>["response"],
     void | undefined
   >
+>;
+
+const confirmOpts = layerOptions<{ title: string }, boolean>({
+  key: ["confirm", "count"],
+});
+
+function openViaUseLayer() {
+  const c = useLayer(confirmOpts);
+  return c.open({ title: "n" });
+}
+export type _UseLayerOpenInfersResponse = Expect<
+  Equal<Awaited<ReturnType<typeof openViaUseLayer>>, boolean>
 >;

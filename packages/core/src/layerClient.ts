@@ -1,6 +1,5 @@
 import type { DataTag } from "./dataTag";
 import { LayerStack } from "./layerStack";
-import type { StandardSchemaV1 } from "./standardSchema";
 import type {
   DefaultLayerError,
   DismissAllOptions,
@@ -12,8 +11,8 @@ import type {
   StackOptions,
 } from "./types";
 import type {
-  InferValidatorInput,
   InferValidatorOutput,
+  OpenValidatePayload,
   Validator,
 } from "./validators";
 
@@ -21,11 +20,6 @@ import type {
 type NoValidateOptions<Opts> = Opts extends { validate: Validator<unknown> }
   ? never
   : Opts;
-
-type OpenValidatePayload<V extends Validator<unknown>> =
-  V extends StandardSchemaV1
-    ? StandardSchemaV1.InferInput<V>
-    : InferValidatorInput<V>;
 
 type OpenImplOptions<P, R, E, D, RootProps, V extends Validator<unknown>> =
   | NoValidateOptions<OpenLayerOptions<P, R, E, D, RootProps>>

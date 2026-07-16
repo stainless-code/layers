@@ -7,7 +7,7 @@
   let { client }: { client: LayerClient } = $props();
 
   setLayerClient(client);
-  const stack = useStack("drawer");
+  const stack = useStack({ stack: "drawer" });
 </script>
 
 {#each stack.current as s (s.id)}

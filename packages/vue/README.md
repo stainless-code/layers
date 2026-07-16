@@ -73,20 +73,15 @@ Wrap `<StackOutlet>` in `<Teleport to="body">` when you need a portal target.
 
 ### 3. Call and await
 
-`ConfirmResponse` is inferred from the named `layerOptions` contract — no explicit generics on `open`.
-
 ```vue
 <script setup lang="ts">
-import { useLayerClient } from "@stainless-code/vue-layers";
+import { useLayer } from "@stainless-code/vue-layers";
 import { confirm } from "./confirm";
 
-const client = useLayerClient();
+const c = useLayer(confirm);
 
 async function handleRemove() {
-  const ok = await client.open({
-    ...confirm,
-    payload: { title: "Remove?" },
-  });
+  const ok = await c.open({ title: "Remove?" });
   if (!ok) return;
   deleteItem();
 }
@@ -96,6 +91,8 @@ async function handleRemove() {
   <button type="button" @click="handleRemove()">Remove</button>
 </template>
 ```
+
+Low-level bag-form alternative: `useLayerClient()` + `client.open({ ...confirm, payload })`.
 
 `payload` is optional when its type is `void`, `unknown`, `undefined`, or a union containing `undefined`; responses default to `void`. This no-payload, fire-and-forget layer omits `payload`, does not await the returned promise, and dismisses without a response:
 
@@ -155,32 +152,31 @@ All imports from `@stainless-code/vue-layers`.
 | **`provideLayerClient`** | `(client?) => LayerClient` | Provide a `LayerClient` via Vue provide/inject (creates one if omitted). Call in a parent `setup()`. |
 | **`useLayerClient`**     | `() => LayerClient`        | Read the nearest client from inject; throws if none provided.                                        |
 
-### Subscriptions
+### Wired handle & subscriptions
 
 Call inside `setup()` or an `effectScope()` — subscriptions clean up via `onScopeDispose`. Refs auto-unwrap in templates; use `.value` in `<script setup>`.
 
-- **`useStack(stackId?, selector?, compare?)`** or **`useStack(client, stackId?, selector?, compare?)`** → `Readonly<Ref<T>>`. Subscribes to a stack snapshot (default `T = LayerState[]`).
-- **`useLayer(key, stackId?, compare?)`** or **`useLayer(client, key, stackId?, compare?)`** → `Readonly<Ref<LayerState | null>>`. Subscribes by key; `null` when inactive. `DataTag` keys infer response `R` and error `E`.
-- **`StackSubscribe({ stack?, selector })`** — scoped-slot subscription; slot payload is `{ value: unknown }`. Prefer **`useStack(stack, selector)`** in `setup()` for a fully typed value.
+| Export                                                                 | Returns                              | Role                                                                     |
+| ---------------------------------------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------ |
+| **`useLayer(options, client?)`**                                       | handle refs + `state`/`queued`/`top` | Drive + observe. See [glossary](../../../docs/glossary.md).              |
+| **`useLayerState({ key, stack?, select?, compare? }, client?)`**       | `Readonly<Ref<LayerState[]>>`        | Observe-only, mounted.                                                   |
+| **`useLayerQueuedState({ key, stack?, select?, compare? }, client?)`** | `Readonly<Ref<LayerState[]>>`        | Observe-only, queued.                                                    |
+| **`useStack({ stack?, select?, compare? }, client?)`**                 | `Readonly<Ref<T>>`                   | Whole-stack mounted.                                                     |
+| **`useQueuedStack({ stack?, select?, compare? }, client?)`**           | `Readonly<Ref<T>>`                   | Whole-stack queued.                                                      |
+| **`StackSubscribe({ stack?, selector })`**                             | scoped slot                          | Slot `{ value: unknown }`; prefer `useStack({ select })` for typed refs. |
 
 ```vue
 <script setup lang="ts">
-import { useStack, useLayer } from "@stainless-code/vue-layers";
+import { useLayer, useLayerState, useStack } from "@stainless-code/vue-layers";
 import { confirm } from "./confirm";
 
-const stack = useStack("confirm");
-const count = useStack("confirm", (states) => states.length);
-const state = useLayer(confirm.key, "confirm");
+const c = useLayer(confirm);
+const mounted = useLayerState({ key: confirm.key, stack: "confirm" });
+const count = useStack({ stack: "confirm", select: (s) => s.length });
 </script>
-
-<template>
-  <StackSubscribe :selector="(s) => s.length">
-    <template #default="{ value }">{{ value }} open</template>
-  </StackSubscribe>
-</template>
 ```
 
-Pass an explicit `LayerClient` first when outside a `provideLayerClient()` subtree.
+Optional trailing `client` overrides context client.
 
 ### Rendering
 
@@ -210,6 +206,6 @@ Pass an explicit `LayerClient` first when outside a `provideLayerClient()` subtr
 
 ### Core re-exports
 
-`export * from "@stainless-code/layers"` — types (`LayerState`, `LayerComponentProps`, `LayerCallContext`, …), `LayerClient`, `LayerStack`, `Layer`, `layerOptions`, `layerKey`, `createCallContext`, `createLayerGroup`, `childStackId`, validation helpers (`PayloadValidationError`, `isPayloadValidationError`), utilities (`hashKey`, `keySignature`), and more. Engine depth: [`layers` skill](https://github.com/stainless-code/layers/blob/main/packages/core/skills/layers/SKILL.md) · [architecture](https://github.com/stainless-code/layers/blob/main/docs/architecture.md).
+`export * from "@stainless-code/layers"` — includes `createLayer`, `LayerHandle`, `ValidatedLayerHandle`, plus `LayerClient`, `layerOptions`, `LayerState`, validation helpers, and more.
 
 Full guide: [repo README](https://github.com/stainless-code/layers#readme).

@@ -102,7 +102,7 @@ export const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
   import { confirm } from "./layers/confirm";
 
   setLayerClient();
-  const stack = useStack("confirm");
+  const stack = useStack({ stack: "confirm" });
 </script>
 
 {#each stack.current as s (s.id)}
@@ -135,7 +135,7 @@ requires Svelte 5.7+.
   import { confirm } from "./layers/confirm";
 
   const client = setLayerClient();
-  const stack = useStack("confirm");
+  const stack = useStack({ stack: "confirm" });
 </script>
 
 {#each $stack as s (s.id)}
@@ -164,13 +164,13 @@ The component and call snippets use Svelte 5 syntax. With Svelte 3/4, use legacy
 
 ```svelte
 <script lang="ts">
-  import { useLayerClient } from "@stainless-code/svelte-layers";
+  import { createLayer } from "@stainless-code/svelte-layers";
   import { confirm } from "./layers/confirm";
 
-  const client = useLayerClient();
+  const c = createLayer(confirm);
 
   async function handleRemove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+    const ok = await c.open({ title: "Remove?" });
     if (!ok) return;
     deleteItem();
   }
@@ -179,7 +179,7 @@ The component and call snippets use Svelte 5 syntax. With Svelte 3/4, use legacy
 <button type="button" onclick={() => void handleRemove()}>Remove</button>
 ```
 
-Response type is inferred from `layerOptions` / `layerKey` `DataTag` branding.
+Low-level bag-form: `useLayerClient()` + `client.open({ ...confirm, payload })`.
 
 When `P` admits `undefined`, `payload` is optional; omit it instead of passing an empty or `undefined` value. With the default `void` response, a layer can also be fire-and-forget. Mount its `"notice"` stack with the runes outlet pattern above.
 
@@ -254,69 +254,53 @@ Set `enteringDelay` / `exitingDelay` on `layerOptions`. For spring or variable-d
 
 The adapter has no built-in outlet, portal host, `StackOutlet`, `StackSubscribe`, or `createStackHook`. Render active layers inline in a layout with `useStack().current` and `callFor`, or move them with the app's portal pattern; nested child stacks from `useLayerGroup` follow the same render path.
 
+## Wired handle: createLayer
+
+```ts
+const c = createLayer(confirm);
+await c.open({ title: "Remove?" });
+```
+
+Core headless factory is `createLayerHandle`.
+
 ## Subscribing to stacks
 
-### useStack
+Options-bag + optional trailing `client`; `select` (not `selector`).
 
-Runes return a `SvelteStack` handle: read `.current` in a reactive context and use `.callFor(state, rootProps?)` for a mounted state.
+### useStack / createQueuedStack
+
+Runes return a `SvelteStack` handle: read `.current` in a reactive context.
 
 ```svelte
 <script lang="ts">
-  import { useStack } from "@stainless-code/svelte-layers";
+  import { useStack, createQueuedStack } from "@stainless-code/svelte-layers";
 
-  const stack = useStack("confirm");
+  const stack = useStack({ stack: "confirm" });
+  const count = useStack({ stack: "confirm", select: (s) => s.length });
+  const queued = createQueuedStack({ stack: "confirm" });
 </script>
 
 <p>{stack.current.length} open</p>
 ```
 
-Optional `selector` and `compare` (default `Object.is`) limit updates when only a slice matters:
+### createLayerState / createLayerQueuedState
+
+Observe-only; `.current` is `LayerState[]` for all same-key instances:
 
 ```svelte
 <script lang="ts">
-  const count = useStack("confirm", (states) => states.length);
-  const top = useStack("confirm", (states) => states.at(-1) ?? null);
-</script>
-
-<p>Count: {count.current}</p>
-```
-
-Stores return a `Readable`; use `$stack` to auto-subscribe and standalone `callFor(client, stackId, state, rootProps?)` for a mounted state.
-
-```svelte
-<script lang="ts">
-  import { setLayerClient, useStack, callFor } from "@stainless-code/svelte-layers/store";
-
-  const client = setLayerClient();
-  const stackStore = useStack("confirm");
-</script>
-
-{#each $stackStore as s (s.id)}
-  {@const call = callFor(client, "confirm", s)}
-  ...
-{/each}
-```
-
-Both forms accept optional `selector` and `compare` arguments; `compare` defaults to `Object.is`.
-
-### useLayer
-
-Subscribe to one layer by key. The selected state is `null` while inactive; `DataTag` branding from `layerOptions` / `layerKey` infers response and error types.
-
-```svelte
-<script lang="ts">
-  import { useLayer } from "@stainless-code/svelte-layers";
+  import { createLayerState } from "@stainless-code/svelte-layers";
   import { confirm } from "./layers/confirm";
 
-  const layer = useLayer(confirm.key, "confirm");
+  const mounted = createLayerState({ key: confirm.key, stack: "confirm" });
 </script>
 
-{#if layer.current}
-  <span>{layer.current.payload.title}</span>
+{#if mounted.current.at(-1)}
+  <span>{mounted.current.at(-1)!.payload.title}</span>
 {/if}
 ```
 
-For stores, import `useLayer` from `@stainless-code/svelte-layers/store` and read the returned `Readable` with `$layer`.
+Stores entry: same names (`createLayer`, `createLayerState`, `createQueuedStack`, `createLayerQueuedState`); `useStack({ … })` returns `Readable<T>` — auto-subscribe with `$stack`.
 
 ## Mutation flow
 
@@ -444,23 +428,26 @@ For stores, import `useLayer` from `@stainless-code/svelte-layers/store` and rea
 
 ## Adapter API
 
-| API               | Runes entry                                                                                                    | Stores entry                                                                       | Role                                                                        |
-| ----------------- | -------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
-| `setLayerClient`  | `(client?) => LayerClient`                                                                                     | Same                                                                               | Put a provided or new client in Svelte context.                             |
-| `useLayerClient`  | `() => LayerClient`                                                                                            | Same                                                                               | Read the nearest client; throws when absent.                                |
-| `useStack`        | `(client, stackId?, selector?, compare?)` or `(stackId?, selector?, compare?) => SvelteStack<RootProps, T>`    | Same overloads returning `Readable<T>`                                             | Subscribe to a stack; the default selector returns `LayerState[]`.          |
-| `useLayer`        | `(client, key, stackId?, compare?)` or `(key, stackId?, compare?) => SvelteStack<unknown, LayerState \| null>` | Same overloads returning `Readable<LayerState \| null>`                            | Subscribe to one keyed layer.                                               |
-| `useMutationFlow` | `(call) => { readonly pending: boolean, run }`                                                                 | `(call) => { pending: Readable<boolean>, run }`                                    | Drive `actionStatus: "running"`; `run(fn).orEnd(response)` ends on success. |
-| `useLayerGroup`   | `(call, options?) => { open, dismissAll, stack: SvelteStack, stackId }`                                        | `(call, options?) => { open, dismissAll, stack: Readable<LayerState[]>, stackId }` | Child stack scoped to the calling layer; cleaned up on `onDestroy`.         |
-| `SvelteStack`     | `{ readonly current: T; callFor(state, rootProps?) }`                                                          | —                                                                                  | Reactive runes handle.                                                      |
-| `callFor`         | —                                                                                                              | `(client, stackId, state, rootProps?) => LayerCallContext \| null`                 | Build a call context; returns `null` if the layer is gone.                  |
-| `MutationFlow<R>` | `{ readonly pending: boolean, run }`                                                                           | `{ pending: Readable<boolean>, run }`                                              | `pending` mirrors `actionStatus: "running"`.                                |
-| `MutationRun<R>`  | `{ orEnd(response) => Promise<void> }`                                                                         | Same                                                                               | Ends on success; on failure leaves the layer open and rethrows.             |
-| `LayerGroup`      | `{ open, dismissAll, stack: SvelteStack, stackId }`                                                            | `{ open, dismissAll, stack: Readable<LayerState[]>, stackId }`                     | `open` is stack-pre-bound; `dismissAll(response?)` clears the child stack.  |
+| API                      | Runes entry                                                             | Stores entry                                                                       | Role                                                                        |
+| ------------------------ | ----------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `setLayerClient`         | `(client?) => LayerClient`                                              | Same                                                                               | Put a provided or new client in Svelte context.                             |
+| `useLayerClient`         | `() => LayerClient`                                                     | Same                                                                               | Read the nearest client; throws when absent.                                |
+| `createLayer`            | `({ … }, client?) => SvelteStack` wired handle + state/queued/top       | Same                                                                               | Drive + observe; `open(payload)` — no spread.                               |
+| `createLayerState`       | `({ key, … }, client?) => SvelteStack<LayerState[]>`                    | `Readable<LayerState[]>`                                                           | Observe-only, mounted.                                                      |
+| `createLayerQueuedState` | `({ key, … }, client?) => SvelteStack<LayerState[]>`                    | `Readable<LayerState[]>`                                                           | Observe-only, queued.                                                       |
+| `useStack`               | `({ stack?, select?, compare? }, client?) => SvelteStack`               | `Readable<T>`                                                                      | Whole-stack mounted.                                                        |
+| `createQueuedStack`      | `({ stack?, select?, compare? }, client?) => SvelteStack`               | `Readable<T>`                                                                      | Whole-stack queued.                                                         |
+| `useMutationFlow`        | `(call) => { readonly pending: boolean, run }`                          | `(call) => { pending: Readable<boolean>, run }`                                    | Drive `actionStatus: "running"`; `run(fn).orEnd(response)` ends on success. |
+| `useLayerGroup`          | `(call, options?) => { open, dismissAll, stack: SvelteStack, stackId }` | `(call, options?) => { open, dismissAll, stack: Readable<LayerState[]>, stackId }` | Child stack scoped to the calling layer; cleaned up on `onDestroy`.         |
+| `SvelteStack`            | `{ readonly current: T; callFor(state, rootProps?) }`                   | —                                                                                  | Reactive runes handle.                                                      |
+| `callFor`                | —                                                                       | `(client, stackId, state, rootProps?) => LayerCallContext \| null`                 | Build a call context; returns `null` if the layer is gone.                  |
+| `MutationFlow<R>`        | `{ readonly pending: boolean, run }`                                    | `{ pending: Readable<boolean>, run }`                                              | `pending` mirrors `actionStatus: "running"`.                                |
+| `MutationRun<R>`         | `{ orEnd(response) => Promise<void> }`                                  | Same                                                                               | Ends on success; on failure leaves the layer open and rethrows.             |
+| `LayerGroup`             | `{ open, dismissAll, stack: SvelteStack, stackId }`                     | `{ open, dismissAll, stack: Readable<LayerState[]>, stackId }`                     | `open` is stack-pre-bound; `dismissAll(response?)` clears the child stack.  |
 
 ## Core re-exports (same import path)
 
-Both entries use `export * from "@stainless-code/layers"` and additionally expose adapter types including `LayerComponentProps`, `SvelteStack`, `MutationFlow<R>`, `MutationRun<R>`, and `LayerGroup`. The core surface includes `LayerClient`, `LayerStack`, `Layer`, `layerOptions`, `layerKey`, `LayerState`, `LayerCallContext`, `createCallContext`, `createLayerGroup`, `childStackId`, `keySignature`, `hashKey`, `DataTag`, `ResponseOf`, `ErrorOf`, `PayloadValidationError`, `isPayloadValidationError`, and related types.
+Both entries use `export * from "@stainless-code/layers"` — includes `createLayer`, `LayerHandle`, `ValidatedLayerHandle`, plus adapter types (`LayerComponentProps`, `SvelteStack`, `MutationFlow<R>`, …).
 
 Common core patterns:
 

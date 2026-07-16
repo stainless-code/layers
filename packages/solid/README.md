@@ -72,20 +72,15 @@ function App() {
 
 ### 3. Call and await
 
-Response type `ConfirmResponse` is inferred from `confirm` — no explicit generics on `open`.
-
 ```tsx
-import { useLayerClient } from "@stainless-code/solid-layers";
+import { useLayer } from "@stainless-code/solid-layers";
 import { confirm } from "./confirm";
 
 function RemoveButton() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
 
   async function handleRemove() {
-    const ok = await client.open({
-      ...confirm,
-      payload: { title: "Remove?", message: "Sure?" },
-    });
+    const ok = await c.open({ title: "Remove?", message: "Sure?" });
     if (!ok) return;
     deleteItem();
   }
@@ -97,6 +92,8 @@ function RemoveButton() {
   );
 }
 ```
+
+Low-level bag-form alternative: `useLayerClient()` + `client.open({ ...confirm, payload })`. Solid also exports idiomatic `create*` aliases for the observe/stack hooks (`createStack`, `createLayerState`, `createQueuedStack`, `createLayerQueuedState`) — not for the wired handle (`useLayer` / core `createLayer`).
 
 Payload and response are both optional. A no-payload, fire-and-forget layer omits `payload`, does not `await` `open`, and dismisses without a response:
 
@@ -147,20 +144,24 @@ All imports from `@stainless-code/solid-layers`.
 
 `createStackHook` also returns a **`StackProvider`** that wraps `LayerClientContext.Provider` for a bound stack.
 
-### Subscriptions
+### Wired handle & subscriptions
 
-- **`useStack(stackId?, selector?, compare?) => Accessor<T>`** — subscribe to a stack snapshot. The default selector returns `LayerState[]`; `compare` defaults to `Object.is` and preserves the previous selected reference when equal. Also accepts an explicit `LayerClient` as the first argument.
-- **`useLayer(key, stackId?, compare?) => Accessor<LayerState \| null>`** — subscribe to one layer by key; `null` when inactive. `DataTag` keys from `layerOptions` / `layerKey` infer response `R` and error `E`. Also accepts an explicit `LayerClient` as the first argument.
-- **`StackSubscribe({ stack?, selector, children })`** — isolate a render-prop subscription; `children` receives an `Accessor<T>` for the selected value.
+| Export                                                 | Returns                                    | Role                                                              |
+| ------------------------------------------------------ | ------------------------------------------ | ----------------------------------------------------------------- |
+| **`useLayer(options, client?)`**                       | `Accessor` handle + `state`/`queued`/`top` | Drive + observe. Core **`createLayer`** re-exported for headless. |
+| **`useLayerState({ key, … }, client?)`**               | `Accessor<LayerState[]>`                   | Observe-only, mounted. **`createLayerState`** alias.              |
+| **`useLayerQueuedState({ key, … }, client?)`**         | `Accessor<LayerState[]>`                   | Observe-only, queued. **`createLayerQueuedState`** alias.         |
+| **`useStack({ stack?, select?, compare? }, client?)`** | `Accessor<T>`                              | Whole-stack mounted. **`createStack`** alias.                     |
+| **`useQueuedStack({ … }, client?)`**                   | `Accessor<T>`                              | Whole-stack queued. **`createQueuedStack`** alias.                |
+| **`StackSubscribe({ stack?, selector, children })`**   | render-prop                                | `children` receives `Accessor<T>`.                                |
 
 ```tsx
-const stack = useStack("confirm");
-const count = useStack("confirm", (states) => states.length);
-const confirmLayer = useLayer(confirm.key, "confirm");
-const active = () => confirmLayer()?.phase === "active";
+const c = useLayer(confirm);
+const mounted = useLayerState({ key: confirm.key, stack: "confirm" });
+const count = useStack({ stack: "confirm", select: (s) => s.length });
 ```
 
-Read accessors inside reactive scopes — call `stack()` in JSX, `createEffect`, or `<For each={stack()}>`.
+Read accessors inside reactive scopes — call `mounted()` in JSX or `createEffect`.
 
 ### Rendering
 
@@ -190,7 +191,7 @@ Read accessors inside reactive scopes — call `stack()` in JSX, `createEffect`,
 
 ### Core re-exports
 
-This package **`export *` from `@stainless-code/layers`** — core types and APIs (`LayerClient`, `LayerStack`, `layerOptions`, `layerKey`, `LayerState`, `LayerComponentProps`, `LayerCallContext`, `createLayerGroup`, `DataTag`, `ResponseOf`, `ErrorOf`, validation helpers, etc.) import from the same path.
+This package **`export *` from `@stainless-code/layers`** — includes `createLayer`, `LayerHandle`, `ValidatedLayerHandle`, and all other core APIs from the same path.
 
 Engine concepts (transitions, blockers, validation, serial scope, `gcTime`) live in core — see the [`layers` skill](https://github.com/stainless-code/layers/blob/main/packages/core/skills/layers/SKILL.md) and [architecture doc](https://github.com/stainless-code/layers/blob/main/docs/architecture.md).
 

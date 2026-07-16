@@ -35,7 +35,7 @@ describe("useStack (react)", () => {
     const client = new LayerClient();
     currentClient = client as never;
     client.open({ key: ["a"], payload: 1, stack: "confirm" });
-    const states = useStack("confirm");
+    const states = useStack({ stack: "confirm" });
     expect(states).toHaveLength(1);
     expect(states[0]?.payload).toBe(1);
   });

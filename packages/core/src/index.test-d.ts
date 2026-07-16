@@ -3,7 +3,7 @@
  * includes `src/**`); never executed — bun's `*.test.ts` glob skips
  * `*.test-d.ts`. Registered as a knip entry so its exports are not flagged.
  */
-import { LayerClient, layerKey, layerOptions } from "./index";
+import { LayerClient, createLayer, layerKey, layerOptions } from "./index";
 import type {
   DataTag,
   DefaultLayerError,
@@ -204,3 +204,66 @@ function openOptFieldsOmitted() {
   return client.open(optFieldsOpts);
 }
 void openOptFieldsOmitted;
+
+declare const confirmClient: LayerClient;
+
+// createLayer — plain handle infers response from layerOptions.
+const confirmOptsForHandle = layerOptions<{ title: string }, number>({
+  key: ["confirm", "count"],
+});
+const confirmHandle = createLayer(confirmOptsForHandle, confirmClient);
+function openViaHandle() {
+  return confirmHandle.open({ title: "n" });
+}
+export type _CreateLayerInfersResponse = Expect<
+  Equal<Awaited<ReturnType<typeof openViaHandle>>, number>
+>;
+
+// createLayer — validated handle: open accepts INPUT, not OUTPUT.
+const validatedHandle = createLayer(
+  {
+    key: ["v"],
+    validate: idSchema,
+  },
+  confirmClient,
+);
+function openViaValidatedHandle() {
+  return validatedHandle.open({ id: "1" });
+}
+void openViaValidatedHandle;
+export type _ValidatedHandleOpenAcceptsInput = Expect<
+  Equal<Parameters<(typeof validatedHandle)["open"]>[0], { id: string }>
+>;
+function openViaValidatedHandleWrongPayload() {
+  // @ts-expect-error output shape is not the schema input
+  return validatedHandle.open({ id: 1 });
+}
+void openViaValidatedHandleWrongPayload;
+
+// createLayer — PayloadArg optionality on the handle.
+const voidHandle = createLayer(
+  layerOptions<void, boolean>({ key: ["void"] }),
+  confirmClient,
+);
+function openVoidHandleOmitted() {
+  return voidHandle.open();
+}
+void openVoidHandleOmitted;
+
+const reqHandle = createLayer(
+  layerOptions<{ title: string }>({ key: ["req"] }),
+  confirmClient,
+);
+function openReqHandleOmitted() {
+  // @ts-expect-error payload is required for a payload with required fields
+  return reqHandle.open();
+}
+void openReqHandleOmitted;
+
+// createLayer — current is typed from options payload.
+export type _CreateLayerCurrentPayload = Expect<
+  Equal<
+    NonNullable<(typeof confirmHandle)["current"]>["state"]["payload"],
+    { title: string }
+  >
+>;

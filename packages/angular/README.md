@@ -96,7 +96,7 @@ For fully custom hosts, use `useStackHandles(stack?, rootProps?)` → `{ states,
 
 ```ts
 import { Component } from "@angular/core";
-import { useLayerClient } from "@stainless-code/angular-layers";
+import { injectLayer, useLayerClient } from "@stainless-code/angular-layers";
 import { confirm, type ConfirmResponse } from "./confirm.layer";
 
 @Component({
@@ -105,17 +105,19 @@ import { confirm, type ConfirmResponse } from "./confirm.layer";
   template: `<button type="button" (click)="remove()">Remove</button>`,
 })
 export class RemoveButtonComponent {
-  private readonly client = useLayerClient();
+  private readonly c = injectLayer(confirm);
 
   async remove() {
-    const ok: ConfirmResponse = await this.client.open({
-      ...confirm,
-      payload: { title: "Remove?", message: "Sure?" },
+    const ok: ConfirmResponse = await this.c.open({
+      title: "Remove?",
+      message: "Sure?",
     });
     // ok: boolean
   }
 }
 ```
+
+Low-level bag-form alternative: `useLayerClient()` + `client.open({ ...confirm, payload })`.
 
 `ConfirmResponse` is inferred from `layerOptions<ConfirmPayload, ConfirmResponse>` — no explicit generics on `open`.
 
@@ -173,10 +175,11 @@ The package builds compiler-free with tsdown, so **no adapter-shipped `@Componen
 | ---------------------------------------------------------- | --------------------------------------------------------------------------------------- |
 | `<StackProvider>`                                          | `provideLayerClient()` in app config                                                    |
 | `<StackOutlet stack="…" />`                                | `renderStack(vcr, stack)` or `renderInto(vcr)` from `useLayerGroup` / `createStackHook` |
-| `<StackSubscribe selector={…}>`                            | `useStack(stackId, selector)` — a `Signal`, not a component                             |
+| `useLayer(confirm).open(payload)`                          | `injectLayer(confirm).open(payload)`                                                    |
+| `useLayerState({ key, stack })`                            | `injectLayerState({ key, stack })`                                                      |
 | `createStackHook` → `{ StackProvider, AppHost, AppLayer }` | `createStackHook` → `{ provideClient, useAppStack, renderInto }`                        |
 
-Use `useStack(stack, selector)` for isolated subscriptions; there is no `StackSubscribe` render-prop component.
+Use `useStack({ stack, select })` (or `injectStack`) for isolated subscriptions; there is no `StackSubscribe` render-prop component.
 
 ## API
 
@@ -190,16 +193,22 @@ All imports from `@stainless-code/angular-layers`.
 | `provideLayerClient` | `(client?: LayerClient) => FactoryProvider` | Add to `providers`; creates a client when omitted |
 | `useLayerClient`     | `() => LayerClient`                         | `inject(LAYER_CLIENT)` — injection context only   |
 
-### Subscriptions
+### Wired handle & subscriptions
 
-- **`useStack(stackId?, selector?, compare?) => Signal<T>`** — default `T` is `LayerState[]`; `compare` defaults to `Object.is`. Explicit-client overload: `(client, stackId?, selector?, compare?)`.
-- **`useLayer(key, stackId?, compare?) => Signal<LayerState | null>`** — one layer by key; `null` when inactive. `DataTag` keys infer `R` and `E`. Explicit-client overload available.
+Injection context only (`effect()` internally).
 
-`useStack` and `useLayer` return read-only signals and must run in an injection context (they use `effect()` internally).
+| Export                                                 | Returns                                 | Role                   |
+| ------------------------------------------------------ | --------------------------------------- | ---------------------- |
+| **`injectLayer(options, client?)`**                    | handle signals + `state`/`queued`/`top` | Drive + observe.       |
+| **`injectLayerState({ key, … }, client?)`**            | `Signal<LayerState[]>`                  | Observe-only, mounted. |
+| **`injectLayerQueuedState({ key, … }, client?)`**      | `Signal<LayerState[]>`                  | Observe-only, queued.  |
+| **`useStack({ stack?, select?, compare? }, client?)`** | `Signal<T>`                             | Whole-stack mounted.   |
+| **`injectQueuedStack({ … }, client?)`**                | `Signal<T>`                             | Whole-stack queued.    |
 
 ```ts
-readonly count = useStack("confirm", (states) => states.length);
-readonly top = useStack("confirm", (states) => states.at(-1) ?? null);
+readonly c = injectLayer(confirm);
+readonly mounted = injectLayerState({ key: confirm.key, stack: "confirm" });
+readonly count = useStack({ stack: "confirm", select: (s) => s.length });
 ```
 
 ### Rendering
@@ -235,7 +244,7 @@ No `StackProvider`, `AppHost`, or `AppLayer` components — register `provideCli
 
 ### Core re-exports
 
-`export * from "@stainless-code/layers"` — import core APIs from the same path: `LayerClient`, `layerOptions`, `layerKey`, `createCallContext`, `createLayerGroup`, `Layer`, `LayerStack`, `LayerComponentProps`, `PayloadValidationError`, `isPayloadValidationError`, types (`LayerState`, `LayerCallContext`, `DataTag`, …), and the rest of the zero-dep engine.
+`export * from "@stainless-code/layers"` — includes `createLayer`, `LayerHandle`, `ValidatedLayerHandle`, plus `LayerClient`, `layerOptions`, `LayerState`, validation helpers, and the rest of the zero-dep engine.
 
 Engine concepts (transitions, blockers, validation, serial scope, `gcTime`) live in core — see the [`layers` skill](https://github.com/stainless-code/layers/blob/main/packages/core/skills/layers/SKILL.md) and [architecture](https://github.com/stainless-code/layers/blob/main/docs/architecture.md).
 

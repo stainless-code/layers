@@ -18,6 +18,7 @@ Ubiquitous language for the `@stainless-code/layers` domain. Keep terms stable a
 - **Call context** (`LayerCallContext`) — imperative handle handed to a layer component: `end`/`dismiss` (async — resolve the caller's `await`; return `Promise<boolean>`), `addBlocker`, `update` (patch payload live), `setRunning` (drives `actionStatus`), `settle` (drives `transition`), `ended`, `index`, `stackSize`, `root`, `stackId`, `layerId`. Built by `createCallContext`.
 - **open** — push a layer onto a stack; returns `Promise<R>` resolved by `dismiss`. The caller `await`s the user's decision.
 - **dismiss** — async (`Promise<boolean>`): consult blockers (unless `{ force: true }`), then resolve the layer's promise with a response, flip `ended`, set `phase: "dismissed"` + `transition: "exiting"`, then remove after `exitingDelay` or `call.settle()` (whichever first). Return `true` if dismissed, `false` if vetoed.
+- **cancelQueued** — resolve and remove a serial `queued` layer without mounting; skips blockers. Omit `{ id }` → FIFO head for the key; pass `{ id }` → exact queued instance.
 - **blocker** — consumer predicate gating user-intent dismissal; `true` = allow, falsy = veto. Instance (`call.addBlocker`) or stack (`stack.addBlocker`) scope; multiple allowed; async-capable; throw/reject = veto (fail-closed).
 - **addBlocker** — register a blocker; returns a disposer. `call.addBlocker(fn)` — instance scope (`() => boolean | Promise<boolean>`). `stack.addBlocker(fn)` — stack policy (`(layer) => boolean | Promise<boolean>`).
 - **dismissing** — `LayerState.dismissing`: `true` while a user-intent dismiss is consulting blockers; `false` on veto or removal. Use to disable close UI during async confirm.
@@ -33,3 +34,9 @@ Ubiquitous language for the `@stainless-code/layers` domain. Keep terms stable a
 - **Layer group** — a child stack owned by a parent layer and tied to its lifetime: created via `createLayerGroup` / adapter `useLayerGroup`; when the parent dismisses, the group's stack auto-drains. Same `LayerClient`, no second client.
 - **Child stack** — the stack a layer group opens onto; id derived from the parent's `stackId` + `layerId` via `childStackId` (`` `${parentStackId}~${parentLayerId}~${name}` ``).
 - **Validator** (`validate`) — a Standard Schema or sync `(input) => output` fn that parses/validates a layer's `payload` at `open`; the layer stores the parsed output. Failure rejects `open` with a `PayloadValidationError`.
+- **createLayer** — core factory: `options` + `client` → headless `LayerHandle` / `ValidatedLayerHandle` (layer ops + `stack`/`client`/`options`/`current` escapes; no reactive field).
+- **LayerHandle** — return of plain `createLayer`. `open`/`upsert` take payload only; `dismiss`/`update` take optional `{ id?, force? }`; `cancelQueued` takes `{ id? }` (see **cancelQueued**).
+- **ValidatedLayerHandle** — when `options.validate` is set: `open`/`upsert` = schema **input**; `state`/`update`/`current` = parsed **output**.
+- **useLayer** — adapter wired handle (`createLayer` + reactive `state`/`queued`/`top`). Svelte: `createLayer`; Angular: `injectLayer`.
+- **useLayerState** / **useLayerQueuedState** / **useQueuedStack** — observe-only (mounted per-key / queued per-key / queued whole-stack); return `LayerState[]` (or framework wrappers). Renamed/added vs the old singular `useLayer(key, …)`.
+- **current** — live-checked bound instance on a handle (`Layer | null`); correlation + explicit `{ id }` — not a hidden control default.

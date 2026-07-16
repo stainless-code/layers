@@ -135,12 +135,12 @@ const customProvider: FactoryProvider = {
 };
 ```
 
-`renderStack(vcr, stack?, rootProps?)` creates each layer's registered component via `ViewContainerRef.createComponent` + `setInput`, keyed by stable layer `id` so state changes update inputs without remounting. `useLayerClient`, `useStack`, `useLayer`, `renderStack`, `useStackHandles`, `useLayerGroup`, and `useMutationFlow` must run in an Angular injection context — typically a component constructor or field initializer. Outside a constructor, use `runInInjectionContext(injector, () => …)`.
+`renderStack(vcr, stack?, rootProps?)` creates each layer's registered component via `ViewContainerRef.createComponent` + `setInput`, keyed by stable layer `id` so state changes update inputs without remounting. `injectLayer`, `injectLayerState`, `useStack`, `renderStack`, `useStackHandles`, `useLayerGroup`, and `useMutationFlow` must run in an Angular injection context — typically a component constructor or field initializer. Outside a constructor, use `runInInjectionContext(injector, () => …)`.
 
 ```ts
-// 3. Call & await — boolean is inferred
+// 3. Call & await — injectLayer binds identity; open takes payload only
 import { Component } from "@angular/core";
-import { useLayerClient } from "@stainless-code/angular-layers";
+import { injectLayer, useLayerClient } from "@stainless-code/angular-layers";
 import { confirm, savedToast, type ConfirmResponse } from "./confirm.layer";
 
 @Component({
@@ -152,13 +152,11 @@ import { confirm, savedToast, type ConfirmResponse } from "./confirm.layer";
   `,
 })
 export class OpenerComponent {
+  private readonly c = injectLayer(confirm);
   private readonly client = useLayerClient();
 
   async open() {
-    const ok: ConfirmResponse = await this.client.open({
-      ...confirm,
-      payload: { title: "Remove?" },
-    });
+    const ok: ConfirmResponse = await this.c.open({ title: "Remove?" });
     // ok: boolean
   }
 
@@ -176,70 +174,33 @@ Each mounted layer gets a `LayerCallContext` from `createCallContext(stack, laye
 
 **Key vs id:** `key` is the logical identity used by `find`, `upsert`, and `gcTime`; each mount gets a unique instance `id`. Track `s.id` in `@for` because parallel stacks may contain multiple layers with the same key.
 
+## Wired handle: injectLayer
+
+```ts
+readonly c = injectLayer(confirm);
+await this.c.open({ title: "Remove?" });
+```
+
 ## Subscribing to stacks
 
-There is no `StackSubscribe` component — derive a slice with `useStack(stackId, selector)` and read the returned signal in your template.
+Options-bag + optional trailing `client`; `select` (not `selector`).
 
-### useStack
-
-Returns a read-only `Signal<T>` that tracks stack mutations.
+### useStack / injectQueuedStack
 
 ```ts
-import { Component } from "@angular/core";
-import { useStack, type LayerState } from "@stainless-code/angular-layers";
-import type { ConfirmPayload, ConfirmResponse } from "./confirm.layer";
-
-@Component({
-  selector: "app-confirm-list",
-  standalone: true,
-  template: `
-    <ul>
-      @for (state of stack(); track state.id) {
-        <li>{{ state.payload.title }}</li>
-      }
-    </ul>
-  `,
-})
-export class ConfirmListComponent {
-  readonly stack =
-    useStack<LayerState<ConfirmPayload, ConfirmResponse>[]>("confirm");
-}
+readonly stack = useStack({ stack: "confirm" });
+readonly count = useStack({ stack: "confirm", select: (s) => s.length });
+readonly queued = injectQueuedStack({ stack: "confirm" });
 ```
 
-Optional `selector` and `compare` limit signal updates when only a slice matters:
+### injectLayerState / injectLayerQueuedState
+
+Observe-only; `Signal<LayerState[]>` for all same-key instances:
 
 ```ts
-readonly count = useStack("confirm", (states) => states.length);
-readonly top = useStack("confirm", (states) => states.at(-1) ?? null);
+readonly states = injectLayerState({ key: confirm.key, stack: "confirm" });
+readonly top = computed(() => this.states().at(-1));
 ```
-
-Pass an explicit `LayerClient` as the first argument when needed. `compare` defaults to `Object.is`.
-
-### useLayer
-
-Subscribe to one layer by key. It returns `Signal<LayerState | null>` (`null` when inactive); a `DataTag` key from `layerOptions` or `layerKey` infers response `R` and error `E`.
-
-```ts
-import { Component } from "@angular/core";
-import { useLayer } from "@stainless-code/angular-layers";
-import { confirm, type ConfirmPayload } from "./confirm.layer";
-
-@Component({
-  selector: "app-active-confirm",
-  standalone: true,
-  template: `@if (state(); as state) {
-    <span>{{ state.payload.title }}</span>
-  }`,
-})
-export class ActiveConfirmComponent {
-  readonly state = useLayer<typeof confirm.key, ConfirmPayload>(
-    confirm.key,
-    "confirm",
-  );
-}
-```
-
-The explicit-client overload takes the client first. Unlike `useStack`, `useLayer` has no selector; its optional `compare` compares the previous and next matched state.
 
 ## Rendering layers
 
@@ -314,7 +275,7 @@ export class ConfirmOutletComponent {
 
 ### Angular vs React rendering
 
-The adapter ships **no** `StackOutlet`, `Outlet`, `AppHost`, `AppLayer`, or `StackProvider` components — the package is compiler-free. React mounts `<StackOutlet />`; Angular calls `renderStack(vcr, stack)` or `group.renderInto(vcr)` / `stackHook.renderInto(vcr)`. There is no `StackSubscribe`; use `useStack(stackId, selector)` instead.
+The adapter ships **no** `StackOutlet`, `Outlet`, `AppHost`, `AppLayer`, or `StackProvider` components — the package is compiler-free. React mounts `<StackOutlet />`; Angular calls `renderStack(vcr, stack)` or `group.renderInto(vcr)` / `stackHook.renderInto(vcr)`. There is no `StackSubscribe`; use `useStack({ select })` instead.
 
 ## Nested layers
 
@@ -448,20 +409,21 @@ Returns `{ provideClient, useAppStack, renderInto }` — register `provideClient
 
 ## Adapter API
 
-| Name                 | Signature / shape                                                                                                   |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `LAYER_CLIENT`       | `InjectionToken<LayerClient>`                                                                                       |
-| `provideLayerClient` | `(client?: LayerClient) => FactoryProvider`                                                                         |
-| `useLayerClient`     | `() => LayerClient`                                                                                                 |
-| `useStack`           | `<T = LayerState[]>(stackId?, selector?, compare?) => Signal<T>`                                                    |
-| `useStack`           | `<T = LayerState[]>(client, stackId?, selector?, compare?) => Signal<T>`                                            |
-| `useLayer`           | `<Key, P?, D?>(key, stackId?, compare?) => Signal<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> \| null>`         |
-| `useLayer`           | `<Key, P?, D?>(client, key, stackId?, compare?) => Signal<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> \| null>` |
-| `renderStack`        | `(vcr, stack?, rootProps?) => void` — imperative outlet; injection context                                          |
-| `useStackHandles`    | `(stack?, rootProps?) => { states, getCall }`                                                                       |
-| `useMutationFlow`    | `(call) => { pending: Signal<boolean>, run }`                                                                       |
-| `useLayerGroup`      | `(call, options?) => { open, dismissAll, states, stackId, renderInto }`                                             |
-| `createStackHook`    | `({ stack?, client? }) => { provideClient, useAppStack, renderInto }`                                               |
+| Name                     | Signature / shape                                                          |
+| ------------------------ | -------------------------------------------------------------------------- |
+| `LAYER_CLIENT`           | `InjectionToken<LayerClient>`                                              |
+| `provideLayerClient`     | `(client?: LayerClient) => FactoryProvider`                                |
+| `useLayerClient`         | `() => LayerClient`                                                        |
+| `injectLayer`            | `(options, client?) => WiredLayerHandle signals + state/queued/top`        |
+| `injectLayerState`       | `({ key, stack?, select?, compare? }, client?) => Signal<LayerState[]>`    |
+| `injectLayerQueuedState` | `({ key, stack?, select?, compare? }, client?) => Signal<LayerState[]>`    |
+| `useStack`               | `({ stack?, select?, compare? }, client?) => Signal<T>`                    |
+| `injectQueuedStack`      | `({ stack?, select?, compare? }, client?) => Signal<T>`                    |
+| `renderStack`            | `(vcr, stack?, rootProps?) => void` — imperative outlet; injection context |
+| `useStackHandles`        | `(stack?, rootProps?) => { states, getCall }`                              |
+| `useMutationFlow`        | `(call) => { pending: Signal<boolean>, run }`                              |
+| `useLayerGroup`          | `(call, options?) => { open, dismissAll, states, stackId, renderInto }`    |
+| `createStackHook`        | `({ stack?, client? }) => { provideClient, useAppStack, renderInto }`      |
 
 Types: `StackHandles`, `MutationRun<R>`, `MutationFlow<R>`, `ScopedOpen`, `LayerGroup`, `AppStack`, `StackHook`.
 

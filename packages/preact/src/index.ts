@@ -2,21 +2,28 @@ import type {
   DataTag,
   DefaultLayerError,
   ErrorOf,
+  InferValidatorOutput,
   LayerCallContext,
   LayerComponentProps,
   LayerGroupOptions,
+  LayerHandle,
   LayerKey,
   LayerOptions,
+  LayerStack,
   LayerState,
   OmitKeyof,
   OpenLayerOptions,
   ResponseOf,
+  ValidatedLayerHandle,
+  Validator,
 } from "@stainless-code/layers";
 import {
   childStackId,
   createCallContext,
+  createLayer,
   createLayerGroup,
   keySignature,
+  shallowArrayEqual,
   LayerClient,
 } from "@stainless-code/layers";
 // Preact adapter — peer `preact` >=10.19.0 (`useSyncExternalStore` via
@@ -67,25 +74,66 @@ function defaultSelector(states: LayerState[]): LayerState[] {
   return states;
 }
 
+type NoValidateOptions<Opts> = Opts extends { validate: Validator<unknown> }
+  ? never
+  : Opts;
+
+export interface UseStackOptions<T = LayerState[]> {
+  stack?: string;
+  select?: (states: LayerState[]) => T;
+  compare?: (a: T, b: T) => boolean;
+}
+
+export interface UseLayerStateOptions<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+> {
+  key: Key;
+  stack?: string;
+  select?: (states: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[]) => U;
+  compare?: (a: U, b: U) => boolean;
+}
+
+export type WiredLayerHandle<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = LayerHandle<P, R, E, D, RP> & {
+  state: LayerState<P, R, E, D>[];
+  queued: LayerState<P, R, E, D>[];
+  top: LayerState<P, R, E, D> | null;
+};
+
+export type WiredValidatedLayerHandle<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = ValidatedLayerHandle<V, R, E, D, RP> & {
+  state: LayerState<InferValidatorOutput<V>, R, E, D>[];
+  queued: LayerState<InferValidatorOutput<V>, R, E, D>[];
+  top: LayerState<InferValidatorOutput<V>, R, E, D> | null;
+};
+
 /**
- * Subscribe to a selected slice of a stack.
+ * Shared snapshot subscription primitive for mounted and queued stack hooks.
  *
  * Selector output is memoized against the stable snapshot reference so
  * `useSyncExternalStore` does not churn object or array selections.
- *
- * @param compare Equality check used to preserve the previous selection. Defaults to `Object.is`.
  */
-export function useStack<T = LayerState[]>(
-  stackId = "default",
-  selector: (states: LayerState[]) => T = defaultSelector as unknown as (
-    states: LayerState[],
-  ) => T,
-  compare: (a: T, b: T) => boolean = Object.is,
+function useSnapshot<T>(
+  stack: LayerStack,
+  getSource: () => LayerState[],
+  select: (states: LayerState[]) => T,
+  compare: (a: T, b: T) => boolean,
 ): T {
-  const client = useLayerClient();
-  const stack = client.getStack(stackId);
-  const selectorRef = useRef(selector);
-  selectorRef.current = selector;
+  const selectRef = useRef(select);
+  selectRef.current = select;
   const compareRef = useRef(compare);
   compareRef.current = compare;
   const cacheRef = useRef<{ base: LayerState[]; value: T } | null>(null);
@@ -93,10 +141,10 @@ export function useStack<T = LayerState[]>(
   // Memoize the selected value against the stable base snapshot ref: return the
   // cached selection while the base is unchanged, and keep the old ref when a
   // new selection is `compare`-equal — so object/array selectors don't churn.
-  const select = useCallback((base: LayerState[]): T => {
+  const runSelect = useCallback((base: LayerState[]): T => {
     const prev = cacheRef.current;
     if (prev && prev.base === base) return prev.value;
-    const next = selectorRef.current(base);
+    const next = selectRef.current(base);
     if (prev && compareRef.current(prev.value, next)) {
       cacheRef.current = { base, value: prev.value };
       return prev.value;
@@ -110,39 +158,178 @@ export function useStack<T = LayerState[]>(
     [stack],
   );
   const getSnapshot = useCallback(
-    () => select(stack.getSnapshot()),
-    [stack, select],
+    () => runSelect(getSource()),
+    [getSource, runSelect],
   );
-  const getServerSnapshot = useCallback(() => select(emptySnapshot), [select]);
+  const getServerSnapshot = useCallback(
+    () => runSelect(emptySnapshot),
+    [runSelect],
+  );
   // @ts-expect-error preact/compat types omit getServerSnapshot (SSR 3rd arg)
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
 /**
- * Subscribe to the active layer matching a key, or return `null`.
+ * Subscribe to a selected slice of a stack's mounted snapshot.
+ *
+ * @param compare Equality check used to preserve the previous selection. Defaults to `Object.is`.
+ */
+export function useStack<T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): T {
+  const resolved = client ?? useLayerClient();
+  const stack = resolved.getStack(opts.stack ?? "default");
+  const select =
+    opts.select ?? (defaultSelector as unknown as (states: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  const getSource = useCallback(() => stack.getSnapshot(), [stack]);
+  return useSnapshot(stack, getSource, select, compare);
+}
+
+/** Subscribe to a selected slice of a stack's queued snapshot. */
+export function useQueuedStack<T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): T {
+  const resolved = client ?? useLayerClient();
+  const stack = resolved.getStack(opts.stack ?? "default");
+  const select =
+    opts.select ?? (defaultSelector as unknown as (states: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  const getSource = useCallback(() => stack.getQueuedSnapshot(), [stack]);
+  return useSnapshot(stack, getSource, select, compare);
+}
+
+/**
+ * Observe all mounted layers matching a key.
  *
  * A {@link DataTag} key infers its response and error types.
  */
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  key: Key,
-  stackId = "default",
-  compare: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean = Object.is,
-): LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null {
-  const sig = keySignature(key);
-  return useStack(
-    stackId,
-    (states) =>
-      (states.find((s) => keySignature(s.key) === sig) ?? null) as LayerState<
+export function useLayerState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(opts: UseLayerStateOptions<Key, P, D, U>, client?: LayerClient): U {
+  const sig = useMemo(() => keySignature(opts.key), [opts.key]);
+  return useStack<U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+/** Observe all queued layers matching a key. */
+export function useLayerQueuedState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(opts: UseLayerStateOptions<Key, P, D, U>, client?: LayerClient): U {
+  const sig = useMemo(() => keySignature(opts.key), [opts.key]);
+  return useQueuedStack<U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+function useLayerImpl<P, R, E = DefaultLayerError, D = unknown, RP = unknown>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP> {
+  const resolved = client ?? useLayerClient();
+  const stackId = options.stack ?? "default";
+  const sig = useMemo(() => keySignature(options.key), [options.key]);
+  const selectByKey = useCallback(
+    (states: LayerState[]) =>
+      states.filter((s) => keySignature(s.key) === sig) as LayerState<
         P,
-        ResponseOf<Key>,
-        ErrorOf<Key>,
+        R,
+        E,
         D
-      > | null,
-    compare,
-  ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null;
+      >[],
+    [sig],
+  );
+  const state = useStack<LayerState<P, R, E, D>[]>(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const queued = useQueuedStack<LayerState<P, R, E, D>[]>(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const top = state.at(-1) ?? null;
+  const handle = useMemo(
+    () => createLayer(options, resolved),
+    [resolved, options.key, options.stack],
+  );
+  // Preserve live `current` getter — object spread would freeze a render-time snapshot.
+  return {
+    ...handle,
+    get current() {
+      return handle.current;
+    },
+    state,
+    queued,
+    top,
+  };
+}
+
+/** Wired handle: `createLayer` + reactive `state`/`queued`/`top`. */
+export function useLayer<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<InferValidatorOutput<V>, R, E, D, RP> & {
+    key: LayerKey;
+    validate: V;
+  },
+  client?: LayerClient,
+): WiredValidatedLayerHandle<V, R, E, D, RP>;
+
+export function useLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: NoValidateOptions<LayerOptions<P, R, E, D, RP> & { key: LayerKey }>,
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP>;
+
+export function useLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP> {
+  return useLayerImpl(options, client);
 }
 
 type AnyComponent = ComponentType<
@@ -161,7 +348,7 @@ export function useStackHandles(
 ): StackHandles {
   const client = useLayerClient();
   const stk = client.getStack(stack);
-  const states = useStack(stack);
+  const states = useStack({ stack });
   const getCall = useCallback(
     (state: LayerState): LayerCallContext<unknown, unknown, unknown> => {
       const layer = stk.getLayer(state.id);
@@ -225,7 +412,7 @@ export function StackSubscribe<T>(props: {
   selector: (states: LayerState[]) => T;
   children: (value: T) => ComponentChildren;
 }): VNode {
-  const value = useStack(props.stack, props.selector);
+  const value = useStack({ stack: props.stack, select: props.selector });
   return h(Fragment, null, props.children(value)) as VNode;
 }
 
@@ -332,7 +519,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
     };
   }, [client, stackId]);
 
-  const states = useStack(stackId);
+  const states = useStack({ stack: stackId });
   const open = useCallback(
     <P2, R2 = void, E = DefaultLayerError, D = unknown, RP = unknown>(
       opts: OmitKeyof<OpenLayerOptions<P2, R2, E, D, RP>, "stack">,
@@ -415,7 +602,7 @@ export function createStackHook<HostProps extends object = object>(
 
   function useAppStack(): AppStack {
     const client = useLayerClient();
-    const states = useStack(stackId);
+    const states = useStack({ stack: stackId });
     const open = useCallback(
       <P, R = void, E = DefaultLayerError, D = unknown, RootProps = unknown>(
         options: OmitKeyof<OpenLayerOptions<P, R, E, D, RootProps>, "stack">,

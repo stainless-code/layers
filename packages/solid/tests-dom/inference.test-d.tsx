@@ -1,5 +1,9 @@
-import { LayerClient, layerKey } from "@stainless-code/layers";
-import type { LayerCallContext, LayerState } from "@stainless-code/layers";
+import type {
+  LayerCallContext,
+  LayerState,
+  StandardSchemaV1,
+} from "@stainless-code/layers";
+import { LayerClient, layerKey, layerOptions } from "@stainless-code/layers";
 /**
  * Solid adapter type-level inference tests. Compiled by `tsc --noEmit`
  * (tsconfig includes `tests-dom/**` + `.tsx`); never executed — vitest's
@@ -7,9 +11,10 @@ import type { LayerCallContext, LayerState } from "@stainless-code/layers";
  * Registered as a knip entry so its exports are not flagged.
  */
 import {
-  useLayer as useSolidLayer,
-  useStack,
   createStackHook,
+  useLayer,
+  useLayerState,
+  useStack,
   useLayerGroup,
   useMutationFlow,
 } from "@stainless-code/solid-layers";
@@ -38,18 +43,18 @@ const removeKey = layerKey<boolean>()(["confirm", "remove"]);
 declare const nSelector: (states: LayerState[]) => { n: number };
 type _NSelectorReturn = ReturnType<typeof nSelector>;
 
-// M1 — `useStack` selector return flows through as `Accessor<T>`; default is `LayerState[]`.
+// M1 — `useStack` select return flows through as `Accessor<T>`; default is `LayerState[]`.
 function useStackDefault() {
-  return useStack("s");
+  return useStack({ stack: "s" });
 }
 export type _UseStackDefaultLayerStates = Expect<
   Equal<UnwrapAccessor<ReturnType<typeof useStackDefault>>, LayerState[]>
 >;
+function useStackWithSelect() {
+  return useStack<{ n: number }>({ stack: "s", select: nSelector });
+}
 export type _UseStackSelectorFlows = Expect<
-  Equal<
-    UnwrapAccessor<ReturnType<typeof useStack<{ n: number }>>>,
-    { n: number }
-  >
+  Equal<UnwrapAccessor<ReturnType<typeof useStackWithSelect>>, { n: number }>
 >;
 export type _UseStackSelectorFromDecl = Expect<
   Equal<
@@ -58,42 +63,130 @@ export type _UseStackSelectorFromDecl = Expect<
   >
 >;
 function useStackAcceptsCompare() {
-  useStack("s", nSelector, (a, b) => a.n === b.n);
+  useStack({ stack: "s", select: nSelector, compare: (a, b) => a.n === b.n });
 }
 void useStackAcceptsCompare;
 function useStackRejectsBadCompare() {
   // @ts-expect-error compare must return boolean
-  useStack("s", nSelector, (_a, _b) => "bad");
+  useStack({ stack: "s", select: nSelector, compare: (_a, _b) => "bad" });
 }
 void useStackRejectsBadCompare;
 
-// M4 — `useLayer` honors a DataTag key: `R`/`E` inferred from the key alone.
-type _SolidUseLayerTagged = ReturnType<typeof useSolidLayer<typeof removeKey>>;
-export type _UseLayerInfersResponse = Expect<
+// M4 — `useLayerState` honors a DataTag key: `R`/`E` inferred from the key alone.
+function useLayerStateTagged() {
+  return useLayerState({ key: removeKey });
+}
+type _SolidUseLayerStateTagged = ReturnType<typeof useLayerStateTagged>;
+export type _UseLayerStateInfersResponse = Expect<
   Equal<
-    UnwrapAccessor<_SolidUseLayerTagged>,
-    LayerState<unknown, boolean, Error, unknown> | null
+    UnwrapAccessor<_SolidUseLayerStateTagged>,
+    LayerState<unknown, boolean, Error, unknown>[]
   >
 >;
-type _SolidUseLayerPlain = ReturnType<typeof useSolidLayer<["plain"]>>;
-export type _UseLayerPlainVoid = Expect<
+function useLayerStatePlain() {
+  return useLayerState({ key: ["plain"] as const });
+}
+type _SolidUseLayerStatePlain = ReturnType<typeof useLayerStatePlain>;
+export type _UseLayerStatePlainVoid = Expect<
   Equal<
-    UnwrapAccessor<_SolidUseLayerPlain>,
-    LayerState<unknown, void, Error, unknown> | null
+    UnwrapAccessor<_SolidUseLayerStatePlain>,
+    LayerState<unknown, void, Error, unknown>[]
   >
 >;
-export type _SolidUseLayerTaggedResponse = Expect<
+export type _SolidUseLayerStateTaggedResponse = Expect<
   Equal<
-    NonNullable<UnwrapAccessor<_SolidUseLayerTagged>>["response"],
+    NonNullable<UnwrapAccessor<_SolidUseLayerStateTagged>[number]>["response"],
     boolean | undefined
   >
 >;
-export type _SolidUseLayerPlainResponse = Expect<
+export type _SolidUseLayerStatePlainResponse = Expect<
   Equal<
-    NonNullable<UnwrapAccessor<_SolidUseLayerPlain>>["response"],
+    NonNullable<UnwrapAccessor<_SolidUseLayerStatePlain>[number]>["response"],
     void | undefined
   >
 >;
+
+const confirmOpts = layerOptions<{ title: string }, boolean>({
+  key: ["confirm", "count"],
+});
+
+const idSchema = {
+  "~standard": {
+    version: 1,
+    vendor: "test",
+    validate: (v: unknown) => ({
+      value: { id: Number((v as { id: string }).id) },
+    }),
+    types: undefined as unknown as {
+      input: { id: string };
+      output: { id: number };
+    },
+  },
+} as StandardSchemaV1<{ id: string }, { id: number }>;
+
+const validatedConfirm = {
+  key: ["v"],
+  validate: idSchema,
+};
+
+// Wired `useLayer` — open infers `R` from layerOptions.
+function useConfirmLayer() {
+  return useLayer(confirmOpts);
+}
+function openViaUseLayer() {
+  const c = useConfirmLayer();
+  return c.open({ title: "n" });
+}
+export type _UseLayerOpenInfersResponse = Expect<
+  Equal<Awaited<ReturnType<typeof openViaUseLayer>>, boolean>
+>;
+
+// Wired `useLayer` — validated: open accepts INPUT; state uses OUTPUT.
+function useValidatedLayer() {
+  return useLayer(validatedConfirm);
+}
+function openViaValidatedUseLayer() {
+  const c = useValidatedLayer();
+  return c.open({ id: "1" });
+}
+void openViaValidatedUseLayer;
+export type _ValidatedUseLayerOpenAcceptsInput = Expect<
+  Equal<
+    Parameters<ReturnType<typeof useValidatedLayer>["open"]>[0],
+    { id: string }
+  >
+>;
+function openViaValidatedUseLayerWrongPayload() {
+  const c = useValidatedLayer();
+  // @ts-expect-error output shape is not the schema input
+  return c.open({ id: 1 });
+}
+void openViaValidatedUseLayerWrongPayload;
+export type _ValidatedUseLayerStatePayload = Expect<
+  Equal<
+    UnwrapAccessor<
+      ReturnType<typeof useValidatedLayer>["state"]
+    >[number]["payload"],
+    { id: number }
+  >
+>;
+
+// PayloadArg optionality on wired `useLayer`.
+const voidOpts = layerOptions<void, boolean>({ key: ["void"] });
+function useVoidLayer() {
+  return useLayer(voidOpts);
+}
+function openVoidUseLayerOmitted() {
+  return useVoidLayer().open();
+}
+void openVoidUseLayerOmitted;
+
+const reqOpts = layerOptions<{ title: string }>({ key: ["req"] });
+function openReqUseLayerOmitted() {
+  // @ts-expect-error payload is required for a payload with required fields
+  return useLayer(reqOpts).open();
+}
+void openReqUseLayerOmitted;
 
 // `useStackHandles.states` is an `Accessor<LayerState[]>`.
 declare const handles: StackHandles;

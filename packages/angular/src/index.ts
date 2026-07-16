@@ -1,4 +1,5 @@
 import {
+  computed,
   DestroyRef,
   effect,
   inject,
@@ -16,19 +17,27 @@ import type {
   DataTag,
   DefaultLayerError,
   ErrorOf,
+  InferValidatorOutput,
   LayerCallContext,
   LayerGroupOptions,
+  LayerHandle,
   LayerKey,
+  LayerOptions,
+  LayerStack,
   LayerState,
   OmitKeyof,
   OpenLayerOptions,
   ResponseOf,
+  ValidatedLayerHandle,
+  Validator,
 } from "@stainless-code/layers";
 import {
   childStackId,
   createCallContext,
+  createLayer,
   createLayerGroup,
   keySignature,
+  shallowArrayEqual,
   LayerClient,
 } from "@stainless-code/layers";
 
@@ -59,58 +68,73 @@ function defaultSelector(states: LayerState[]): LayerState[] {
   return states;
 }
 
-/**
- * Bridges a {@link LayerClient} stack into an Angular `Signal`.
- * Must run in an injection context because the subscription uses `effect()`.
- *
- * @param stackId - Stack to observe.
- * @param selector - Derives the value exposed by the signal.
- * @param compare - Prevents updates when selected values are equal.
- * @returns A readonly `Signal` containing the selected stack value.
- * @default stackId `"default"`; compare `Object.is`.
- */
-export function useStack<T = LayerState[]>(
-  client: LayerClient,
-  stackId?: string,
-  selector?: (states: LayerState[]) => T,
-  compare?: (a: T, b: T) => boolean,
-): Signal<T>;
-export function useStack<T = LayerState[]>(
-  stackId?: string,
-  selector?: (states: LayerState[]) => T,
-  compare?: (a: T, b: T) => boolean,
-): Signal<T>;
-export function useStack<T = LayerState[]>(
-  clientOrStackId?: LayerClient | string,
-  stackIdOrSelector?: string | ((states: LayerState[]) => T),
-  selectorOrCompare?: ((states: LayerState[]) => T) | ((a: T, b: T) => boolean),
-  compareArg?: (a: T, b: T) => boolean,
-): Signal<T> {
-  const explicit = clientOrStackId instanceof LayerClient;
-  const client = explicit ? clientOrStackId : useLayerClient();
-  const stackId =
-    ((explicit ? stackIdOrSelector : clientOrStackId) as string | undefined) ??
-    "default";
-  const selector =
-    ((explicit ? selectorOrCompare : stackIdOrSelector) as
-      | ((states: LayerState[]) => T)
-      | undefined) ??
-    (defaultSelector as unknown as (states: LayerState[]) => T);
-  const compare =
-    ((explicit ? compareArg : selectorOrCompare) as
-      | ((a: T, b: T) => boolean)
-      | undefined) ?? Object.is;
+type NoValidateOptions<Opts> = Opts extends { validate: Validator<unknown> }
+  ? never
+  : Opts;
 
-  const stack = client.getStack(stackId);
+export interface UseStackOptions<T = LayerState[]> {
+  stack?: string;
+  select?: (states: LayerState[]) => T;
+  compare?: (a: T, b: T) => boolean;
+}
+
+export interface UseLayerStateOptions<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+> {
+  key: Key;
+  stack?: string;
+  select?: (states: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[]) => U;
+  compare?: (a: U, b: U) => boolean;
+}
+
+export type WiredLayerHandle<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = LayerHandle<P, R, E, D, RP> & {
+  state: Signal<LayerState<P, R, E, D>[]>;
+  queued: Signal<LayerState<P, R, E, D>[]>;
+  top: Signal<LayerState<P, R, E, D> | null>;
+};
+
+export type WiredValidatedLayerHandle<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+> = ValidatedLayerHandle<V, R, E, D, RP> & {
+  state: Signal<LayerState<InferValidatorOutput<V>, R, E, D>[]>;
+  queued: Signal<LayerState<InferValidatorOutput<V>, R, E, D>[]>;
+  top: Signal<LayerState<InferValidatorOutput<V>, R, E, D> | null>;
+};
+
+/**
+ * Shared snapshot subscription primitive for mounted and queued stack hooks.
+ *
+ * Selector output is memoized against the stable snapshot reference so
+ * subscribers do not churn object or array selections.
+ */
+function subscribeStackSnapshot<T>(
+  stack: LayerStack,
+  getSource: () => LayerState[],
+  select: (states: LayerState[]) => T,
+  compare: (a: T, b: T) => boolean,
+): Signal<T> {
   let cache: { base: LayerState[]; value: T } | null = null;
 
   // Memoize the selected value against the stable base snapshot ref: return the
   // cached selection while the base is unchanged, and keep the old ref when a
   // new selection is `compare`-equal — so object/array selectors don't churn.
-  const select = (base: LayerState[]): T => {
+  const runSelect = (base: LayerState[]): T => {
     const prev = cache;
     if (prev && prev.base === base) return prev.value;
-    const next = selector(base);
+    const next = select(base);
     if (prev && compare(prev.value, next)) {
       cache = { base, value: prev.value };
       return prev.value;
@@ -119,15 +143,15 @@ export function useStack<T = LayerState[]>(
     return next;
   };
 
-  const state = signal<T>(select(stack.getSnapshot()));
+  const state = signal<T>(runSelect(getSource()));
   effect((onCleanup) => {
     // `effect()` runs after the current change-detection cycle, so a stack
     // mutation between signal creation and effect attach would leave the
     // signal stale. Re-read at attach time to close that gap.
-    state.set(select(stack.getSnapshot()));
+    state.set(runSelect(getSource()));
     const unsubscribe = stack.subscribe(() => {
       const prev = state();
-      const next = select(stack.getSnapshot());
+      const next = runSelect(getSource());
       if (!compare(prev, next)) {
         state.set(next);
       }
@@ -137,66 +161,183 @@ export function useStack<T = LayerState[]>(
   return state.asReadonly();
 }
 
-/** Observes one active layer by key as a readonly `Signal`, or `null` when inactive. */
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  client: LayerClient,
-  key: Key,
-  stackId?: string,
-  compare?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Signal<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>;
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  key: Key,
-  stackId?: string,
-  compare?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Signal<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>;
-export function useLayer<Key extends LayerKey, P = unknown, D = unknown>(
-  clientOrKey: LayerClient | Key,
-  keyOrStackId?: Key | string,
-  stackIdOrCompare?:
-    | string
-    | ((
-        a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-        b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-      ) => boolean),
-  compareArg?: (
-    a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-    b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-  ) => boolean,
-): Signal<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null> {
-  const explicit = clientOrKey instanceof LayerClient;
-  const client = explicit ? clientOrKey : useLayerClient();
-  const key = (explicit ? keyOrStackId : clientOrKey) as Key;
-  const stackId =
-    ((explicit ? stackIdOrCompare : keyOrStackId) as string | undefined) ??
-    "default";
-  const compare =
-    ((explicit ? compareArg : stackIdOrCompare) as
-      | ((
-          a: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-          b: LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null,
-        ) => boolean)
-      | undefined) ?? Object.is;
-
-  const sig = keySignature(key);
-  return useStack(
-    client,
-    stackId,
-    (states) =>
-      (states.find((s) => keySignature(s.key) === sig) ?? null) as LayerState<
-        P,
-        ResponseOf<Key>,
-        ErrorOf<Key>,
-        D
-      > | null,
+/**
+ * Bridges a {@link LayerClient} stack into an Angular `Signal`.
+ * Must run in an injection context because the subscription uses `effect()`.
+ *
+ * @param compare Equality check used to preserve the previous selection. Defaults to `Object.is`.
+ */
+export function useStack<T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): Signal<T> {
+  const resolved = client ?? useLayerClient();
+  const stack = resolved.getStack(opts.stack ?? "default");
+  const select =
+    opts.select ?? (defaultSelector as unknown as (states: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  return subscribeStackSnapshot(
+    stack,
+    () => stack.getSnapshot(),
+    select,
     compare,
-  ) as Signal<LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D> | null>;
+  );
 }
+
+/** Subscribe to a selected slice of a stack's queued snapshot. */
+export function useQueuedStack<T = LayerState[]>(
+  opts: UseStackOptions<T> = {},
+  client?: LayerClient,
+): Signal<T> {
+  const resolved = client ?? useLayerClient();
+  const stack = resolved.getStack(opts.stack ?? "default");
+  const select =
+    opts.select ?? (defaultSelector as unknown as (states: LayerState[]) => T);
+  const compare = opts.compare ?? Object.is;
+  return subscribeStackSnapshot(
+    stack,
+    () => stack.getQueuedSnapshot(),
+    select,
+    compare,
+  );
+}
+
+/**
+ * Observe all mounted layers matching a key.
+ *
+ * A {@link DataTag} key infers its response and error types.
+ */
+export function useLayerState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(opts: UseLayerStateOptions<Key, P, D, U>, client?: LayerClient): Signal<U> {
+  const sig = keySignature(opts.key);
+  return useStack<U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+/** Observe all queued layers matching a key. */
+export function useLayerQueuedState<
+  Key extends LayerKey,
+  P = unknown,
+  D = unknown,
+  U = LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[],
+>(opts: UseLayerStateOptions<Key, P, D, U>, client?: LayerClient): Signal<U> {
+  const sig = keySignature(opts.key);
+  return useQueuedStack<U>(
+    {
+      stack: opts.stack,
+      select: (states) => {
+        const filtered = states.filter(
+          (s) => keySignature(s.key) === sig,
+        ) as LayerState<P, ResponseOf<Key>, ErrorOf<Key>, D>[];
+        return opts.select ? opts.select(filtered) : (filtered as unknown as U);
+      },
+      compare: opts.compare ?? (shallowArrayEqual as (a: U, b: U) => boolean),
+    },
+    client,
+  );
+}
+
+function injectLayerImpl<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP> {
+  const resolved = client ?? useLayerClient();
+  const stackId = options.stack ?? "default";
+  const sig = keySignature(options.key);
+  const selectByKey = (states: LayerState[]) =>
+    states.filter((s) => keySignature(s.key) === sig) as LayerState<
+      P,
+      R,
+      E,
+      D
+    >[];
+  const state = useStack<LayerState<P, R, E, D>[]>(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const queued = useQueuedStack<LayerState<P, R, E, D>[]>(
+    { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
+    resolved,
+  );
+  const top = computed(() => state().at(-1) ?? null);
+  const handle = createLayer(options, resolved);
+  return Object.assign(handle, { state, queued, top });
+}
+
+/** Wired handle: `createLayer` + reactive `state`/`queued`/`top`. */
+export function injectLayer<
+  V extends Validator<unknown>,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<InferValidatorOutput<V>, R, E, D, RP> & {
+    key: LayerKey;
+    validate: V;
+  },
+  client?: LayerClient,
+): WiredValidatedLayerHandle<V, R, E, D, RP>;
+
+export function injectLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: NoValidateOptions<LayerOptions<P, R, E, D, RP> & { key: LayerKey }>,
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP>;
+
+export function injectLayer<
+  P,
+  R,
+  E = DefaultLayerError,
+  D = unknown,
+  RP = unknown,
+>(
+  options: LayerOptions<P, R, E, D, RP> & { key: LayerKey },
+  client?: LayerClient,
+): WiredLayerHandle<P, R, E, D, RP> {
+  return injectLayerImpl(options, client);
+}
+
+/** Alias for {@link injectLayer}. */
+export const useLayer = injectLayer;
+
+/** Angular-idiomatic alias for {@link useStack}. */
+export const injectStack = useStack;
+
+/** Angular-idiomatic alias for {@link useQueuedStack}. */
+export const injectQueuedStack = useQueuedStack;
+
+/** Angular-idiomatic alias for {@link useLayerState}. */
+export const injectLayerState = useLayerState;
+
+/** Angular-idiomatic alias for {@link useLayerQueuedState}. */
+export const injectLayerQueuedState = useLayerQueuedState;
 
 export interface StackHandles {
   states: Signal<LayerState[]>;
@@ -210,7 +351,7 @@ export function useStackHandles(
 ): StackHandles {
   const client = useLayerClient();
   const stk = client.getStack(stackId);
-  const states = useStack(stackId);
+  const states = useStack({ stack: stackId });
   const getCall = (
     state: LayerState,
   ): LayerCallContext<unknown, unknown, unknown> =>
@@ -237,7 +378,7 @@ export function renderStack(
 ): void {
   const client = useLayerClient();
   const stk = client.getStack(stackId);
-  const states = useStack(stackId);
+  const states = useStack({ stack: stackId });
   const refs = new Map<string, ComponentRef<Record<string, unknown>>>();
   effect(() => {
     const current = states();
@@ -376,7 +517,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
     client.dismissAll(group.stackId);
   });
 
-  const states = useStack(stackId);
+  const states = useStack({ stack: stackId });
   const open = <
     P2,
     R2 = void,
@@ -431,7 +572,7 @@ export function createStackHook(
 
   function useAppStack(): AppStack {
     const client = useLayerClient();
-    const states = useStack(stackId);
+    const states = useStack({ stack: stackId });
     const open = <
       P,
       R = void,

@@ -7,7 +7,6 @@ import type { LayerCallContext, LayerState } from "@stainless-code/layers";
  */
 import {
   createStackHook,
-  useLayer as usePreactLayer,
   useMutationFlow,
   useStack,
   useStackHandles,
@@ -53,60 +52,33 @@ function _appLayerInfersResponse() {
 void _appLayerInfersResponse;
 void client;
 
-// M1 — `useStack` selector return flows through; default is `LayerState[]`.
+// M1 — `useStack` select return flows through; default is `LayerState[]`.
 declare const nSelector: (states: LayerState[]) => { n: number };
 type _NSelectorReturn = ReturnType<typeof nSelector>;
 function useStackDefault() {
-  return useStack("s");
+  return useStack({ stack: "s" });
 }
 export type _UseStackDefaultLayerStates = Expect<
   Equal<ReturnType<typeof useStackDefault>, LayerState[]>
 >;
+function useStackWithSelect() {
+  return useStack<{ n: number }>({ stack: "s", select: nSelector });
+}
 export type _UseStackSelectorFlows = Expect<
-  Equal<ReturnType<typeof useStack<{ n: number }>>, { n: number }>
+  Equal<ReturnType<typeof useStackWithSelect>, { n: number }>
 >;
 export type _UseStackSelectorFromDecl = Expect<
   Equal<ReturnType<typeof useStack<_NSelectorReturn>>, { n: number }>
 >;
 function useStackAcceptsCompare() {
-  useStack("s", nSelector, (a, b) => a.n === b.n);
+  useStack({ stack: "s", select: nSelector, compare: (a, b) => a.n === b.n });
 }
 void useStackAcceptsCompare;
 function useStackRejectsBadCompare() {
   // @ts-expect-error compare must return boolean
-  useStack("s", nSelector, (_a, _b) => "bad");
+  useStack({ stack: "s", select: nSelector, compare: (_a, _b) => "bad" });
 }
 void useStackRejectsBadCompare;
-
-// M4 — `useLayer` honors a DataTag key: `R`/`E` inferred from the key alone.
-type _PreactUseLayerTagged = ReturnType<
-  typeof usePreactLayer<typeof removeKey>
->;
-export type _UseLayerInfersResponse = Expect<
-  Equal<
-    _PreactUseLayerTagged,
-    LayerState<unknown, boolean, Error, unknown> | null
-  >
->;
-// A plain (untagged) key keeps the historical `R = void` default.
-type _PreactUseLayerPlain = ReturnType<typeof usePreactLayer<["plain"]>>;
-export type _UseLayerPlainVoid = Expect<
-  Equal<_PreactUseLayerPlain, LayerState<unknown, void, Error, unknown> | null>
->;
-export type _PreactUseLayerTaggedResponse = Expect<
-  Equal<
-    NonNullable<
-      ReturnType<typeof usePreactLayer<typeof removeKey>>
-    >["response"],
-    boolean | undefined
-  >
->;
-export type _PreactUseLayerPlainResponse = Expect<
-  Equal<
-    NonNullable<ReturnType<typeof usePreactLayer<["plain"]>>>["response"],
-    void | undefined
-  >
->;
 
 // M4 — scoped `open` (createStackHook/useLayerGroup) infers `R` from a DataTag key.
 declare const appStack: AppStack;

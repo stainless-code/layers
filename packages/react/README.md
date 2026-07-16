@@ -67,20 +67,17 @@ function App() {
 
 ### 3. Call and await
 
-Response type `ConfirmResponse` is inferred from `confirm` — no explicit
-generics on `open`.
-
 ```tsx
-import { useLayerClient } from "@stainless-code/react-layers";
+import { useLayer } from "@stainless-code/react-layers";
 import { confirm } from "./confirm";
 
 function RemoveButton() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
 
   async function handleRemove() {
-    const ok: boolean = await client.open({
-      ...confirm,
-      payload: { title: "Remove?", message: "Sure?" },
+    const ok: boolean = await c.open({
+      title: "Remove?",
+      message: "Sure?",
     });
     if (!ok) return;
     deleteItem();
@@ -93,6 +90,8 @@ function RemoveButton() {
   );
 }
 ```
+
+Low-level bag-form alternative: `useLayerClient()` + `client.open({ ...confirm, payload })`.
 
 Payload and response are both optional. A no-payload, fire-and-forget layer
 omits `payload`, does not `await` `open`, and dismisses without a response:
@@ -142,15 +141,23 @@ All imports from `@stainless-code/react-layers`.
 | **`StackProvider`**    | `{ client?, children }` | Mount a `LayerClient` for the subtree (creates one lazily if omitted). |
 | **`useLayerClient()`** | `() => LayerClient`     | Read the nearest client; call `client.open(...)`.                      |
 
-### Subscriptions
+### Wired handle & subscriptions
 
-- **`useStack(stackId?, selector?, compare?) => T`** — subscribe to a stack snapshot. The default selector returns `LayerState[]`; `compare` defaults to `Object.is` and preserves the previous selected reference when equal.
-- **`useLayer(key, stackId?, compare?) => LayerState | null`** — subscribe to one layer by key; `null` when inactive. `DataTag` keys from `layerOptions` / `layerKey` infer response `R` and error `E`.
-- **`StackSubscribe({ stack?, selector, children })`** — isolate a render-prop subscription and pass its selected value to `children`.
+| Export                                                                 | Signature                                | Role                                                                   |
+| ---------------------------------------------------------------------- | ---------------------------------------- | ---------------------------------------------------------------------- |
+| **`useLayer(options, client?)`**                                       | → `LayerHandle` + `state`/`queued`/`top` | Drive + observe. Validated I/O: [glossary](../../../docs/glossary.md). |
+| **`useLayerState({ key, stack?, select?, compare? }, client?)`**       | → `LayerState[]` (or selected `U`)       | Observe-only, mounted.                                                 |
+| **`useLayerQueuedState({ key, stack?, select?, compare? }, client?)`** | → `LayerState[]` (or selected `U`)       | Observe-only, queued.                                                  |
+| **`useStack({ stack?, select?, compare? }, client?)`**                 | → `T`                                    | Whole-stack mounted.                                                   |
+| **`useQueuedStack({ stack?, select?, compare? }, client?)`**           | → `T`                                    | Whole-stack queued.                                                    |
+| **`StackSubscribe({ stack?, selector, children })`**                   | render-prop                              | Isolate a subscription; pass selected value to `children`.             |
 
 ```tsx
-const count = useStack("confirm", (states) => states.length);
-const top = useStack("confirm", (states) => states.at(-1) ?? null);
+const c = useLayer(confirm);
+const ok = await c.open({ title: "Remove?" });
+const mounted = useLayerState({ key: confirm.key, stack: "confirm" });
+const count = useStack({ stack: "confirm", select: (s) => s.length });
+const queued = useQueuedStack({ stack: "confirm" });
 ```
 
 ### Rendering
@@ -175,11 +182,11 @@ const top = useStack("confirm", (states) => states.at(-1) ?? null);
 
 ### React-specific types
 
-`StackHandles`, `MutationRun<R>`, `MutationFlow<R>`, `ScopedOpen`, `LayerGroup`, `AppStack`, `AppLayerProps<P, R>`, `StackHook<HostProps>`.
+`WiredLayerHandle`, `WiredValidatedLayerHandle`, `StackHandles`, `MutationRun<R>`, `MutationFlow<R>`, `ScopedOpen`, `LayerGroup`, `AppStack`, `AppLayerProps<P, R>`, `StackHook<HostProps>`, `UseStackOptions`, `UseLayerStateOptions`.
 
 ### Core re-exports
 
-This package **`export *` from `@stainless-code/layers`** — core types and APIs (`LayerClient`, `LayerStack`, `layerOptions`, `layerKey`, `LayerState`, `LayerComponentProps`, `LayerCallContext`, `createLayerGroup`, `DataTag`, `ResponseOf`, `ErrorOf`, validation helpers, etc.) import from the same path.
+This package **`export *` from `@stainless-code/layers`** — core types and APIs (`LayerClient`, `LayerStack`, `layerOptions`, `layerKey`, `createLayer`, `LayerHandle`, `ValidatedLayerHandle`, `LayerState`, `LayerComponentProps`, `LayerCallContext`, `createLayerGroup`, `DataTag`, `ResponseOf`, `ErrorOf`, validation helpers, etc.) import from the same path.
 
 Engine concepts (transitions, blockers, validation, serial scope, `gcTime`) live in core — see the [`layers` skill](https://github.com/stainless-code/layers/blob/main/packages/core/skills/layers/SKILL.md) and [architecture doc](https://github.com/stainless-code/layers/blob/main/docs/architecture.md).
 

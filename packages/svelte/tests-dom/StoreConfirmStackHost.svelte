@@ -7,7 +7,7 @@
   let { client }: { client: LayerClient } = $props();
 
   setLayerClient(client);
-  const stack = useStack("confirm");
+  const stack = useStack({ stack: "confirm" });
 </script>
 
 {#each $stack as s (s.id)}
