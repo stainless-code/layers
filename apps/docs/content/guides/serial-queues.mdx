@@ -79,7 +79,7 @@ function QueueIndicator() {
 }
 ```
 
-In adapters, observe queued layers with `useLayerQueuedState({ key, stack })` (per-key) or `useQueuedStack({ stack })` (whole stack) — both return `LayerState[]` for `phase: "queued"` rows. Wired handles expose the same slice as `.queued` on `useLayer(options)`.
+In adapters, observe queued layers with `useLayerQueuedState({ key, stack })` (per-key) or `useQueuedStack({ stack })` (whole stack) — both return `LayerState[]` for `phase: "queued"` rows. Svelte names these `createLayerQueuedState` / `createQueuedStack`. Wired handles expose the same slice as `.queued` (`useLayer` / `injectLayer` / `createLayer`).
 
 ## Cancel a queued layer
 

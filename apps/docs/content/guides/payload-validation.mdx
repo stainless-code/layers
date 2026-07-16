@@ -102,7 +102,7 @@ Headless hosts use `createLayer(prompt, client)` with the same input/output spli
 
 ## Rules
 
-- Validation runs **synchronously** at `open` — async schemas are a config error.
+- Validation runs **synchronously** at `open` — async schemas throw at open time (`Async payload validation is not supported`).
 - `open`'s `payload` is schema **input**; the component sees schema **output**.
 - `upsert` re-validates — invalid input rejects and leaves the existing layer unchanged.
 

@@ -19,7 +19,7 @@ Save feedback shouldn't block the UI. `useLayer(toast)` + `void toast.open({ mes
 - `UNSTABLE_Toast*` is the 1.19 export prefix (stable in 3.x) — pin `react-aria-components` accordingly.
 - **Queue ownership:** RAC ships a global `ToastQueue`. For toasts, let the lib own the queue/region; Layers is the typed `open` entry. Don't dual-queue.
 - Toast is instant-dismiss (no exit-animation crux) — `call.dismiss()` after the timeout is fine; the `transition`/`call.settle()` axis is irrelevant here (it matters for animated-enter-exit, not toast).
-- Lib owns focus/portal/scroll-lock — don't double-apply Layers-side equivalents.
+- Layers coordinates open/dismiss only — leave the toast region to RAC; don't add modal-style focus traps or scroll-lock.
 
 ## Learn more
 

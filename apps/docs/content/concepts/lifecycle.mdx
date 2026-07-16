@@ -16,7 +16,8 @@ stateDiagram-v2
     pending --> active: loadFn resolves
     pending --> error: loadFn throws
     pending --> queued: serial scope (waiting)
-    queued --> pending: active dismissed
+    queued --> pending: active dismissed (has loadFn)
+    queued --> active: active dismissed (no loadFn)
     active --> dismissed: end / dismiss
     dismissed --> removed: exitingDelay or settle()
     removed --> cached: gcTime > 0, data set

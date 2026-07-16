@@ -7,7 +7,7 @@ search:
 
 import racSrc from "../../../recipes/animated-enter-exit/react.rac.tsx?raw";
 
-Instant `call.end` cuts off RAC exit animations — Layers must hold the mount until the lib finishes. `useLayer(animated)` opens the modal; drive enter/exit with `data-entering`/`data-exiting` (or Motion `isExiting`); defer `call.end` until `onAnimationComplete`. See the [live demo](/examples/animated-enter-exit).
+Instant `call.end` cuts off RAC exit animations — Layers must hold the mount until the exit finishes. `useLayer(animated)` opens the modal; this recipe holds local `exiting` state and defers `call.end` until a timer matching the CSS exit. See the [live demo](/examples/animated-enter-exit).
 
 ## Recipe
 
@@ -16,7 +16,7 @@ Instant `call.end` cuts off RAC exit animations — Layers must hold the mount u
 ## Seam notes
 
 - Don't use RAC's trigger wrappers — controlled overlay while mounted.
-- **Exit-animation crux:** if `call.end` fires the moment the user dismisses, Layers unmounts synchronously and the exit animation never plays. RAC fix: hold a local `exiting` state, pass `isExiting`, and call `call.end` on `onAnimationComplete` (or RAC's `data-[exiting]:` classes).
+- **Exit-animation crux:** if `call.end` fires the moment the user dismisses, Layers unmounts synchronously and the exit animation never plays. Hold local `exiting` state and defer `call.end` until the CSS exit finishes (timer, `onAnimationComplete`, or RAC `data-[exiting]` — recipe uses a timer).
 - Lib owns focus/portal/scroll-lock — don't double-apply Layers-side equivalents.
 
 ## Learn more

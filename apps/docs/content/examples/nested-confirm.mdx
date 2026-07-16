@@ -16,7 +16,7 @@ import nestedSvelteRunesSrc from "../../recipes/nested-confirm/svelte-runes.svel
 import nestedSvelteStoreSrc from "../../recipes/nested-confirm/svelte-store.svelte?raw";
 import nestedAngularSrc from "../../recipes/nested-confirm/angular.ts?raw";
 
-Delete inside an open drawer. `useLayer(parent)` opens the parent; `group.open` scopes the confirm to that stack and auto-drains when the parent dismisses.
+Delete inside an open parent dialog. `useLayer(parent)` opens the parent; `group.open` scopes the confirm to that stack and auto-drains when the parent dismisses.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
@@ -57,7 +57,7 @@ One complete recipe per framework adapter (live demo above is React).
 
 - **Standalone confirm** — no parent layer; see [Confirm dialog](/examples/confirm-dialog)
 - **Dismissal blockers** — guard closing a parent with open children; see [Dismissal blockers](/guides/dismissal-blockers)
-- **Drawer + sub-dialog** — same pattern with a slide-over parent; see Drawer example
+- **Slide-over parent** — same `useLayerGroup` pattern with a drawer as the parent layer
 
 ## Learn more
 

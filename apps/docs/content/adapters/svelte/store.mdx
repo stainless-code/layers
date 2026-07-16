@@ -7,7 +7,7 @@ sidebar:
   badge: "3+"
 ---
 
-`@stainless-code/svelte-layers/store` binds stacks to Svelte `readable` stores. The core is re-exported. Use this entry for Svelte 3+ projects that prefer the store contract over runes.
+`@stainless-code/svelte-layers/store` binds stacks to Svelte `readable` stores. Most core symbols are re-exported. Core's headless `createLayer` is `createLayerHandle`; the wired handle is `createLayer`. Use this entry for Svelte 3+ projects that prefer the store contract over runes.
 
 :::tip
 Like the [runes entry](/adapters/svelte/runes), this adapter ships no `.svelte` components — render with `{#each $stack}` + `callFor(client, stackId, s)` in your own markup. **Intentional compiler-free design**; see the [parity matrix](/adapters).

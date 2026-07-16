@@ -7,7 +7,7 @@ search:
 
 import buSrc from "../../../recipes/animated-enter-exit/react.baseui.tsx?raw";
 
-Instant `call.end` cuts off CSS exit transitions — Layers must hold the mount until Base UI finishes. `useLayer(animated)` opens the dialog; drive enter/exit with `data-[starting-style]`/`data-[ending-style]`; resolve `call.end` in `onOpenChangeComplete(false)`. See the [live demo](/examples/animated-enter-exit).
+Instant `call.end` cuts off CSS exit transitions — Layers must hold the mount until Base UI finishes. `useLayer(animated)` opens the dialog; resolve `call.end` in `onOpenChangeComplete(false)` after dismiss intent sets `open` false. See the [live demo](/examples/animated-enter-exit).
 
 ## Recipe
 
@@ -16,7 +16,7 @@ Instant `call.end` cuts off CSS exit transitions — Layers must hold the mount 
 ## Seam notes
 
 - Don't use Base UI's trigger wrappers — controlled overlay while mounted.
-- **Exit-animation crux:** don't `call.end` on dismiss intent or Layers unmounts before the exit anim plays. Base UI fix: `setOpen(false)` on dismiss intent, resolve `call.end(result)` in `onOpenChangeComplete(false)` (fires AFTER Base UI's exit animation). Use `data-[starting-style]`/`data-[ending-style]` for the transitions.
+- **Exit-animation crux:** don't `call.end` on dismiss intent or Layers unmounts before the exit anim plays. Base UI fix: `setOpen(false)` on dismiss intent, resolve `call.end(result)` in `onOpenChangeComplete(false)` (fires after Base UI's exit animation). Style with Base UI's starting/ending data attributes as needed.
 - Lib owns focus/portal/scroll-lock — don't double-apply Layers-side equivalents.
 
 ## Learn more

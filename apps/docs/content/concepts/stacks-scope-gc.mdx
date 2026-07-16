@@ -28,17 +28,15 @@ Use serial scope for one-at-a-time flows — onboarding steps, queued confirms, 
 
 ## upsert and update
 
-**`upsert`** — reusing an active key updates its payload instead of stacking a duplicate. Ideal for singleton toasts, snackbars, or progress indicators.
+**`upsert`** — with `upsert: true` on `layerOptions` (or via handle `.upsert(payload)`), reusing an active key updates its payload instead of stacking. Ideal for singleton toasts, snackbars, or progress indicators.
 
-**`update`** — patch a layer's payload live while it remains mounted (`stack.update(layer, patch)` or `call.update(patch)`).
-
-Both operate on the **logical key** (`keySignature(key)`), not the instance id.
+**`update`** — patch a mounted layer's payload (`stack.update(layer, patch)` or `call.update(patch)`). The stack API takes a **layer instance**; a handle's `.update(patch, { id? })` finds by key when `id` is omitted.
 
 ## gcTime — dismissed-layer cache
 
 `gcTime` caches a dismissed layer only when it had `data !== undefined`, so re-opening the same key can restore `data` without re-running `loadFn`. No `data` → not cached.
 
-- **One slot per key signature** — last-dismissed-wins; the displaced entry is evicted with explicit teardown.
+- **One slot per key signature** — last-dismissed-wins; a displaced cache entry is dropped (no extra teardown — the layer already dismissed).
 - A cached layer is off-`getSnapshot()` and unobserved; the timer runs while cached.
 - Re-open cancels the eviction timer.
 

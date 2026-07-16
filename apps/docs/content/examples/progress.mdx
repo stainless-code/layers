@@ -15,7 +15,7 @@ import progressSvelteRunesSrc from "../../recipes/progress/svelte-runes.svelte?r
 import progressSvelteStoreSrc from "../../recipes/progress/svelte-store.svelte?raw";
 import progressAngularSrc from "../../recipes/progress/angular.ts?raw";
 
-A file upload needs a live percent bar without remounting. `useLayer(progress)` opens once; `progress.stack.update(layer, { percent })` pushes ticks while it stays mounted.
+A file upload needs a live percent bar without remounting. `useLayer(progress)` opens once; `progressLayer.stack.update(layer, { percent })` pushes ticks while it stays mounted.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).

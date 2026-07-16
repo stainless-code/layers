@@ -5,14 +5,14 @@ search:
   tags: ["concept"]
 ---
 
-Three opens in one tick should cost one re-render, not three. `Subscribable` wraps each listener in `notifyManager.batchCalls`, and `open`, `dismiss`, and `update` run inside `notifyManager.batch` — so mutations in one tick collapse to **one** UI re-render.
+Three opens in one tick should cost one re-render, not three. Stack mutations (`open`, `dismiss`, `update`, `settle`, `cancelQueued`, …) run inside `notifyManager.batch`. `Subscribable` wraps listeners in `batchCalls` — one flush per tick, one re-render.
 
 ## How it works
 
 ```ts
 // Inside the engine — mutations are batched automatically
 notifyManager.batch(() => {
-  // open / dismiss / update mutations
+  // stack mutations for this tick
 });
 ```
 

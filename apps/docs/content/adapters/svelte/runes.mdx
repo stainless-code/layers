@@ -7,7 +7,7 @@ sidebar:
   badge: "5.7+"
 ---
 
-`@stainless-code/svelte-layers` (package root) binds stacks to Svelte 5 runes via `createSubscriber`. The core is re-exported.
+`@stainless-code/svelte-layers` (package root) binds stacks to Svelte 5 runes via `createSubscriber`. Most core symbols are re-exported. Core's headless `createLayer` is `createLayerHandle`; the wired handle is `createLayer`.
 
 :::tip
 Svelte builds compiler-free (tsdown, no `.svelte` components shipped). Render with `{#each useStack().current as s}` + `stack.callFor(s)` in your own markup — **intentional primitive design**, not a parity gap. See the [parity matrix](/adapters).

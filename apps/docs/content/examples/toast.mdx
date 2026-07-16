@@ -15,11 +15,11 @@ import toastSvelteRunesSrc from "../../recipes/toast/svelte-runes.svelte?raw";
 import toastSvelteStoreSrc from "../../recipes/toast/svelte-store.svelte?raw";
 import toastAngularSrc from "../../recipes/toast/angular.ts?raw";
 
-Save feedback shouldn't block the UI. `useLayer(toast)` + `void toast.open({ message: "Saved" })` mounts the toast and returns immediately.
+Save feedback shouldn't block the UI. `useLayer(toast)` + `void toast.open(...)` fires without `await` — recipes below wire a fixed-key handle.
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
-Concurrent toasts here use per-click `client.open` keys; recipes below use a wired handle.
+Concurrent toasts here use per-click `client.open` keys; recipes below use a fixed-key handle.
 Integrations with React Aria and Base UI live under [Integrations](/integrations).
 :::
 

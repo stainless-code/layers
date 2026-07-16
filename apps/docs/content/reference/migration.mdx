@@ -54,7 +54,7 @@ Optional trailing `client?: LayerClient` is unchanged.
 await confirm.open({ title: "Remove?" });`}
 />
 
-Headless (no adapter): `createLayer(options, client)`.
+Headless (no adapter): `createLayer(options, client)` from `@stainless-code/layers`. On Svelte adapters, import that factory as `createLayerHandle` — `createLayer` is the wired handle.
 
 ### Core: `LayerStack.find` is topmost same-key
 
