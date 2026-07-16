@@ -1165,7 +1165,6 @@ let toastCounter = 0;
 
 function HeroShowcase() {
   const client = useLayerClient();
-  // Wired handles for fixed-key demos; bag-form `client.open` kept where open overrides `key`.
   const confirm = useLayer(confirmOpts);
   const progress = useLayer(progressOpts);
   const drawer = useLayer(drawerOpts);
