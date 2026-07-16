@@ -18,7 +18,8 @@ const confirm = layerOptions<ConfirmPayload, boolean>({
   component: ConfirmDialog,
 });
 
-const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });//    ^? boolean
+const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+//    ^? boolean
 ```
 
 You can also brand a key alone with `layerKey<R>()(key)` when options are inlined at the call site. See [Identity and types](/concepts/identity-and-types) for how `DataTag` inference works.
@@ -37,7 +38,8 @@ function RemoveButton() {
   const confirmLayer = useLayer(confirm);
 
   async function handleRemove() {
-    const ok = await confirmLayer.open({ title: "Remove?" }); //    ^? boolean
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
     if (ok) {
       /* … */
     }
@@ -55,32 +57,49 @@ function RemoveButton() {
 <Tab title="Preact" icon="/icons/preact.svg">
 
 ```tsx lineNumbers
-import { useLayerClient } from "@stainless-code/preact-layers";
+import { useLayer } from "@stainless-code/preact-layers";
 
-function useRemove() {
-  const client = useLayerClient();
-  return async () => {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+function RemoveButton() {
+  const confirmLayer = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
       /* … */
     }
-  };
+  }
+
+  return (
+    <button type="button" onClick={() => void handleRemove()}>
+      Remove
+    </button>
+  );
 }
 ```
-
 
 </Tab>
 <Tab title="Solid" icon="/icons/solid.svg">
 
 ```tsx lineNumbers
-import { useLayerClient } from "@stainless-code/solid-layers";
+import { useLayer } from "@stainless-code/solid-layers";
 
-function useRemove() {
-  const client = useLayerClient();
-  return async () => {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+function RemoveButton() {
+  const confirmLayer = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
       /* … */
     }
-  };
+  }
+
+  return (
+    <button type="button" onClick={() => void handleRemove()}>
+      Remove
+    </button>
+  );
 }
 ```
 
@@ -89,14 +108,16 @@ function useRemove() {
 
 ```ts lineNumbers
 import { Component } from "@angular/core";
-import { useLayerClient } from "@stainless-code/angular-layers";
+import { injectLayer } from "@stainless-code/angular-layers";
 
 @Component({ /* … */ })
 class RemoveButton {
-  private client = useLayerClient();
+  private confirmLayer = injectLayer(confirm);
 
   async remove() {
-    const ok = await this.client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+    const ok = await this.confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
       /* … */
     }
   }
@@ -108,12 +129,14 @@ class RemoveButton {
 
 ```vue lineNumbers
 <script setup lang="ts">
-import { useLayerClient } from "@stainless-code/vue-layers";
+import { useLayer } from "@stainless-code/vue-layers";
 
-const client = useLayerClient();
+const confirmLayer = useLayer(confirm);
 
 async function remove() {
-  const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });  if (ok) {
+  const ok = await confirmLayer.open({ title: "Remove?" });
+  //    ^? boolean
+  if (ok) {
     /* … */
   }
 }
@@ -125,12 +148,14 @@ async function remove() {
 
 ```svelte lineNumbers
 <script lang="ts">
-  import { useLayerClient } from "@stainless-code/svelte-layers";
+  import { createLayer } from "@stainless-code/svelte-layers";
 
-  const client = useLayerClient();
+  const confirmLayer = createLayer(confirm);
 
   async function remove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
       /* … */
     }
   }
@@ -142,19 +167,19 @@ async function remove() {
 
 ```svelte lineNumbers
 <script lang="ts">
-  import { useLayerClient } from "@stainless-code/svelte-layers/store";
+  import { createLayer } from "@stainless-code/svelte-layers/store";
 
-  const client = useLayerClient();
+  const confirmLayer = createLayer(confirm);
 
   async function remove() {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
       /* … */
     }
   }
 </script>
 ```
-
-Same `open`/`await` call — store entry uses `Readable` stacks for rendering, not this call site.
 
 </Tab>
 </Tabs>

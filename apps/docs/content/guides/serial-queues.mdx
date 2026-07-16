@@ -51,7 +51,8 @@ const steps = [
 ];
 
 for (const step of steps) {
-  void client.open(step); // only one active; rest queue // [!code highlight]
+  void client.open(step); // [!code highlight]
+  // only one active; rest queue
 }
 ```
 

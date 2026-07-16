@@ -5,14 +5,7 @@ search:
   tags: ["guide"]
 ---
 
-This guide uses **React**. Install packages first — see [Install](/guides/install).
-
-```tsx
-const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
-//    ^? boolean
-```
-
-Declare the layer once, mount an outlet, then open from anywhere and `await` a typed result — the sections below walk through each step.
+Stop threading `isOpen` through props — declare the contract once, mount an outlet, and open from any descendant. This guide uses **React**; other adapters: [Install](/guides/install).
 
 ## Install
 
@@ -103,7 +96,7 @@ function useRemove() {
 }
 ```
 
-**Recommended:** wire the declaration with `useLayer(options)` — same inference, payload-only `open`, plus reactive `state`/`queued`/`top` for UI:
+Or wire the declaration with `useLayer(options)` — same inference, payload-only `open`, plus reactive `state`/`queued`/`top` for UI:
 
 ```tsx
 import { useLayer } from "@stainless-code/react-layers";
@@ -129,4 +122,4 @@ function RemoveButton() {
 
 See [Glossary](/concepts/glossary) for drive vs observe.
 
-> **Both payload and response are optional.** The response type `R` defaults to `void` (fire-and-forget), and `payload` is omittable whenever the layer needs no input. For a fire-and-forget layer, declare it with `layerOptions({ stack, key, component })` and call `client.open(about)` — the layer dismisses itself via `call.dismiss()`.
+> Optional payload and response — see [Awaiting results](/guides/awaiting-results#fire-and-forget).

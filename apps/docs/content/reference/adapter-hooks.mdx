@@ -5,7 +5,7 @@ search:
   tags: ["reference", "adapters"]
 ---
 
-Call sites need two things: **wire** a layer definition to imperative ops, and **observe** stack snapshots for rendering. Every adapter re-exports `@stainless-code/layers` and exposes the same split — wired handle vs observe-only hooks — with framework-native wrappers around the same options bags.
+**Wire** a definition to imperative ops, or **observe** stack snapshots for rendering — same options bags on every adapter, framework-native wrappers only. Core stays re-exported from each package.
 
 :::note[Svelte entries]
 `@stainless-code/svelte-layers` (runes, 5.7+) and `@stainless-code/svelte-layers/store` (readable stores, 3+) share client helpers but differ in stack reactivity and rendering.
@@ -102,8 +102,6 @@ Wired adapters extend `LayerHandle` with reactive `state`, `queued`, and `top` (
 | Nested stack | `useLayerGroup` → `Outlet` | `useLayerGroup` → `renderInto(vcr)` | `useLayerGroup` → `stack` |
 | Async actions | `useMutationFlow` | same | same |
 | App factory | `createStackHook` | `createStackHook` → `renderInto` | not shipped |
-
-Every wired/observe hook accepts an optional trailing `client: LayerClient` (falls back to context).
 
 ## Stack rendering divergences
 

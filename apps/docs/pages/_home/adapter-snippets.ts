@@ -25,10 +25,7 @@ const confirm = layerOptions({
 });
 
 async function remove() {
-  const ok = await client.open({
-    ...confirm,
-    payload: { title: "Remove?" },
-  });
+  const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
   //    ^? boolean
 }`,
   },
@@ -62,10 +59,7 @@ function App() {
 function RemoveButton() {
   const client = useLayerClient();
   async function remove() {
-    const ok = await client.open({
-      ...confirm,
-      payload: { title: "Remove?" },
-    });
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
     //    ^? boolean
   }
 }`,
@@ -100,10 +94,7 @@ function App() {
 function RemoveButton() {
   const client = useLayerClient();
   async function remove() {
-    const ok = await client.open({
-      ...confirm,
-      payload: { title: "Remove?" },
-    });
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
     //    ^? boolean
   }
 }`,
@@ -142,10 +133,7 @@ function App() {
 function RemoveButton() {
   const client = useLayerClient();
   async function remove() {
-    const ok = await client.open({
-      ...confirm,
-      payload: { title: "Remove?" },
-    });
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
     //    ^? boolean
   }
 }`,
@@ -184,10 +172,7 @@ export class AppComponent {
   }
 
   async remove() {
-    const ok = await this.client.open({
-      ...confirm,
-      payload: { title: "Remove?" },
-    });
+    const ok = await this.client.open({ ...confirm, payload: { title: "Remove?" } });
     //    ^? boolean
   }
 }`,
@@ -216,10 +201,7 @@ provideLayerClient();
 
 async function remove() {
   const client = useLayerClient();
-  const ok = await client.open({
-    ...confirm,
-    payload: { title: "Remove?" },
-  });
+  const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
   //    ^? boolean
 }
 </script>
@@ -253,10 +235,7 @@ async function remove() {
   const stack = useStack({ stack: "confirm" });
 
   async function remove() {
-    const ok = await client.open({
-      ...confirm,
-      payload: { title: "Remove?" },
-    });
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
     //    ^? boolean
   }
 </script>
@@ -289,10 +268,7 @@ export const svelteStoreCode = `<script lang="ts">
   const stack = useStack({ stack: "confirm" });
 
   async function remove() {
-    const ok = await client.open({
-      ...confirm,
-      payload: { title: "Remove?" },
-    });
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
     //    ^? boolean
   }
 </script>

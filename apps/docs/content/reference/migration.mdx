@@ -14,7 +14,7 @@ Layers is **pre-1.0**. Breaking API changes are expected and ship in minor relea
 
 ## 0.x — wired handles and observe reshape
 
-Shipped in the layer-handles minor. Three coordinated changes: wired handles (`createLayer` / `useLayer`), observe hooks return arrays, and stack lookup semantics tightened.
+Three coordinated 0.x changes: wired handles (`createLayer` / `useLayer`), observe hooks return arrays, and stack lookup semantics tightened.
 
 ### Observe: `useLayer(key, …)` → `useLayerState({ key, … })`
 
@@ -43,9 +43,9 @@ Per-key queued observation is **`useLayerQueuedState({ key, … })`**. Whole-sta
 
 Optional trailing `client?: LayerClient` is unchanged.
 
-### Wire: prefer `useLayer(options).open(payload)`
+### Wire: `useLayer(options).open(payload)`
 
-Spreading options into `client.open` still works, but wired handles bind identity and expose payload-only ops:
+`client.open({ …layerOptions, payload })` remains valid. Wired handles bind identity and expose payload-only ops:
 
 <Diff
   lang="tsx"
