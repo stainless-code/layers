@@ -1,0 +1,25 @@
+---
+title: Animated enter/exit + Base UI
+description: Compose Layers with Base UI for enter/exit CSS transitions.
+search:
+  tags: ["integration"]
+---
+
+import buSrc from "../../../recipes/animated-enter-exit/react.baseui.tsx?raw";
+
+Drive enter/exit with Base UI's `data-[starting-style]`/`data-[ending-style]`; Layers owns the mount window — `call.end` after exit. See the [live demo](/examples/animated-enter-exit) for the behavior.
+
+## Recipe
+
+<CodeBlock code={buSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use Base UI's trigger wrappers — Layers owns the imperative open; the layer component renders the controlled overlay directly while mounted.
+- **Exit-animation crux:** don't `call.end` on dismiss intent or Layers unmounts before the exit anim plays. Base UI fix: `setOpen(false)` on dismiss intent, resolve `call.end(result)` in `onOpenChangeComplete(false)` (fires AFTER Base UI's exit animation). Use `data-[starting-style]`/`data-[ending-style]` for the transitions.
+- Lib owns focus/portal/scroll-lock — don't double-apply Layers-side equivalents.
+
+## Learn more
+
+- [Animated enter/exit example](/examples/animated-enter-exit) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

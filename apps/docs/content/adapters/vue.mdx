@@ -1,0 +1,117 @@
+---
+title: Vue
+description: Vue adapter — provideLayerClient, composition API hooks, StackOutlet.
+search:
+  tags: ["adapter", "vue"]
+sidebar:
+  icon: /icons/vue.svg
+---
+
+`@stainless-code/vue-layers` bridges stacks into Vue 3 composition API refs. The core is re-exported.
+
+## Install
+
+```package-install
+npm i @stainless-code/vue-layers
+```
+
+**Peer:** `vue` >=3.3.0
+
+## Client
+
+Call `provideLayerClient()` in a parent `setup()` (creates a `LayerClient` when omitted). Descendants read it with `useLayerClient()`:
+
+```vue
+<script setup lang="ts">
+import { provideLayerClient, StackOutlet } from "@stainless-code/vue-layers";
+
+provideLayerClient();
+</script>
+
+<template>
+  <StackOutlet stack="confirm" />
+</template>
+```
+
+:::note
+Hooks must run inside `setup()` or an `effectScope()` so `onScopeDispose` can tear down stack subscriptions.
+:::
+
+## Render a stack
+
+`StackOutlet` renders registered `component` entries. For scoped-slot-style subscriptions, use `StackSubscribe` or `useStack(stack, selector)` directly in `setup()`.
+
+## Confirm dialog
+
+```vue
+<script setup lang="ts">
+import {
+  layerOptions,
+  provideLayerClient,
+  StackOutlet,
+  useLayerClient,
+  type LayerComponentProps,
+} from "@stainless-code/vue-layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+const ConfirmDialog = defineComponent({
+  props: {
+    call: { type: Object, required: true },
+    payload: { type: Object, required: true },
+  },
+  setup(props: LayerComponentProps<ConfirmPayload, ConfirmResponse>) {
+    return () => (
+      <div role="dialog">
+        <h2>{props.payload.title}</h2>
+        <button onClick={() => void props.call.end(true)}>Yes</button>
+        <button onClick={() => void props.call.end(false)}>No</button>
+      </div>
+    );
+  },
+});
+
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+
+provideLayerClient();
+const client = useLayerClient();
+
+async function remove() {
+  await client.open({ ...confirm, payload: { title: "Remove item?" } });
+}
+</script>
+
+<template>
+  <StackOutlet stack="confirm" />
+  <button @click="remove">Remove</button>
+</template>
+```
+
+## Primitives
+
+| Export | Role |
+| ------ | ---- |
+| `useStack(stackId?, selector?, compare?)` | `Readonly<Ref<T>>` of the selected stack slice |
+| `useLayer(key, stackId?, compare?)` | `Readonly<Ref<LayerState \| null>>` for one active key |
+
+Both accept an optional leading `LayerClient` argument.
+
+## Ergonomic APIs
+
+| Export | Role |
+| ------ | ---- |
+| `useStackHandles(stack?, rootProps?)` | `{ states: Ref, getCall }` for headless rendering |
+| `StackSubscribe` | Scoped-slot subscription (`#default="{ value }"`) |
+| `useMutationFlow(call)` | `pending` is a `Ref<boolean>`; `run(fn).orEnd(response)` |
+| `useLayerGroup(call, options?)` | Child stack with `Outlet` component |
+| `createStackHook(config?)` | `StackProvider`, `useAppStack`, `AppHost`, `AppLayer` components |
+
+## Learn more
+
+- [Lifecycle](/concepts/lifecycle) · [Identity & types](/concepts/identity-and-types)
+- [Adapter parity](/adapters)

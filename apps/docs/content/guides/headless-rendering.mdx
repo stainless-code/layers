@@ -1,0 +1,319 @@
+---
+title: Headless rendering
+description: Render stacks yourself with useStackHandles and StackSubscribe instead of StackOutlet.
+search:
+  tags: ["guide"]
+---
+
+`StackOutlet` maps a stack snapshot to registered components — the convenience path. When you need custom portals, per-layer switches, or non-component renderers, use the headless primitives.
+
+## useStackHandles
+
+Returns `{ states, getCall }` — everything `StackOutlet` uses internally:
+
+<Tabs>
+<Tab title="React" icon="/icons/react.svg">
+
+```tsx lineNumbers
+import { useStackHandles } from "@stainless-code/react-layers";
+
+function CustomHost() {
+  const { states, getCall } = useStackHandles("modal");
+  return (
+    <Portal>
+      {states.map((s) => {
+        const call = getCall(s);
+        return (
+          <MyModal
+            key={s.id}
+            call={call}
+            payload={s.payload}
+            transition={s.transition}
+          />
+        );
+      })}
+    </Portal>
+  );
+}
+```
+
+</Tab>
+<Tab title="Preact" icon="/icons/preact.svg">
+
+```tsx lineNumbers
+import { useStackHandles } from "@stainless-code/preact-layers";
+
+function CustomHost() {
+  const { states, getCall } = useStackHandles("modal");
+  return (
+    <Portal>
+      {states.map((s) => {
+        const call = getCall(s);
+        return (
+          <MyModal
+            key={s.id}
+            call={call}
+            payload={s.payload}
+            transition={s.transition}
+          />
+        );
+      })}
+    </Portal>
+  );
+}
+```
+
+</Tab>
+<Tab title="Solid" icon="/icons/solid.svg">
+
+```tsx lineNumbers
+import { For } from "solid-js";
+import { useStackHandles } from "@stainless-code/solid-layers";
+
+function CustomHost() {
+  const { states, getCall } = useStackHandles("modal");
+  return (
+    <Portal>
+      <For each={states()}>
+        {(s) => (
+          <MyModal
+            call={getCall(s)}
+            payload={s.payload}
+            transition={s.transition}
+          />
+        )}
+      </For>
+    </Portal>
+  );
+}
+```
+
+</Tab>
+<Tab title="Angular" icon="/icons/angular.svg">
+
+```ts lineNumbers
+import { Component } from "@angular/core";
+import { useStackHandles } from "@stainless-code/angular-layers";
+
+@Component({
+  template: `
+    @for (s of states(); track s.id) {
+      <my-modal
+        [call]="getCall(s)"
+        [payload]="s.payload"
+        [transition]="s.transition"
+      />
+    }
+  `,
+})
+class CustomHost {
+  private handles = useStackHandles("modal");
+  states = this.handles.states;
+  getCall = this.handles.getCall;
+}
+```
+
+</Tab>
+<Tab title="Vue" icon="/icons/vue.svg">
+
+```vue lineNumbers
+<script setup lang="ts">
+import { useStackHandles } from "@stainless-code/vue-layers";
+
+const { states, getCall } = useStackHandles("modal");
+</script>
+
+<template>
+  <Teleport to="body">
+    <MyModal
+      v-for="s in states"
+      :key="s.id"
+      :call="getCall(s)"
+      :payload="s.payload"
+      :transition="s.transition"
+    />
+  </Teleport>
+</template>
+```
+
+</Tab>
+<Tab title="Svelte (runes)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { useStack } from "@stainless-code/svelte-layers";
+
+  const stack = useStack("modal");</script>
+
+{#each stack.current as s (s.id)}
+  {@const call = stack.callFor(s)}
+  {#if call}<MyModal {call} payload={s.payload} transition={s.transition} />{/if}
+{/each}
+```
+
+`useStack().current` + `callFor` — no separate `useStackHandles` export.
+
+</Tab>
+<Tab title="Svelte (store)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { callFor, setLayerClient, useLayerClient, useStack } from "@stainless-code/svelte-layers/store";
+
+  setLayerClient();
+  const client = useLayerClient();
+  const stack = useStack("modal");</script>
+
+{#each $stack as s (s.id)}
+  {@const call = callFor(client, "modal", s)}
+  {#if call}<MyModal {call} payload={s.payload} transition={s.transition} />{/if}
+{/each}
+```
+
+Store entry subscribes via `$stack` + standalone `callFor(client, stackId, state)`.
+
+</Tab>
+</Tabs>
+
+`StackOutlet` deliberately has **no** `render` prop — headless is the escape hatch.
+
+## StackSubscribe
+
+Isolate a selector in JSX/template without pulling the full snapshot into your component:
+
+<Tabs>
+<Tab title="React" icon="/icons/react.svg">
+
+```tsx lineNumbers
+import { StackSubscribe } from "@stainless-code/react-layers";
+
+function OpenCount() {
+  return (
+    <StackSubscribe stack="modal" selector={(s) => s.length}>
+      {" "}
+      {(count) => <span>{count} open</span>}
+    </StackSubscribe>
+  );
+}
+```
+
+</Tab>
+<Tab title="Preact" icon="/icons/preact.svg">
+
+```tsx lineNumbers
+import { StackSubscribe } from "@stainless-code/preact-layers";
+
+function OpenCount() {
+  return (
+    <StackSubscribe stack="modal" selector={(s) => s.length}>
+      {" "}
+      {(count) => <span>{count} open</span>}
+    </StackSubscribe>
+  );
+}
+```
+
+
+</Tab>
+<Tab title="Solid" icon="/icons/solid.svg">
+
+```tsx lineNumbers
+import { StackSubscribe } from "@stainless-code/solid-layers";
+
+function OpenCount() {
+  return (
+    <StackSubscribe stack="modal" selector={(s) => s.length}>
+      {" "}
+      {(count) => <span>{count()} open</span>}
+    </StackSubscribe>
+  );
+}
+```
+
+</Tab>
+<Tab title="Angular" icon="/icons/angular.svg">
+
+```ts lineNumbers
+import { Component } from "@angular/core";
+import { useStack } from "@stainless-code/angular-layers";
+
+@Component({ template: `<span>{{ count() }} open</span>` })
+class OpenCount {
+  count = useStack("modal", (s) => s.length);
+}
+```
+
+No `StackSubscribe` — `useStack(stack, selector)` signal is the equivalent.
+
+</Tab>
+<Tab title="Vue" icon="/icons/vue.svg">
+
+```vue lineNumbers
+<script setup lang="ts">
+import { StackSubscribe } from "@stainless-code/vue-layers";
+</script>
+
+<StackSubscribe
+  stack="modal"
+  :selector="(s) => s.length"
+>  <template #default="{ value }">{{ value }} open</template>
+</StackSubscribe>
+```
+
+</Tab>
+<Tab title="Svelte (runes)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { useStack } from "@stainless-code/svelte-layers";
+
+  const count = useStack("modal", (s) => s.length);</script>
+
+<span>{count.current} open</span>
+```
+
+No `StackSubscribe` — `useStack(stack, selector)` with `.current` is the equivalent.
+
+</Tab>
+<Tab title="Svelte (store)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { useStack } from "@stainless-code/svelte-layers/store";
+
+  const count = useStack("modal", (s) => s.length);</script>
+
+<span>{$count} open</span>
+```
+
+No `StackSubscribe` — subscribe to the selector `Readable` with `$count`.
+
+</Tab>
+</Tabs>
+
+For fully-typed selector output in Vue, prefer `useStack(stack, selector)` in `setup()`.
+
+## Adapter equivalents
+
+| Adapter        | Headless path                                | Built-in outlet           |
+| -------------- | -------------------------------------------- | ------------------------- |
+| React / Preact | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
+| Solid / Vue    | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
+| Angular        | `useStackHandles`, `renderStack(vcr)`        | `renderStack`             |
+| Svelte (runes) | `useStack().current` + `callFor`             | — (render in your markup) |
+| Svelte (store) | `$stack` + `callFor(client, stackId, state)` | —                         |
+
+:::tip
+Svelte's `useStack()` already returns the headless pair — `.current` for states and `callFor` for call contexts. No separate `useStackHandles` export.
+:::
+
+Angular has no `StackSubscribe`; `useStack(stack, selector)` as a signal is the idiomatic equivalent.
+
+## When to skip StackOutlet
+
+- Custom portal targets or z-index layering
+- Switching on `state.key` to pick arbitrary components (not the registered `component`)
+- Integrating with a design-system modal primitive that owns its own DOM
+- Angular and Svelte — imperative/primitive rendering by design
+
+Dev warning: `StackOutlet` logs when a layer has no `component` and renders nothing.

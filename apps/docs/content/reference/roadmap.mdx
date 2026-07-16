@@ -1,0 +1,30 @@
+---
+title: Roadmap
+description: Forward-looking work — not a mirror of shipped src.
+search:
+  tags: ["reference", "roadmap"]
+sidebar:
+  badge: "Planned"
+---
+
+Shipped features live in [Overview](/concepts/overview) + [Glossary](/concepts/glossary); this page is the forward-looking list. Pull requests welcome — open an issue first for anything below so we can agree on shape.
+
+## Robustness
+
+- **Devtools** — `@stainless-code/layers-devtools` stack inspector; also owns the public `StackNotifyEvent` event bus. Design-first, once the public API is stable (co-design the event schema against the inspector's real needs); fires the architecture-priming rule (new subpath entry + core/UI split).
+- **`#dispatch` reducer** — route every `LayerStack` mutation through one internal transition choke point; unlocks the devtools event stream. Do alongside Devtools.
+
+## Backlog (grill before building)
+
+- **Infer `D` from `loadFn`** — type a layer's `data` from the `loadFn` return without an explicit generic. Needs a dedicated type pass (interacts with the `const Key` inference).
+- **`initialSnapshot` (SSR rehydration)** — seed a stack so layers render server-side and hydrate (layers are client-only today; the `transition` axis would hydrate as `settled`).
+- **Thenable `.status`** — expose a layer / `open` promise that React Suspense can read.
+
+## Adapters
+
+- **Qwik** + **Alpine** + **Lit** + **Marko** + **Angular SSR** + **React Native** bindings if demand materializes.
+
+## Out of scope
+
+- **No `HostAdapter` / portal abstraction** — `StackOutlet` renders inline; wrap it in your own `createPortal` when you need a portal target. Keeping the core agnostic means no host/portal layer is baked in.
+- Sidecar / nested-portal hosting, route masking, and z-order management — consumer concerns, not core. Re-evaluate only if a real consumer needs them and the agnostic contract can express it without leaking library- or framework-specific details.

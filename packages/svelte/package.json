@@ -14,7 +14,7 @@
     "tanstack-intent",
     "typescript"
   ],
-  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/svelte#readme",
+  "homepage": "https://stainless-code.com/layers/adapters/svelte/runes",
   "bugs": {
     "url": "https://github.com/stainless-code/layers/issues"
   },

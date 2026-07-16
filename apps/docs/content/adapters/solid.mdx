@@ -1,0 +1,127 @@
+---
+title: Solid
+description: Solid adapter — LayerClientContext, signal accessors, StackOutlet.
+search:
+  tags: ["adapter", "solid"]
+sidebar:
+  icon: /icons/solid.svg
+---
+
+`@stainless-code/solid-layers` bridges stacks into Solid signals via `from`. The core is re-exported.
+
+## Install
+
+```package-install
+npm i @stainless-code/solid-layers
+```
+
+**Peer:** `solid-js` >=1.6.0
+
+## Client
+
+Provide a `LayerClient` through `LayerClientContext`. Read it with `useLayerClient()`:
+
+```tsx
+import {
+  LayerClientContext,
+  LayerClient,
+  StackOutlet,
+  useLayerClient,
+} from "@stainless-code/solid-layers";
+
+const client = new LayerClient();
+
+function App() {
+  return (
+    <LayerClientContext.Provider value={client}>
+      <StackOutlet stack="confirm" />
+    </LayerClientContext.Provider>
+  );
+}
+```
+
+`createStackHook` also returns a bound `StackProvider` when you want a single-stack factory.
+
+## Render a stack
+
+`StackOutlet` renders registered components with keyed `Dynamic` updates. For render-prop subscriptions, use `StackSubscribe`.
+
+## Confirm dialog
+
+```tsx
+import {
+  layerOptions,
+  LayerClientContext,
+  LayerClient,
+  StackOutlet,
+  useLayerClient,
+  type LayerComponentProps,
+} from "@stainless-code/solid-layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+function ConfirmDialog(props: LayerComponentProps<ConfirmPayload, ConfirmResponse>) {
+  return (
+    <div role="dialog">
+      <h2>{props.payload.title}</h2>
+      <button onClick={() => void props.call.end(true)}>Yes</button>
+      <button onClick={() => void props.call.end(false)}>No</button>
+    </div>
+  );
+}
+
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+
+const client = new LayerClient();
+
+function RemoveButton() {
+  const c = useLayerClient();
+  return (
+    <button
+      onClick={() =>
+        void c.open({ ...confirm, payload: { title: "Remove item?" } })
+      }
+    >
+      Remove
+    </button>
+  );
+}
+
+function App() {
+  return (
+    <LayerClientContext.Provider value={client}>
+      <StackOutlet stack="confirm" />
+      <RemoveButton />
+    </LayerClientContext.Provider>
+  );
+}
+```
+
+## Primitives
+
+| Export | Role |
+| ------ | ---- |
+| `useStack(stackId?, selector?, compare?)` | `Accessor<T>` of the selected stack slice |
+| `useLayer(key, stackId?, compare?)` | `Accessor<LayerState \| null>` for one active key |
+
+Both accept an optional leading `LayerClient` argument. Read accessors with `()` — e.g. `useStack("confirm")()`.
+
+## Ergonomic APIs
+
+| Export | Role |
+| ------ | ---- |
+| `useStackHandles(stack?, rootProps?)` | `{ states: Accessor, getCall }` for headless rendering |
+| `StackSubscribe` | Render-prop with `Accessor<T>` child argument |
+| `useMutationFlow(call)` | `pending` is an `Accessor<boolean>`; `run(fn).orEnd(response)` |
+| `useLayerGroup(call, options?)` | Child stack with `Outlet` component |
+| `createStackHook(config?)` | `StackProvider`, `useAppStack`, `AppHost`, `AppLayer` |
+
+## Learn more
+
+- [Lifecycle](/concepts/lifecycle) · [Identity & types](/concepts/identity-and-types)
+- [Adapter parity](/adapters)

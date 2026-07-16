@@ -189,22 +189,32 @@ jobs:
       - name: Run size limit
         run: bun run size
 
-  docs-api:
-    name: 📚 API docs
+  docs:
+    name: 📖 Docs site (Blume)
     needs: skip-ci
     if: needs['skip-ci'].outputs.skip != 'true'
     runs-on: ubuntu-latest
+    # Token for github-releases changelog — avoids BLUME_SOURCE_OFFLINE under --strict.
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           persist-credentials: false
-
+          fetch-depth: 0
       - name: Setup
         uses: ./.github/actions/setup
-
-      - name: Generate API docs (fails on broken {@link} / not-exported)
+      - name: Generate API reference (Markdown)
         run: bun run docs:api
+      # Site content graph (lychee excludes apps/docs). No --external (offline).
+      - name: Validate docs links
+        run: bun run docs:validate -- --strict
+      # Astro/pages/islands — recipes already gated by root typecheck:recipes.
+      - name: Typecheck docs site
+        run: bun run docs:check -- --isolated
+      - name: Build docs site
+        run: bun run docs:build
 
   links:
     name: 🔗 Doc links
@@ -285,7 +295,7 @@ jobs:
         build,
         check-pack,
         size,
-        docs-api,
+        docs,
         links,
         audit,
         deps,
@@ -304,7 +314,7 @@ jobs:
             needs.build.result != 'success' ||
             needs['check-pack'].result != 'success' ||
             needs.size.result != 'success' ||
-            needs['docs-api'].result != 'success' ||
+            needs.docs.result != 'success' ||
             needs.links.result != 'success' ||
             needs.audit.result != 'success' ||
             needs.deps.result != 'success'

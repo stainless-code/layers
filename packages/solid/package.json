@@ -14,7 +14,7 @@
     "tanstack-intent",
     "typescript"
   ],
-  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/solid#readme",
+  "homepage": "https://stainless-code.com/layers/adapters/solid",
   "bugs": {
     "url": "https://github.com/stainless-code/layers/issues"
   },

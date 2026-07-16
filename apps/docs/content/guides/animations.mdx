@@ -1,0 +1,88 @@
+---
+title: Animations
+description: Drive enter and exit animations with transition, delays, and call.settle.
+search:
+  tags: ["guide"]
+---
+
+Animation is a third axis — orthogonal to `phase` and `actionStatus`. Layers expose `transition: "entering" | "settled" | "exiting"` so your component can apply CSS classes or motion libraries without overloading lifecycle phase.
+
+## Transition axis
+
+| Moment | `phase` | `transition` |
+| ------ | ------- | ------------ |
+| Opening, loading | `pending` | `settled` (default `enteringDelay: 0`); `entering` when `enteringDelay > 0` |
+| Open and idle | `active` | `settled` |
+| Dismissed, animating out | `dismissed` | `settled` then unmount (default `exitingDelay: 0`); `exiting` when `exitingDelay > 0` |
+| Dismissed, cached | `dismissed` | `settled` |
+
+Read `transition` in your layer component to toggle enter/exit styles:
+
+```tsx lineNumbers
+function Modal({ call, transition }: LayerComponentProps<void, void>) {
+  return (
+    <div
+      className={
+        transition === "entering" // [!code highlight]
+          ? "modal-enter"
+          : transition === "exiting"
+            ? "modal-exit"
+            : "modal-settled"
+      }
+    >
+      <button onClick={() => void call.dismiss()}>Close</button>
+    </div>
+  );
+}
+```
+
+## Fixed-duration CSS
+
+Set delays on the layer definition; the engine flips `transition` after the timer:
+
+```ts
+const modal = layerOptions({
+  stack: "modal",
+  key: ["settings"],
+  component: Settings,
+  enteringDelay: 200,
+  exitingDelay: 300,
+});
+```
+
+With `enteringDelay: 0` and `exitingDelay: 0` (defaults), transitions flip synchronously — no animation frame is observed.
+
+## Variable duration (springs, motion)
+
+Use a generous cap delay and call `call.settle()` when your animation completes:
+
+```tsx lineNumbers
+function SpringModal({ call, transition }: LayerComponentProps<void, void>) {
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onAnimationComplete={() => {
+        if (transition === "entering" || transition === "exiting") {
+          call.settle(); // [!code highlight]
+        }
+      }}
+    >
+      {/* … */}
+    </motion.div>
+  );
+}
+```
+
+`call.settle()` completes whichever transition is active:
+
+- `entering → settled` (clears enter timer; `phase` untouched)
+- `exiting → remove` (clears exit timer and unmounts)
+
+Completion fires on **whichever comes first** — delay elapsed or `call.settle()`.
+
+## Edge cases
+
+- Blockers run **before** exit transition starts — a vetoed dismiss keeps `transition` at `settled`. See [Dismissal blockers](/guides/dismissal-blockers).
+- Layers are client-only today; when SSR hydration lands, initial `transition` must be `"settled"`. See [SSR](/guides/ssr).

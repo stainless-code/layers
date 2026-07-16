@@ -1,0 +1,64 @@
+---
+title: Confirm dialog with a typed result
+description: Open a confirm dialog from anywhere and await a typed boolean result.
+search:
+  tags: ["example"]
+---
+
+import confirmSrc from "../../recipes/confirm-dialog/react.tsx?raw";
+import confirmWiringSrc from "../../recipes/confirm-dialog/react.wiring.tsx?raw";
+import confirmPreactSrc from "../../recipes/confirm-dialog/preact.tsx?raw";
+import confirmVueLayerSrc from "../../recipes/confirm-dialog/vue.vue?raw";
+import confirmVueHostSrc from "../../recipes/confirm-dialog/vue-host.vue?raw";
+import confirmSolidSrc from "../../recipes/confirm-dialog/solid.tsx?raw";
+import confirmSvelteRunesSrc from "../../recipes/confirm-dialog/svelte-runes.svelte?raw";
+import confirmSvelteStoreSrc from "../../recipes/confirm-dialog/svelte-store.svelte?raw";
+import confirmAngularSrc from "../../recipes/confirm-dialog/angular.ts?raw";
+
+A delete button in a sidebar, a route guard, an effect — one `await client.open(...)` opens the dialog and hands back a typed boolean.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below; integrations with React Aria and Base UI
+live under [Integrations](/integrations).
+:::
+
+<ConfirmDialogExample />
+
+## Layers wiring
+
+The Layers surface for this example: declare a typed layer, open it from anywhere, `await` a typed boolean. The recipes below wrap this contract in a real dialog.
+
+<CodeBlock code={confirmWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={confirmSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={confirmPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={confirmSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={confirmAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={confirmVueLayerSrc} lang="vue" title="ConfirmDialog.vue" /><CodeBlock code={confirmVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={confirmSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={confirmSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Integrations
+
+<CardGroup cols={2}>
+  <Card title="Confirm dialog + React Aria" href="/integrations/react-aria/confirm-dialog" icon="/icons/react-aria.svg" arrow />
+  <Card title="Confirm dialog + Base UI" href="/integrations/base-ui/confirm-dialog" icon="/icons/base-ui.svg" arrow />
+</CardGroup>
+
+## Variations
+
+- **Fire-and-forget** — toast (no await); see Toast example
+- **Payload validation** — reject bad input before mount; see [Payload validation](/guides/payload-validation)
+- **Animated exit** — hold unmount until CSS finishes; see Animated enter/exit example
+
+## Learn more
+
+- [Getting started](/guides/getting-started) — declare, mount, open, await
+- [Identity and types](/concepts/identity-and-types) — keys, stacks, and typed contracts

@@ -5,7 +5,8 @@
     "coverage",
     "dist",
     "node_modules",
-    "**/*.svelte"
+    "**/*.svelte",
+    "**/*.vue"
   ],
   "plugins": ["eslint", "typescript", "unicorn", "oxc", "import"],
   "rules": {

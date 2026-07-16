@@ -1,0 +1,110 @@
+---
+title: React
+description: React adapter — StackProvider, useStack, StackOutlet, and ergonomic stack helpers.
+search:
+  tags: ["adapter", "react"]
+sidebar:
+  icon: /icons/react.svg
+---
+
+`@stainless-code/react-layers` binds stack snapshots to React via `useSyncExternalStore`. The core is re-exported — import everything from one package.
+
+## Install
+
+```package-install
+npm i @stainless-code/react-layers
+```
+
+**Peer:** `react` ^18.0.0 || ^19.0.0
+
+## Client
+
+Wrap your tree with `StackProvider` (creates a `LayerClient` when omitted). Read it anywhere with `useLayerClient`:
+
+```tsx
+import { StackProvider, useLayerClient } from "@stainless-code/react-layers";
+
+function App() {
+  return (
+    <StackProvider>
+      <StackOutlet stack="confirm" />
+    </StackProvider>
+  );
+}
+```
+
+## Render a stack
+
+`StackOutlet` maps the active snapshot to each layer's registered `component`. For custom rendering, use `useStackHandles` or `StackSubscribe`.
+
+## Confirm dialog
+
+Same pattern across adapters — declare, mount, open:
+
+```tsx
+import {
+  layerOptions,
+  StackOutlet,
+  StackProvider,
+  useLayerClient,
+  type LayerComponentProps,
+} from "@stainless-code/react-layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+function ConfirmDialog({
+  call,
+  payload,
+}: LayerComponentProps<ConfirmPayload, ConfirmResponse>) {
+  return (
+    <div role="dialog">
+      <h2>{payload.title}</h2>
+      <button onClick={() => void call.end(true)}>Yes</button>
+      <button onClick={() => void call.end(false)}>No</button>
+    </div>
+  );
+}
+
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+
+function RemoveButton() {
+  const client = useLayerClient();
+  return (
+    <button
+      onClick={() =>
+        void client.open({ ...confirm, payload: { title: "Remove item?" } })
+      }
+    >
+      Remove
+    </button>
+  );
+}
+```
+
+## Primitives
+
+| Export | Role |
+| ------ | ---- |
+| `useStack(stackId?, selector?, compare?)` | Subscribe to a stack slice via `useSyncExternalStore` |
+| `useLayer(key, stackId?, compare?)` | Active layer matching a key, or `null` |
+
+## Ergonomic APIs
+
+| Export | Role |
+| ------ | ---- |
+| `useStackHandles(stack?, rootProps?)` | Headless `{ states, getCall }` for custom renderers |
+| `StackSubscribe` | Render-prop subscription with selector isolation |
+| `useMutationFlow(call)` | Async-action helper — `run(fn).orEnd(response)` |
+| `useLayerGroup(call, options?)` | Child stack with `open`, `dismissAll`, `states`, `Outlet`, `stackId` |
+| `createStackHook(config?)` | Factory returning `StackProvider`, `useAppStack`, `AppHost`, `AppLayer` |
+
+## Learn more
+
+- [Lifecycle](/concepts/lifecycle) · [Blockers](/concepts/blockers) · [Identity & types](/concepts/identity-and-types)
+- [Getting started](/guides/getting-started) (React walkthrough)
+- [Adapter parity](/adapters) — compare with other frameworks

@@ -1,0 +1,57 @@
+---
+title: Overview
+description: Overlay state is cross-cutting; a zero-dep headless engine plus six framework adapters split it from UI rendering.
+search:
+  tags: ["concept"]
+---
+
+A confirm dialog, a toast, or a drawer rarely stays where it started — it opens from a route guard, an effect, or a sibling component, returns a typed result, and stacks in order. Component models trap that state locally: prop-drilled `isOpen`, lifted state, threaded callbacks, hand-rolled z-index. Layers moves it into a **headless client** you invoke imperatively: declare a layer once, mount an outlet, then `await client.open(...)` from any call site. A UI-agnostic core owns the engine; thin per-adapter packages render the active stack in each library or framework's reactivity.
+
+## Engine model
+
+```
+LayerClient ──┬── LayerStack (named, ordered) ── Layer[]
+              └── LayerClientOptions.defaultStackOptions
+```
+
+1. **Declare** — `layerOptions<P, R>({ stack, key, ... })` brands the <Tooltip tip="The logical identity of a layer; find/upsert/gcTime operate on its signature.">key</Tooltip> with a `DataTag` so `open()` infers the response type.
+2. **Observe** — subscribe to a stack snapshot; adapters bind `LayerStack.subscribe` / `getSnapshot` to UI reactivity.
+3. **Call** — `await client.open({ ...options, payload })`; resolution happens when something calls `call.end(response)` or `call.dismiss(response)`.
+
+An app-wide `LayerClient` owns named, ordered stacks of layers. A caller opens a layer from anywhere and may `await` its typed result. Each adapter subscribes to a stack's snapshot and renders the active layers.
+
+## Package boundary
+
+The seam is a **published package boundary** in a bun-workspaces monorepo: one zero-dep core package plus one adapter package per library or framework.
+
+### Core (`@stainless-code/layers`)
+
+Zero runtime dependencies; `sideEffects: false`.
+
+**Engine** — `LayerClient` (`ensureStack`, `getStackIds`, `subscribeStacks`) owns app-wide stacks; [`LayerStack`](/concepts/stacks-scope-gc) (`dismiss`, `dismissAll`, `settle`, `setRunning`, `cancelQueued`, `getQueuedSnapshot`) is one named, ordered stack; `Layer` is a single instance in that stack.
+
+**Declare & infer** — [`layerOptions`](/concepts/identity-and-types), [`layerKey`](/concepts/identity-and-types) / `DataTag` brand keys so `open()` infers payload and response types without explicit generics.
+
+**Lifecycle** — [`phase`](/concepts/lifecycle), [`transition`](/concepts/lifecycle), [`actionStatus`](/concepts/lifecycle) are three independent axes; [`createCallContext`](/concepts/lifecycle) is the per-layer handle (`end`, `dismiss`, `settle`, `setRunning`, `addBlocker`).
+
+**Stacks & scope** — [named stacks, serial/parallel scope, upsert, `gcTime`](/concepts/stacks-scope-gc); [`createLayerGroup`](/guides/nested-overlays) / `childStackId` for nested child stacks.
+
+**<Tooltip tip="A consumer predicate that gates dismissal; true allows, falsy or a thrown error vetoes.">Blockers</Tooltip>** — instance- and stack-scoped [`addBlocker`](/concepts/blockers) gate user-intent dismissal; `dismissAll` supports `skipBlocked` / `stopAtBlocked` / `force` modes.
+
+**Types & validation** — [`Register`](/concepts/identity-and-types) / [`DefaultLayerError`](/concepts/identity-and-types) for app-wide error typing; payload validation via `StandardSchemaV1`, `Validator`, `PayloadValidationError`, `isPayloadValidationError` ([payload validation](/guides/payload-validation)).
+
+**Internals** — [`Subscribable`](/concepts/notifications), [`notifyManager`](/concepts/notifications) (batched mutations → one re-render); `ControlledPromise` for awaitable open resolution; `hashKey`, `keySignature` utilities.
+
+### Adapters (`@stainless-code/<fw>-layers`)
+
+Each declares the library or framework as a **required peer dependency** and `@stainless-code/layers` as a direct dependency, re-exports core, and exposes a `useStack`-shaped binding, an idiomatic client-context provider + `useLayerClient`, and a rendering surface (`StackOutlet`, or the imperative/primitive equivalent). Svelte ships two entries in one package: `.` (runes, 5.7+) and `./store` (stores, 3+).
+
+Each adapter takes the core as a **direct dependency** and re-exports it, so a consumer installs only the package for their framework (e.g. `npm i @stainless-code/react-layers`) and core comes along transitively.
+
+## Subscription model
+
+Adapters subscribe to `LayerStack.getSnapshot()` and project via a selector. On React and Preact, `useStack(stackId, selector, compare)` wraps `useSyncExternalStore(stack.subscribe, getSnapshot, getServerSnapshot)`. The snapshot is cached on `LayerStack` (stable ref between mutations); the hook memoizes selector output with `compare`-equality (default `Object.is`) so object/array selectors don't churn.
+
+:::note
+This page describes the framework-free engine. Per-adapter ergonomics (`StackOutlet`, `useLayerGroup`, `useMutationFlow`, and more) live in the [Adapters](/adapters) section.
+:::

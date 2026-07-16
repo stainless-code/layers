@@ -1,5 +1,6 @@
 {
   "$schema": "https://typedoc.org/schema.json",
+  "plugin": ["typedoc-plugin-markdown", "typedoc-plugin-frontmatter"],
   "entryPoints": [
     "packages/core/src/index.ts",
     "packages/react/src/index.tsx",
@@ -10,10 +11,30 @@
     "packages/preact/src/index.ts",
     "packages/angular/src/index.ts"
   ],
-  "out": "docs/api",
   "tsconfig": "tsconfig.docs.json",
+  "cleanOutputDir": false,
+  "outputs": [
+    {
+      "name": "markdown",
+      "path": "apps/docs/content/reference/api"
+    }
+  ],
+  "router": "module",
+  "publicPath": "/reference/api/",
+  "preserveAnchorCasing": true,
+  "fileExtension": ".mdx",
+  "entryFileName": "index.mdx",
+  "modulesFileName": "_typedoc-modules.mdx",
+  "flattenOutputFiles": true,
+  "useCodeBlocks": true,
+  "hidePageHeader": true,
+  "hideBreadcrumbs": true,
+  "indexFormat": "table",
+  "parametersFormat": "table",
+  "interfacePropertiesFormat": "table",
+  "classPropertiesFormat": "table",
+  "typeDeclarationFormat": "table",
   "name": "@stainless-code/layers",
-  "includeVersion": false,
   "readme": "none",
   "entryPointStrategy": "resolve",
   "categorizeByGroup": false,
@@ -28,24 +49,11 @@
     "invalidPath": true,
     "rewrittenLink": true
   },
-  "highlightLanguages": [
-    "bash",
-    "css",
-    "html",
-    "javascript",
-    "jsx",
-    "json",
-    "jsonc",
-    "ts",
-    "tsx",
-    "typescript",
-    "svelte",
-    "vue"
-  ],
   "excludePrivate": true,
   "excludeInternal": true,
-  "disableSources": false,
-  "sourceLinkTemplate": "https://github.com/stainless-code/layers/blob/{gitRevision}/{path}#L{line}",
-  "gitRevision": "main",
-  "logLevel": "Info"
+  "frontmatterGlobals": {
+    "search": {
+      "tags": ["api", "reference"]
+    }
+  }
 }

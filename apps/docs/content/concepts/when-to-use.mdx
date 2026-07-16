@@ -1,0 +1,30 @@
+---
+title: When to use Layers
+description: Use-case matrix — when a headless layer stack fits, and when a plain component is simpler.
+search:
+  tags: ["concept"]
+---
+
+Overlay UI is cross-cutting, but component models push its state local. You end up prop-drilling `isOpen`, lifting state, threading `onConfirm`/`onCancel`, duplicating modal boilerplate, and hand-rolling z-order and one-at-a-time logic. Layers moves overlay state into a headless `LayerClient` you invoke imperatively: declare a layer once, open it from anywhere.
+
+Awaiting a result is **optional** — `void client.open({ ...toast, payload })` is a complete fire-and-forget call; the typed response is a bonus axis, not a requirement.
+
+| Use case                                                                                                                                      | What it involves                                         | Fit                               |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------- |
+| Confirm/prompt that returns a value                                                                                                           | `await open` + `DataTag` response inference              | Ideal                             |
+| Open an overlay from non-UI code (route guard, event bus, effect, util)                                                                       | global `LayerClient.open`                                | Ideal (incl. fire-and-forget)     |
+| Toast / snackbar / progress — one instance, updated live                                                                                      | `upsert` + `update`                                      | Ideal                             |
+| One-at-a-time / sequential flows (onboarding, queued confirms)                                                                                | serial `scope` + `getQueuedSnapshot`                     | Ideal                             |
+| Stacked or nested overlays (drawer → sub-dialog)                                                                                              | layer groups (`useLayerGroup` / `createLayerGroup`)      | Ideal                             |
+| Enter/exit animated overlays                                                                                                                  | `transition` + `enteringDelay`/`exitingDelay` `settle()` | Ideal                             |
+| Guard dismissal ("discard unsaved changes?")                                                                                                  | <Tooltip tip="A consumer predicate that gates dismissal; true allows, falsy or a thrown error vetoes.">blockers</Tooltip> (`addBlocker`, `dismissing`, `dismissAll`)      | Ideal                             |
+| Validate an untrusted payload at open                                                                                                         | `validate` (Standard Schema or a function)               | Nice-to-have                      |
+| One overlay system across React/Preact/Solid/Angular/Vue/Svelte                                                                               | UI-agnostic core + adapters                              | Ideal                             |
+| A single, always-local overlay opened from one component — no return, stacking, queue, animation, or guard, and no wish for a global registry | —                                                        | Skip → plain controlled component |
+| Static/inline content with no overlay semantics; full-page navigation                                                                         | —                                                        | Skip → plain markup / a router    |
+
+Comparing Layers to other modal and overlay managers? See [Comparison](/concepts/comparison).
+
+:::tip
+The two **Skip** rows are intentional. Layers pays for itself when overlay state crosses component boundaries, stacks, queues, or needs a typed `await`. A single local dialog with no return value is simpler as a controlled component.
+:::

@@ -1,0 +1,25 @@
+---
+title: Animated enter/exit + React Aria
+description: Compose Layers with React Aria for enter/exit CSS transitions.
+search:
+  tags: ["integration"]
+---
+
+import racSrc from "../../../recipes/animated-enter-exit/react.rac.tsx?raw";
+
+Drive enter/exit CSS with RAC's `data-entering`/`data-exiting` (or Motion `isExiting`) while Layers owns the mount window — defer `call.end` until RAC's exit animation completes (this recipe uses local `exiting` state + a timer). See the [live demo](/examples/animated-enter-exit) for the behavior.
+
+## Recipe
+
+<CodeBlock code={racSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use RAC's trigger wrappers — Layers owns the imperative open; the layer component renders the controlled overlay directly while mounted.
+- **Exit-animation crux:** if `call.end` fires the moment the user dismisses, Layers unmounts synchronously and the exit animation never plays. RAC fix: hold a local `exiting` state, pass `isExiting`, and call `call.end` on `onAnimationComplete` (or RAC's `data-[exiting]:` classes).
+- Lib owns focus/portal/scroll-lock — don't double-apply Layers-side equivalents.
+
+## Learn more
+
+- [Animated enter/exit example](/examples/animated-enter-exit) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

@@ -1,0 +1,56 @@
+---
+title: Blockers and force
+description: Veto dismissal with a blocker, then bypass it with force.
+search:
+  tags: ["example"]
+---
+
+import blockersSrc from "../../recipes/blockers-force/react.tsx?raw";
+import blockersWiringSrc from "../../recipes/blockers-force/react.wiring.tsx?raw";
+import blockersPreactSrc from "../../recipes/blockers-force/preact.tsx?raw";
+import blockersVueLayerSrc from "../../recipes/blockers-force/vue.vue?raw";
+import blockersVueChildSrc from "../../recipes/blockers-force/vue-discard.vue?raw";
+import blockersVueHostSrc from "../../recipes/blockers-force/vue-host.vue?raw";
+import blockersSolidSrc from "../../recipes/blockers-force/solid.tsx?raw";
+import blockersSvelteRunesSrc from "../../recipes/blockers-force/svelte-runes.svelte?raw";
+import blockersSvelteStoreSrc from "../../recipes/blockers-force/svelte-store.svelte?raw";
+import blockersAngularSrc from "../../recipes/blockers-force/angular.ts?raw";
+
+A blocker (`call.addBlocker(() => !dirty)`) vetoes `call.end`/`call.dismiss` while the form is dirty. Backdrop and Close call a handler that opens a discard confirm (child layer via `useLayerGroup`) when dirty; `call.end(value, { force: true })` bypasses the blocker entirely.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below.
+:::
+
+<BlockersForceExample />
+
+## Layers wiring
+
+Register a blocker that returns `false` to veto dismissal; `force: true` overrides it. The discard confirm is a child layer opened via `useLayerGroup`. The recipes below wrap it in real dialogs.
+
+<CodeBlock code={blockersWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={blockersSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={blockersPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={blockersSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={blockersAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={blockersVueLayerSrc} lang="vue" title="Edit.vue" /><CodeBlock code={blockersVueChildSrc} lang="vue" title="DiscardConfirm.vue" /><CodeBlock code={blockersVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={blockersSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={blockersSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Variations
+
+- **Nested confirm** — a parent layer opening a child via a group; see [Nested confirm](/examples/nested-confirm)
+- **Dismissal blockers** — the guide behind this pattern; see [Dismissal blockers](/guides/dismissal-blockers)
+
+## Learn more
+
+- [Dismissal blockers](/guides/dismissal-blockers) — `addBlocker` and `force`
+- [Nested overlays](/guides/nested-overlays) — `useLayerGroup` child stacks

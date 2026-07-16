@@ -81,3 +81,9 @@ Preserve cited anchors / rule numbers; if renumbering is unavoidable, update eve
 - **Adopted** → lift the decision-of-record into `architecture.md` or a rule/skill; delete the research file unless its comparison framework is reusable.
 - **Rejected** → add `Status: Rejected (YYYY-MM-DD) — <one-line reason>` at the top. Keep. The rejection rationale saves the next agent from re-litigating.
 - **Open** → stays in `research/` with no status header.
+
+## README surfaces
+
+**The `apps/docs` docs site (built with Blume) is the canonical public documentation** for concepts, API, guides, examples, and adapter detail. Package `README.md` files and the repo root `README.md` are **npm/repo landings only**: package name, brand one-liner, experimental disclaimer (verbatim per docs-voice), install command, peer dependency, one idiomatic taste snippet, and links to the docs site — they **must not** restate API tables, when-to-use matrices, lifecycle explanations, or feature lists. Maintainer-facing depth stays in `docs/architecture.md`, `docs/glossary.md`, and the docs site `/reference/*`. On API changes, update the docs site first (`update-docs`); READMEs change only when install/peers/package name change.
+
+PR checklist: docs site updated for behavior/API; READMEs touched only for install/taste/links.

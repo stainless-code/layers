@@ -1,0 +1,44 @@
+---
+title: SSR
+description: Per-adapter server rendering posture and client-only caveats.
+search:
+  tags: ["guide"]
+---
+
+Stacks are empty on the server and hydrate on the client — Layers is **client-only today**. Each adapter handles SSR differently; all avoid cross-request listener leaks.
+
+## Per-adapter posture
+
+| Adapter | SSR mechanism | Server snapshot |
+| ------- | ------------- | --------------- |
+| React | `useSyncExternalStore` + `getServerSnapshot` | `[]` — never subscribes on server |
+| Preact | Same via `preact/compat` | `[]` |
+| Solid | `from` owner cleanup on scope dispose | eager subscribe, cleaned up |
+| Angular | `effect` `onCleanup` on destroy | eager subscribe, cleaned up |
+| Vue | `onScopeDispose` tears down on SSR scope end | eager subscribe, cleaned up |
+| Svelte (runes) | `createSubscriber` is lazy — no subscription during string render | unread → no subscription |
+| Svelte (store) | `readable` starts idle; first subscriber re-reads | empty until client subscribes |
+
+## React / Preact
+
+`useStack` wires `getServerSnapshot` to return an empty snapshot. `useSyncExternalStore` **never invokes `subscribe` on the server** — the store is read once with no listener registered. This is the whole SSR-safety story for these adapters.
+
+## Solid / Angular / Vue
+
+These adapters subscribe eagerly but register teardown (`from` owner / `effect` `onCleanup` / `onScopeDispose`) that runs when the framework disposes the SSR render scope. A proactive `typeof window` guard was deliberately **not** added — it would break adapter unit tests in environments without `window`.
+
+## Svelte
+
+The runes entry's `createSubscriber` only starts the stack subscription when `.current` is read inside a reactive context — which does not happen during server string rendering.
+
+## Client-only caveats
+
+- Server HTML will **not** include open layers — mount `StackOutlet` (or your headless renderer) in client-hydrated subtrees.
+- Initial `transition` on hydration should be `"settled"` when SSR layer rendering lands.
+- On React/Preact, `getServerSnapshot` is `[]` passed through your selector (identity → `[]`, `useLayer` → `null`, `s => s.length` → `0`).
+
+:::note
+Revisit proactive server guards only if a concrete SSR listener leak surfaces in production.
+:::
+
+See [Architecture](/concepts/overview) for the adapter ergonomics matrix.

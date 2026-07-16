@@ -1,0 +1,189 @@
+---
+title: Nested overlays
+description: Child stacks scoped to a parent layer via useLayerGroup or createLayerGroup.
+search:
+  tags: ["guide"]
+---
+
+A drawer that opens a sub-dialog needs its own stack — but tied to the parent layer's lifetime. Layer groups create a child stack on the same `LayerClient`; when the parent dismisses, children drain automatically.
+
+## Core primitive
+
+`createLayerGroup(client, call, options?)` registers a child stack derived from the parent's `stackId` and instance `layerId`. Adapters wrap it as `useLayerGroup(call)`:
+
+```ts lineNumbers
+import { createLayerGroup } from "@stainless-code/layers";
+
+// headless / custom adapter
+const group = createLayerGroup(client, call);void group.open({ ...nestedConfirm, payload });
+group.dismissAll();
+group.dispose(); // usually automatic via adapter lifecycle
+```
+
+## Inline child outlet
+
+Render the child stack inside the parent layer's DOM. React, Preact, Solid, and Vue ship an `Outlet` component; Angular uses `renderInto`; Svelte exposes the child `stack` directly:
+
+<Tabs>
+<Tab title="React" icon="/icons/react.svg">
+
+```tsx lineNumbers
+import { useLayerGroup } from "@stainless-code/react-layers";
+
+function Drawer({ call }: LayerComponentProps<void, void>) {
+  const group = useLayerGroup(call);
+  return (
+    <div role="dialog">
+      <button onClick={() => void group.open({ ...nestedConfirm, payload })}>
+        Edit details
+      </button>
+      <group.Outlet />
+    </div>
+  );
+}
+```
+
+</Tab>
+<Tab title="Preact" icon="/icons/preact.svg">
+
+```tsx lineNumbers
+import { useLayerGroup } from "@stainless-code/preact-layers";
+
+function Drawer({ call }: LayerComponentProps<void, void>) {
+  const group = useLayerGroup(call);
+  return (
+    <div role="dialog">
+      <button onClick={() => void group.open({ ...nestedConfirm, payload })}>
+        Edit details
+      </button>
+      <group.Outlet />
+    </div>
+  );
+}
+```
+
+
+</Tab>
+<Tab title="Solid" icon="/icons/solid.svg">
+
+```tsx lineNumbers
+import { useLayerGroup } from "@stainless-code/solid-layers";
+
+function Drawer(props: LayerComponentProps<void, void>) {
+  const group = useLayerGroup(props.call);
+  return (
+    <div role="dialog">
+      <button onClick={() => void group.open({ ...nestedConfirm, payload })}>
+        Edit details
+      </button>
+      <group.Outlet />
+    </div>
+  );
+}
+```
+
+</Tab>
+<Tab title="Angular" icon="/icons/angular.svg">
+
+```ts lineNumbers
+import { useLayerGroup } from "@stainless-code/angular-layers";
+
+@Component({ /* … */ })
+class Drawer {
+  group = useLayerGroup(this.call);
+  openNested() {
+    void this.group.open({ ...nestedConfirm, payload });
+  }
+
+  constructor() {
+    const vcr = inject(ViewContainerRef);
+    this.group.renderInto(vcr); // child stack renders here
+  }
+}
+```
+
+</Tab>
+<Tab title="Vue" icon="/icons/vue.svg">
+
+```vue lineNumbers
+<script setup lang="ts">
+import { useLayerGroup } from "@stainless-code/vue-layers";
+import type { LayerComponentProps } from "@stainless-code/vue-layers";
+
+const { call } = defineProps<LayerComponentProps<void, void>>();
+const group = useLayerGroup(call);</script>
+
+<template>
+  <div role="dialog">
+    <button @click="() => void group.open({ ...nestedConfirm, payload })">
+      Edit details
+    </button>
+    <group.Outlet />
+  </div>
+</template>
+```
+
+</Tab>
+<Tab title="Svelte (runes)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { useLayerGroup } from "@stainless-code/svelte-layers";
+
+  let { call } = $props();
+  const group = useLayerGroup(call);</script>
+
+<div role="dialog">
+  <button onclick={() => void group.open({ ...nestedConfirm, payload })}>
+    Edit details
+  </button>
+  {#each group.stack.current as state (state.id)}
+    {@const nestedCall = group.stack.callFor(state)}
+    {#if nestedCall}<NestedConfirm call={nestedCall} />{/if}
+  {/each}
+</div>
+```
+
+</Tab>
+<Tab title="Svelte (store)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { callFor, useLayerClient, useLayerGroup } from "@stainless-code/svelte-layers/store";
+
+  let { call } = $props();
+  const client = useLayerClient();
+  const group = useLayerGroup(call);  const childStack = group.stack;
+</script>
+
+<div role="dialog">
+  <button onclick={() => void group.open({ ...nestedConfirm, payload })}>
+    Edit details
+  </button>
+  {#each $childStack as state (state.id)}
+    {@const nestedCall = callFor(client, group.stackId, state)}
+    {#if nestedCall}<NestedConfirm call={nestedCall} />{/if}
+  {/each}
+</div>
+```
+
+Store entry renders via `$childStack` + standalone `callFor` — same `group.open` call.
+
+</Tab>
+</Tabs>
+
+## What you get
+
+| Member | Role |
+| ------ | ---- |
+| `open` | Opens on the child stack (stack id pre-bound) |
+| `dismissAll` | Closes all child layers |
+| `states` / `stack` | Reactive snapshot of child layers |
+| `Outlet` / `renderInto` / `stack` | Render surface (adapter-specific) |
+| `stackId` | Derived id — `` `${parentStackId}~${parentLayerId}~${name}` `` |
+
+:::warning[Heads up]
+Child stacks cascade on parent dismiss — blockers on the parent are the right place to guard "close drawer with open sub-dialog?". Children are force-drained; see [Dismissal blockers](/guides/dismissal-blockers).
+:::
+
+No second `LayerClient`, no manual cleanup. See [Lifecycle](/concepts/lifecycle) for how dismissal propagates.

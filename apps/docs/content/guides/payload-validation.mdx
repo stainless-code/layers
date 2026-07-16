@@ -1,0 +1,78 @@
+---
+title: Payload validation
+description: Parse untrusted payload at open with validate, Standard Schema, or a sync function.
+search:
+  tags: ["guide"]
+---
+
+A bad payload at `open` should reject before a component ever mounts. Pass `validate` on `layerOptions` or at `open` to parse untrusted input **synchronously**; failure rejects `open` with `PayloadValidationError` and mounts nothing.
+
+## Sync validator function
+
+A sync `(input) => output` function — throw on invalid:
+
+```ts lineNumbers
+const prompt = layerOptions<{ label: string }, string>({
+  stack: "prompt",
+  key: ["prompt", "rename"],
+  component: Prompt,
+  validate: (input: unknown) => { // [!code highlight]
+    const label =
+      typeof input === "object" && input !== null && "label" in input
+        ? (input as { label: unknown }).label
+        : undefined;
+    if (typeof label !== "string" || !label.trim()) {
+      throw new Error("Label required");
+    }
+    return { label: label.trim() };
+  },
+});
+
+// open's payload arg is the validator INPUT; the layer stores OUTPUT
+await client.open({ ...prompt, payload: { label: "  hello  " } });
+// layer sees { label: "hello" }
+```
+
+## Standard Schema
+
+Any library implementing [Standard Schema v1](https://standardschema.dev) works — Zod 4, Valibot, ArkType, etc.:
+
+```ts
+import * as z from "zod";
+
+const schema = z.object({ email: z.string().email() });
+
+await client.open({
+  ...invite,
+  payload: { email: "user@example.com" },
+  validate: schema,
+});
+```
+
+Core ships the `StandardSchemaV1` type interface — no schema-library dependency.
+
+## PayloadValidationError
+
+When validation fails, `open` rejects with `PayloadValidationError`:
+
+```ts
+import { isPayloadValidationError } from "@stainless-code/layers";
+
+try {
+  await client.open({ ...prompt, payload: untrusted });
+} catch (err) {
+  if (isPayloadValidationError(err)) {
+    for (const issue of err.issues) {
+      console.log(issue.message, issue.path);
+    }
+  }
+}
+```
+
+## Rules
+
+- Validation runs **synchronously** at `open` — async schemas are a config error.
+- `open`'s `payload` is schema **input**; the component sees schema **output**.
+- `upsert` re-validates — invalid input rejects and leaves the existing layer unchanged.
+
+Type helpers: `InferValidatorInput`, `InferValidatorOutput`, `ValidationIssue`. See [Error handling](/guides/error-handling) for narrowing rejections.

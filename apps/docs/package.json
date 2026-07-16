@@ -1,0 +1,50 @@
+{
+  "name": "@stainless-code/layers-docs",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "blume build",
+    "check": "blume check",
+    "dev": "blume dev",
+    "preview": "blume preview",
+    "typecheck": "bun run typecheck:recipes",
+    "typecheck:angular": "tsc -p tsconfig.recipes-angular.json --noEmit",
+    "typecheck:preact": "tsc -p tsconfig.recipes-preact.json --noEmit",
+    "typecheck:react": "tsc -p tsconfig.recipes-react.json --noEmit",
+    "typecheck:recipes": "bun run --parallel typecheck:react typecheck:vue typecheck:svelte typecheck:solid typecheck:preact typecheck:angular",
+    "typecheck:solid": "tsc -p tsconfig.recipes-solid.json --noEmit",
+    "typecheck:svelte": "svelte-check --tsconfig tsconfig.recipes-svelte.json",
+    "typecheck:vue": "vue-tsc -p tsconfig.recipes-vue.json --noEmit",
+    "validate": "blume validate"
+  },
+  "dependencies": {
+    "@stainless-code/layers": "workspace:*",
+    "@stainless-code/react-layers": "workspace:*",
+    "blume": "1.0.4",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@analogjs/astro-angular": "2.6.3",
+    "@angular/core": "22.0.5",
+    "@astrojs/preact": "6.0.1",
+    "@astrojs/solid-js": "7.0.1",
+    "@astrojs/svelte": "9.0.1",
+    "@astrojs/vue": "7.0.1",
+    "@base-ui/react": "1.6.0",
+    "@stainless-code/angular-layers": "workspace:*",
+    "@stainless-code/preact-layers": "workspace:*",
+    "@stainless-code/solid-layers": "workspace:*",
+    "@stainless-code/svelte-layers": "workspace:*",
+    "@stainless-code/vue-layers": "workspace:*",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "preact": "10.29.4",
+    "react-aria-components": "1.19.0",
+    "solid-js": "1.9.14",
+    "svelte": "5.56.4",
+    "svelte-check": "4.7.2",
+    "vue": "3.5.39",
+    "vue-tsc": "3.3.7"
+  }
+}

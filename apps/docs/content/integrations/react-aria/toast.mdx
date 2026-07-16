@@ -1,0 +1,27 @@
+---
+title: Toast + React Aria
+description: Compose Layers with React Aria Components for fire-and-forget toasts.
+search:
+  tags: ["integration"]
+---
+
+import racSrc from "../../../recipes/toast/react.rac.tsx?raw";
+
+`void client.open({ ...toast, payload: { message: "Saved" } })` is the typed entry; the layer component renders RAC's `UNSTABLE_Toast` primitives while mounted. See the [live demo](/examples/toast) for the behavior.
+
+## Recipe
+
+<CodeBlock code={racSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use RAC's trigger wrappers — Layers owns the imperative open; the layer component renders the controlled overlay directly while mounted.
+- `UNSTABLE_Toast*` is the 1.19 export prefix (stable in 3.x) — pin `react-aria-components` accordingly.
+- **Queue ownership:** RAC ships a global `ToastQueue`. For toasts, let the lib own the queue/region; Layers is the typed `open` entry. Don't dual-queue.
+- Toast is instant-dismiss (no exit-animation crux) — `call.dismiss()` after the timeout is fine; the `transition`/`call.settle()` axis is irrelevant here (it matters for animated-enter-exit, not toast).
+- Lib owns focus/portal/scroll-lock — don't double-apply Layers-side equivalents.
+
+## Learn more
+
+- [Toast example](/examples/toast) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

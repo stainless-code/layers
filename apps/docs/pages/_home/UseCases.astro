@@ -1,0 +1,176 @@
+---
+import { contentHref } from "blume/components/content/base-href.ts";
+
+const reachFor = [
+  {
+    useCase: "Confirm/prompt that returns a value",
+    involves: "`await open` + `DataTag` response inference",
+    fit: "Ideal",
+  },
+  {
+    useCase:
+      "Open an overlay from non-UI code (route guard, event bus, effect, util)",
+    involves: "global `LayerClient.open`",
+    fit: "Ideal",
+  },
+  {
+    useCase: "Toast / snackbar / progress — one instance, updated live",
+    involves: "`upsert` + `update`",
+    fit: "Ideal",
+  },
+  {
+    useCase: "One-at-a-time / sequential flows (onboarding, queued confirms)",
+    involves: "serial `scope` + `getQueuedSnapshot`",
+    fit: "Ideal",
+  },
+  {
+    useCase: "Stacked or nested overlays (drawer → sub-dialog)",
+    involves: "layer groups (`useLayerGroup` / `createLayerGroup`)",
+    fit: "Ideal",
+  },
+  {
+    useCase: "Guard dismissal (\"discard unsaved changes?\")",
+    involves: "blockers (`addBlocker`, `dismissing`, `dismissAll`)",
+    fit: "Ideal",
+  },
+  {
+    useCase: "Enter/exit animated overlays",
+    involves: "`transition` + `enteringDelay`/`exitingDelay` `settle()`",
+    fit: "Good",
+  },
+  {
+    useCase: "Validate an untrusted payload at open",
+    involves: "`validate` (Standard Schema or a function)",
+    fit: "Nice-to-have",
+  },
+  {
+    useCase:
+      "One overlay system across React/Preact/Solid/Angular/Vue/Svelte",
+    involves: "UI-agnostic core + adapters",
+    fit: "Ideal",
+  },
+];
+
+const fitBadge: Record<string, string> = {
+  Ideal: "bg-accent/15 text-accent",
+  Good: "bg-sky-500/15 text-sky-600 dark:text-sky-400",
+  "Nice-to-have": "bg-muted text-muted-foreground",
+};
+
+const skip = [
+  {
+    useCase:
+      "A single, always-local overlay — no return, stacking, queue, animation, or guard, and no wish for a global registry",
+    fit: "Skip → plain controlled component",
+  },
+  {
+    useCase:
+      "Static/inline content with no overlay semantics; full-page navigation",
+    fit: "Skip → plain markup / a router",
+  },
+];
+
+const thClass =
+  "border-border border-b px-4 py-3 text-left font-medium text-foreground text-sm";
+const tdClass = "border-border border-b px-4 py-3 text-sm";
+const leadClass = `${tdClass} text-foreground`;
+const mutedClass = `${tdClass} text-muted-foreground`;
+---
+
+<section>
+  <div class="mx-auto max-w-2xl text-center">
+    <p
+      class="font-semibold text-muted-foreground text-xs uppercase tracking-wider"
+    >
+      When to use it
+    </p>
+    <h2 class="mt-3 font-medium text-3xl tracking-tight sm:text-4xl">
+      When to reach for Layers.
+    </h2>
+    <p class="mx-auto mt-4 max-w-lg text-balance text-muted-foreground">
+      Overlay state is cross-cutting, but component models push it local. Layers
+      moves it into a client you invoke imperatively — declare once, open from
+      anywhere.
+    </p>
+  </div>
+
+  <div class="mt-10 overflow-x-auto rounded-blume border border-border">
+    <table class="w-full min-w-[640px] border-collapse text-left">
+      <thead>
+        <tr class="bg-muted/50">
+          <th class={thClass}>Use case</th>
+          <th class={thClass}>What it involves</th>
+          <th class={thClass}>Fit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          reachFor.map((row) => (
+            <tr>
+              <td class={leadClass}>{row.useCase}</td>
+              <td class={mutedClass}>
+                <code class="text-foreground text-xs">{row.involves}</code>
+              </td>
+              <td class={tdClass}>
+                <span
+                  class={`rounded-full px-2 py-0.5 text-xs font-medium ${fitBadge[row.fit] ?? "bg-muted text-muted-foreground"}`}
+                >
+                  {row.fit}
+                </span>
+              </td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div class="mx-auto mt-16 max-w-2xl text-center">
+    <h2 class="font-medium text-3xl tracking-tight sm:text-4xl">
+      When to skip it.
+    </h2>
+    <p class="mx-auto mt-4 max-w-lg text-balance text-muted-foreground">
+      A single local dialog with no return value is simpler as a controlled
+      component. Layers pays for itself when overlay state crosses boundaries,
+      stacks, queues, or needs a typed <code>await</code>.
+    </p>
+  </div>
+
+  <div class="mt-10 overflow-x-auto rounded-blume border border-border">
+    <table class="w-full min-w-[640px] border-collapse text-left">
+      <thead>
+        <tr class="bg-muted/50">
+          <th class={thClass}>Use case</th>
+          <th class={thClass}>Fit</th>
+        </tr>
+      </thead>
+      <tbody>
+        {
+          skip.map((row) => (
+            <tr>
+              <td class={leadClass}>{row.useCase}</td>
+              <td class={mutedClass}>{row.fit}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <div
+    class="mx-auto mt-10 flex max-w-2xl flex-wrap items-center justify-center gap-x-6 gap-y-2"
+  >
+    <a
+      class="inline-flex items-center gap-1 font-medium text-accent transition-opacity hover:opacity-80"
+      href={contentHref("/concepts/overview")}
+    >
+      Browse concepts →
+    </a>
+    <a
+      class="inline-flex items-center gap-1 font-medium text-accent transition-opacity hover:opacity-80"
+      href={contentHref("/concepts/comparison")}
+    >
+      Compare alternatives →
+    </a>
+  </div>
+</section>

@@ -14,7 +14,7 @@ metadata:
   library_version: "0.1.0"
   framework: "react"
 sources:
-  - https://github.com/stainless-code/layers/blob/main/packages/react/README.md
+  - https://stainless-code.com/layers/adapters/react
   - https://github.com/stainless-code/layers/blob/main/docs/architecture.md
 ---
 
@@ -31,7 +31,7 @@ Named stacks, singletons with `upsert` and live `update`, serial queues, nested 
 
 **Skip it only when:** you have a single, always-local overlay opened from one component, with no return, stacking, queue, animation, or guard needs and no wish for a global registry.
 
-Full fit matrix: [README — When to use it](https://github.com/stainless-code/layers#when-to-use-it).
+Full fit matrix: [When to use Layers](https://stainless-code.com/layers/concepts/when-to-use).
 
 ## Install
 

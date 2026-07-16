@@ -1,0 +1,63 @@
+---
+title: Toast with auto-dismiss
+description: Fire a toast notification without awaiting a response.
+search:
+  tags: ["example"]
+---
+
+import toastSrc from "../../recipes/toast/react.tsx?raw";
+import toastWiringSrc from "../../recipes/toast/react.wiring.tsx?raw";
+import toastPreactSrc from "../../recipes/toast/preact.tsx?raw";
+import toastVueLayerSrc from "../../recipes/toast/vue.vue?raw";
+import toastVueHostSrc from "../../recipes/toast/vue-host.vue?raw";
+import toastSolidSrc from "../../recipes/toast/solid.tsx?raw";
+import toastSvelteRunesSrc from "../../recipes/toast/svelte-runes.svelte?raw";
+import toastSvelteStoreSrc from "../../recipes/toast/svelte-store.svelte?raw";
+import toastAngularSrc from "../../recipes/toast/angular.ts?raw";
+
+A save succeeds — `void client.open({ ...toast, payload: { message: "Saved" } })` flashes a notification and never blocks on a result.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below; integrations with React Aria and Base UI
+live under [Integrations](/integrations).
+:::
+
+<ToastExample />
+
+## Layers wiring
+
+Fire-and-forget — `void client.open(...)` with no `await`; the layer dismisses itself. The recipes below wrap it in a real toast.
+
+<CodeBlock code={toastWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={toastSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={toastPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={toastSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={toastAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={toastVueLayerSrc} lang="vue" title="Toast.vue" /><CodeBlock code={toastVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={toastSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={toastSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Integrations
+
+<CardGroup cols={2}>
+  <Card title="Toast + React Aria" href="/integrations/react-aria/toast" icon="/icons/react-aria.svg" arrow />
+  <Card title="Toast + Base UI" href="/integrations/base-ui/toast" icon="/icons/base-ui.svg" arrow />
+</CardGroup>
+
+## Variations
+
+- **Live payload updates** — animate progress while open; see [Progress](/examples/progress)
+- **Await a result** — typed `await client.open(...)`; see [Awaiting results](/guides/awaiting-results)
+
+## Learn more
+
+- [Awaiting results](/guides/awaiting-results) — when to await vs fire-and-forget
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

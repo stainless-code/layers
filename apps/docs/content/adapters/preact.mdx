@@ -1,0 +1,96 @@
+---
+title: Preact
+description: Preact adapter — same API surface as React, built with preact/compat.
+search:
+  tags: ["adapter", "preact"]
+sidebar:
+  icon: /icons/preact.svg
+---
+
+`@stainless-code/preact-layers` mirrors the [React adapter](/adapters/react) API. The core is re-exported; every export name matches React except the package and peer.
+
+## Install
+
+```package-install
+npm i @stainless-code/preact-layers
+```
+
+**Peer:** `preact` >=10.19.0 (`useSyncExternalStore` via `preact/compat`)
+
+## Delta from React
+
+| Topic | Preact |
+| ----- | ------ |
+| Package | `@stainless-code/preact-layers` |
+| Peer | `preact` (not `react`) |
+| JSX runtime | Built with `h` — no `react/jsx-runtime` dependency |
+| API names | Identical — `StackProvider`, `useLayerClient`, `useStack`, `useLayer`, `StackOutlet`, `StackSubscribe`, `useStackHandles`, `useMutationFlow`, `useLayerGroup`, `createStackHook` |
+
+## Client
+
+```tsx
+import { StackProvider, StackOutlet } from "@stainless-code/preact-layers";
+
+function App() {
+  return (
+    <StackProvider>
+      <StackOutlet stack="confirm" />
+    </StackProvider>
+  );
+}
+```
+
+## Confirm dialog
+
+```tsx
+import {
+  layerOptions,
+  StackProvider,
+  StackOutlet,
+  useLayerClient,
+  type LayerComponentProps,
+} from "@stainless-code/preact-layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+function ConfirmDialog({
+  call,
+  payload,
+}: LayerComponentProps<ConfirmPayload, ConfirmResponse>) {
+  return (
+    <div role="dialog">
+      <h2>{payload.title}</h2>
+      <button onClick={() => void call.end(true)}>Yes</button>
+      <button onClick={() => void call.end(false)}>No</button>
+    </div>
+  );
+}
+
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+
+function RemoveButton() {
+  const client = useLayerClient();
+  return (
+    <button
+      onClick={() =>
+        void client.open({ ...confirm, payload: { title: "Remove item?" } })
+      }
+    >
+      Remove
+    </button>
+  );
+}
+```
+
+## Ergonomic APIs
+
+Same as React — see [React](/adapters/react) for `useStackHandles`, `StackSubscribe`, `useMutationFlow`, `useLayerGroup`, and `createStackHook`.
+
+## Learn more
+
+- [Adapter parity](/adapters) · [Getting started](/guides/getting-started)

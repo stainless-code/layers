@@ -1,0 +1,61 @@
+name: Deploy docs
+
+# Manual dispatch for now. Once the /layers FTP account + repository secrets
+# (FTP_HOST, FTP_USERNAME, FTP_PASSWORD) are configured, enable auto-deploy on
+# main by uncommenting the `push` block below.
+on:
+  workflow_dispatch:
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - apps/docs/**
+  #     - .github/workflows/deploy-docs.yml
+
+permissions:
+  contents: read
+
+# Don't overlap production deploys; let the queued one finish.
+concurrency:
+  group: deploy-docs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: 🚀 Build & Deploy docs (FTP)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
+        with:
+          persist-credentials: false
+          # Full history: lastModified (sitemap <lastmod>) uses `git log` per file.
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup
+
+      - name: Build docs site
+        env:
+          # Populates the /changelog github-releases source and avoids unauthenticated
+          # GitHub API rate limits in CI.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bun run docs:build
+
+      # The FTP account is scoped to the /layers subfolder only, so its root IS
+      # /layers — upload dist/ contents there. If the account root is the web
+      # root instead, set server-dir to ./layers/.
+      - name: Upload to /layers via FTP
+        uses: SamKirkland/FTP-Deploy-Action@v4.4.0
+        with:
+          server: ${{ secrets.FTP_HOST }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          protocol: ftps
+          port: 21
+          security: strict
+          local-dir: ./apps/docs/dist/
+          server-dir: ./
+          exclude: |
+            **/.git*
+            **/.git*/**
+            **/node_modules/**

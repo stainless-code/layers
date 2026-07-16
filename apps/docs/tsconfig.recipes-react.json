@@ -1,0 +1,13 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
+    "noEmit": true
+  },
+  "include": [
+    "recipes/*/react*.tsx",
+    "islands/*Example.tsx",
+    "islands/_overlayPortal.ts"
+  ]
+}

@@ -1,0 +1,69 @@
+---
+title: Install
+description: npm package names, install commands, and peer dependencies for Layers.
+search:
+  tags: ["guide"]
+---
+
+Install **one adapter** for your framework. It depends on `@stainless-code/layers` and re-exports the core — import both adapter wiring and core APIs from that one package. Provider shape differs by adapter (`StackProvider` on React/Preact; `provideLayerClient` / `setLayerClient` / `LayerClientContext` elsewhere) plus `useLayerClient`.
+
+## Core (UI-agnostic)
+
+```package-install
+npm i @stainless-code/layers
+```
+
+Usually you install an adapter instead; the core comes along transitively.
+
+## React
+
+Peer: `react` (^18 or ^19)
+
+```package-install
+npm i @stainless-code/react-layers
+```
+
+## Preact
+
+Peer: `preact` (≥10.19)
+
+```package-install
+npm i @stainless-code/preact-layers
+```
+
+## Solid
+
+Peer: `solid-js` (≥1.6)
+
+```package-install
+npm i @stainless-code/solid-layers
+```
+
+## Angular
+
+Peer: `@angular/core` (≥17)
+
+```package-install
+npm i @stainless-code/angular-layers
+```
+
+## Vue
+
+Peer: `vue` (≥3.3)
+
+```package-install
+npm i @stainless-code/vue-layers
+```
+
+## Svelte
+
+Peer: `svelte` (≥3). Two package entries in one npm package:
+
+- `@stainless-code/svelte-layers` — runes API (Svelte 5.7+)
+- `@stainless-code/svelte-layers/store` — stores API (Svelte 3+)
+
+```package-install
+npm i @stainless-code/svelte-layers
+```
+
+For the stores entry, import from `@stainless-code/svelte-layers/store` after installing the same package.

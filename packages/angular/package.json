@@ -14,7 +14,7 @@
     "tanstack-intent",
     "typescript"
   ],
-  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/angular#readme",
+  "homepage": "https://stainless-code.com/layers/adapters/angular",
   "bugs": {
     "url": "https://github.com/stainless-code/layers/issues"
   },

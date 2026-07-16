@@ -17,8 +17,12 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 
 ## Adapters
 
-- **Lit** + **Angular SSR** + **React Native** bindings if demand materializes.
+- **Qwik** + **Alpine** + **Lit** + **Marko** + **Angular SSR** + **React Native** bindings if demand materializes.
 - A **`HostAdapter`** contract is deliberately **not** planned — `StackOutlet` renders inline; consumers wrap it in their own `createPortal` if they need a portal target. Keeping the core agnostic means no host/portal abstraction baked in.
+
+## Docs site (`apps/docs/`, Blume)
+
+- **MCP server + Ask AI** — require `deployment.output: "server"` + a deploy adapter + API key + rate limits on `/api/ask`. `llms.txt` / `llms-full.txt` / per-page `.md` mirrors / `agent-readability.json` already cover the static agent surface.
 
 ## Out of scope
 

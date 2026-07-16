@@ -1,0 +1,52 @@
+---
+title: Base UI
+description: Compose Layers with Base UI — controlled overlays, seam notes, and recipes.
+sidebar:
+  label: Overview
+search:
+  tags: ["integration"]
+---
+
+Don't wire Base UI's trigger helpers to Layers' imperative open — mount controlled `Dialog`, `Drawer`, and alert primitives from the layer component while the call is active. Each page ships a recipe and seam notes; live behavior is on the matching [example](/examples) page.
+
+<CardGroup cols={2}>
+  <Card
+    title="Toast with auto-dismiss"
+    description="`void client.open(...)` + Base UI toast region while mounted."
+    href="/integrations/base-ui/toast"
+    icon="bell"
+    arrow
+  />
+  <Card
+    title="Confirm dialog with a typed result"
+    description="`await client.open(...)` → controlled `Dialog`; `call.end` resolves."
+    href="/integrations/base-ui/confirm-dialog"
+    icon="help-circle"
+    arrow
+  />
+  <Card
+    title="Drawer with slide-over panel"
+    description="Slide-over via Base UI drawer primitives; typed boolean on dismiss."
+    href="/integrations/base-ui/drawer"
+    icon="panel-right"
+    arrow
+  />
+  <Card
+    title="Nested confirm inside a parent dialog"
+    description="Child stack via `useLayerGroup`; drains when the parent dismisses."
+    href="/integrations/base-ui/nested-confirm"
+    icon="layers"
+    arrow
+  />
+  <Card
+    title={"Animated enter/exit with `settle()`"}
+    description="Hold `call.end` until `onOpenChangeComplete` fires."
+    href="/integrations/base-ui/animated-enter-exit"
+    icon="sparkles"
+    arrow
+  />
+</CardGroup>
+
+:::note
+Non-React adopters: per-framework recipes live on each [example](/examples) page. Integrations are React-only seams.
+:::

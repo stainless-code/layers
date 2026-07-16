@@ -1,0 +1,178 @@
+---
+title: Awaiting results
+description: Await typed responses from client.open, infer types via DataTag, or fire-and-forget with void.
+search:
+  tags: ["guide"]
+---
+
+Need a boolean back from a confirm? `await client.open(...)` returns `Promise<R>`, and the response type flows from your layer definition with no explicit generic. Awaiting is optional — fire-and-forget is equally first-class.
+
+## Typed await
+
+Brand the contract once with `layerOptions<P, R>()`. The `key` carries a `DataTag`, so `await client.open({ ...confirm, payload })` infers `R`:
+
+```tsx lineNumbers
+const confirm = layerOptions<ConfirmPayload, boolean>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+
+const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });//    ^? boolean
+```
+
+You can also brand a key alone with `layerKey<R>()(key)` when options are inlined at the call site. See [Identity and types](/concepts/identity-and-types) for how `DataTag` inference works.
+
+## Open from your framework
+
+The `open` call is the same everywhere — only client access differs:
+
+<Tabs>
+<Tab title="React" icon="/icons/react.svg">
+
+```tsx lineNumbers
+import { useLayerClient } from "@stainless-code/react-layers";
+
+function useRemove() {
+  const client = useLayerClient();
+  return async () => {
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+      /* … */
+    }
+  };
+}
+```
+
+</Tab>
+<Tab title="Preact" icon="/icons/preact.svg">
+
+```tsx lineNumbers
+import { useLayerClient } from "@stainless-code/preact-layers";
+
+function useRemove() {
+  const client = useLayerClient();
+  return async () => {
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+      /* … */
+    }
+  };
+}
+```
+
+
+</Tab>
+<Tab title="Solid" icon="/icons/solid.svg">
+
+```tsx lineNumbers
+import { useLayerClient } from "@stainless-code/solid-layers";
+
+function useRemove() {
+  const client = useLayerClient();
+  return async () => {
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+      /* … */
+    }
+  };
+}
+```
+
+</Tab>
+<Tab title="Angular" icon="/icons/angular.svg">
+
+```ts lineNumbers
+import { Component } from "@angular/core";
+import { useLayerClient } from "@stainless-code/angular-layers";
+
+@Component({ /* … */ })
+class RemoveButton {
+  private client = useLayerClient();
+
+  async remove() {
+    const ok = await this.client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+      /* … */
+    }
+  }
+}
+```
+
+</Tab>
+<Tab title="Vue" icon="/icons/vue.svg">
+
+```vue lineNumbers
+<script setup lang="ts">
+import { useLayerClient } from "@stainless-code/vue-layers";
+
+const client = useLayerClient();
+
+async function remove() {
+  const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });  if (ok) {
+    /* … */
+  }
+}
+</script>
+```
+
+</Tab>
+<Tab title="Svelte (runes)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { useLayerClient } from "@stainless-code/svelte-layers";
+
+  const client = useLayerClient();
+
+  async function remove() {
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+      /* … */
+    }
+  }
+</script>
+```
+
+</Tab>
+<Tab title="Svelte (store)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { useLayerClient } from "@stainless-code/svelte-layers/store";
+
+  const client = useLayerClient();
+
+  async function remove() {
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });    if (ok) {
+      /* … */
+    }
+  }
+</script>
+```
+
+Same `open`/`await` call — store entry uses `Readable` stacks for rendering, not this call site.
+
+</Tab>
+</Tabs>
+
+## Fire-and-forget
+
+When a layer needs no return value, omit the response generic (defaults to `void`) and skip `await`:
+
+```tsx
+const about = layerOptions({
+  stack: "modal",
+  key: ["about"],
+  component: About,
+});
+
+void client.open(about);
+```
+
+The layer dismisses itself — typically via `call.dismiss()` inside the component. Use `void` to signal intentional fire-and-forget when your linter flags floating promises.
+
+:::tip
+Both payload and response are optional. A layer with `R = void` and no payload is a complete fire-and-forget surface.
+:::
+
+## Edge cases
+
+- **`loadFn` errors** reject the promise — see [Error handling](/guides/error-handling).
+- **Validation failures** reject with `PayloadValidationError` before mount — see [Payload validation](/guides/payload-validation).
+- **Serial stacks** queue later opens; the promise resolves only when the layer activates and ends — see [Serial queues](/guides/serial-queues).

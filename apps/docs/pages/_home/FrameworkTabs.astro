@@ -1,0 +1,170 @@
+---
+import CodeGroup from "blume/components/content/CodeGroup.astro";
+import Icon from "blume/components/Icon.astro";
+import { contentHref } from "blume/components/content/base-href.ts";
+import { highlightCode } from "blume/markdown";
+import { adapterSnippets, svelteStoreCode } from "./adapter-snippets.ts";
+
+// Expand Svelte into runes + store tabs; other snippets stay 1:1 (order from adapterSnippets).
+const adapterList = adapterSnippets.flatMap((snippet) => {
+  if (snippet.framework === "svelte") {
+    return [
+      { title: "Svelte (runes)", code: snippet.code, lang: snippet.lang },
+      { title: "Svelte (store)", code: svelteStoreCode, lang: "svelte" },
+    ];
+  }
+  return [{ title: snippet.label, code: snippet.code, lang: snippet.lang }];
+});
+
+const blocks = await Promise.all(
+  adapterList.map((adapter) =>
+    highlightCode(adapter.code, adapter.lang, { title: adapter.title }),
+  ),
+);
+
+const adapters = [
+  { name: "React", icon: "/icons/react.svg" },
+  { name: "Preact", icon: "/icons/preact.svg" },
+  { name: "Solid", icon: "/icons/solid.svg" },
+  { name: "Angular", icon: "/icons/angular.svg" },
+  { name: "Vue", icon: "/icons/vue.svg" },
+  { name: "Svelte (runes)", icon: "/icons/svelte.svg" },
+  { name: "Svelte (store)", icon: "/icons/svelte.svg" },
+];
+
+const rows = [
+  {
+    feature: "Primitives + core re-export",
+    values: [true, true, true, true, true, true, true],
+  },
+  {
+    feature: "StackOutlet (built-in host)",
+    // react, preact, solid, angular, vue, svelte×2
+    values: [true, true, true, false, true, false, false],
+  },
+  {
+    feature: "useLayerGroup",
+    values: [true, true, true, true, true, true, true],
+  },
+  {
+    feature: "useMutationFlow",
+    values: [true, true, true, true, true, true, true],
+  },
+  {
+    feature: "createStackHook",
+    values: [true, true, true, true, true, false, false],
+  },
+];
+
+const thClass =
+  "border-border border-b px-3 py-2 text-left font-medium text-foreground text-xs sm:px-4 sm:text-sm";
+const tdClass = "border-border border-b px-3 py-2 text-center text-sm sm:px-4";
+const featureClass =
+  "border-border border-b px-3 py-2 text-left text-muted-foreground text-xs sm:px-4 sm:text-sm";
+---
+
+<section>
+  <div class="mx-auto max-w-2xl text-center">
+    <h2 class="font-medium text-3xl tracking-tight sm:text-4xl">
+      One core, six adapters.
+    </h2>
+    <p class="mx-auto mt-4 max-w-lg text-balance text-muted-foreground">
+      Declare a layer once, then open and <code
+        class="rounded bg-muted px-1 font-mono text-sm">await</code
+      > it — same engine, your framework's reactivity.
+    </p>
+  </div>
+
+  <div class="mt-10 prose max-w-none">
+    <CodeGroup>
+      {blocks.map((html) => <Fragment set:html={html} />)}
+    </CodeGroup>
+  </div>
+
+  <p class="mt-4 text-muted-foreground text-sm">
+    <a
+      class="font-medium text-accent transition-opacity hover:opacity-80"
+      href={contentHref("/adapters")}
+    >
+      Browse adapter guides →
+    </a>
+  </p>
+
+  <p class="mt-2 text-muted-foreground text-xs">
+    Svelte ships two modes — runes and store.
+  </p>
+
+  <div class="mt-12">
+    <div class="mx-auto max-w-2xl text-center">
+      <h3 class="font-medium text-2xl tracking-tight sm:text-3xl">
+        Every adapter, the same API.
+      </h3>
+      <p class="mx-auto mt-4 max-w-lg text-balance text-muted-foreground">
+        Every adapter exposes the same primitives and re-exports the full core.
+        Angular and Svelte diverge by design — imperative render instead of
+        shipped outlet components.
+      </p>
+    </div>
+
+    <div class="mt-10 overflow-x-auto rounded-blume border border-border">
+      <table class="w-full min-w-[720px] border-collapse">
+        <thead>
+          <tr class="bg-muted/50">
+            <th class={thClass}>Capability</th>
+            {
+              adapters.map((adapter) => (
+                <th class={thClass}>
+                  <span class="inline-flex items-center gap-1.5">
+                    <Icon name={adapter.icon} size={14} />
+                    {adapter.name}
+                  </span>
+                </th>
+              ))
+            }
+          </tr>
+        </thead>
+        <tbody>
+          {
+            rows.map((row) => (
+              <tr>
+                <td class={featureClass}>{row.feature}</td>
+                {
+                  row.values.map((supported) => (
+                    <td class={tdClass}>
+                      {supported ? (
+                        <span
+                          aria-label="Supported"
+                          class="text-accent"
+                          title="Supported"
+                        >
+                          ✓
+                        </span>
+                      ) : (
+                        <span
+                          aria-label="Not applicable"
+                          class="text-muted-foreground"
+                          title="Not applicable"
+                        >
+                          ø
+                        </span>
+                      )}
+                    </td>
+                  ))
+                }
+              </tr>
+            ))
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <p class="mt-6 text-center text-muted-foreground text-sm">
+      <a
+        class="font-medium text-accent transition-opacity hover:opacity-80"
+        href={contentHref("/adapters")}
+      >
+        Full parity matrix →
+      </a>
+    </p>
+  </div>
+</section>

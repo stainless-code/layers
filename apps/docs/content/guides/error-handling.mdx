@@ -1,0 +1,88 @@
+---
+title: Error handling
+description: Handle Promise rejections from open, narrow with guards, and type loadFn errors via Register.
+search:
+  tags: ["guide"]
+---
+
+`client.open()` returns `Promise<R>` — the direct-`await` contract. Resolution types flow through `DataTag`; **rejections do not** (a TypeScript limitation). Narrow errors in `catch` with runtime guards.
+
+## What rejects
+
+The promise rejects when:
+
+1. **`loadFn` throws** — typed at runtime as the layer's error type `E`
+2. **`validate` fails** — `PayloadValidationError`
+
+Dismissal during `pending` resolves with the dismissal response (the in-flight `loadFn` is aborted via `AbortController`); it does not reject.
+
+```ts lineNumbers
+try {
+  const data = await client.open({ ...layer, payload });
+} catch (err) { // [!code highlight]
+  // err is unknown — narrow explicitly
+}
+```
+
+## Narrow validation errors
+
+```ts lineNumbers
+import { isPayloadValidationError } from "@stainless-code/layers";
+
+try {
+  await client.open({ ...prompt, payload: untrusted });
+} catch (err) {
+  if (isPayloadValidationError(err)) { // [!code highlight]
+    showFieldErrors(err.issues);
+    return;
+  }
+  throw err;
+}
+```
+
+## App-wide error type
+
+Augment `Register` once to set `DefaultLayerError` for every layer's `E` default:
+
+```ts
+declare module "@stainless-code/layers" {
+  interface Register {
+    defaultError: AppError;
+  }
+}
+```
+
+`DefaultLayerError` resolves to `Error` when unaugmented. Per-layer error types can still be set on `layerOptions<P, R, E>()`.
+
+## loadFn errors
+
+When a layer defines `loadFn`, a throw rejects the caller's `await`:
+
+```ts lineNumbers
+const detail = layerOptions<{ id: string }, Detail, ApiError>({
+  stack: "modal",
+  key: ["detail"],
+  component: DetailView,
+  async loadFn({ payload, signal }) {
+    const res = await fetch(`/api/${payload.id}`, { signal });
+    if (!res.ok) throw new ApiError(res.status);
+    return res.json();
+  },
+});
+
+try {
+  await client.open({ ...detail, payload: { id: "42" } });
+} catch (err) {
+  if (err instanceof ApiError) { // [!code highlight]
+    /* … */
+  }
+}
+```
+
+The loaded `data` is available on the layer state when `loadFn` succeeds; on error the layer enters `phase: "error"`.
+
+:::note
+A `Result`-returning `open` was deliberately rejected to preserve direct `await`. Narrow in `catch` instead.
+:::
+
+See [Payload validation](/guides/payload-validation) for `PayloadValidationError` and [Lifecycle](/concepts/lifecycle) for `phase: "error"`.

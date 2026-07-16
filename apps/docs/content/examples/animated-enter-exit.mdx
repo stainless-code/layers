@@ -1,0 +1,63 @@
+---
+title: "Animated enter/exit with `settle()`"
+description: Drive enter and exit CSS with the transition axis and call.settle.
+search:
+  tags: ["example"]
+---
+
+import animatedSrc from "../../recipes/animated-enter-exit/react.tsx?raw";
+import animatedWiringSrc from "../../recipes/animated-enter-exit/react.wiring.tsx?raw";
+import animatedPreactSrc from "../../recipes/animated-enter-exit/preact.tsx?raw";
+import animatedVueLayerSrc from "../../recipes/animated-enter-exit/vue.vue?raw";
+import animatedVueHostSrc from "../../recipes/animated-enter-exit/vue-host.vue?raw";
+import animatedSolidSrc from "../../recipes/animated-enter-exit/solid.tsx?raw";
+import animatedSvelteRunesSrc from "../../recipes/animated-enter-exit/svelte-runes.svelte?raw";
+import animatedSvelteStoreSrc from "../../recipes/animated-enter-exit/svelte-store.svelte?raw";
+import animatedAngularSrc from "../../recipes/animated-enter-exit/angular.ts?raw";
+
+Hold unmount until a CSS exit animation finishes — `transition` plus `call.settle()` lets the component drive enter and exit without overloading lifecycle phase.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below; integrations with React Aria and Base UI
+live under [Integrations](/integrations).
+:::
+
+<AnimatedEnterExitExample />
+
+## Layers wiring
+
+The transition axis is Layers' API: the `transition` prop, `call.settle()`, and `enteringDelay`/`exitingDelay` to cap enter/exit. The recipes below wrap it in a real animated dialog.
+
+<CodeBlock code={animatedWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={animatedSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={animatedPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={animatedSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={animatedAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={animatedVueLayerSrc} lang="vue" title="AnimatedDialog.vue" /><CodeBlock code={animatedVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={animatedSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={animatedSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Integrations
+
+<CardGroup cols={2}>
+  <Card title="Animated enter/exit + React Aria" href="/integrations/react-aria/animated-enter-exit" icon="/icons/react-aria.svg" arrow />
+  <Card title="Animated enter/exit + Base UI" href="/integrations/base-ui/animated-enter-exit" icon="/icons/base-ui.svg" arrow />
+</CardGroup>
+
+## Variations
+
+- **Instant dismiss** — zero delays; see [Confirm dialog](/examples/confirm-dialog)
+- **Transition axis** — phases vs transitions; see [Lifecycle](/concepts/lifecycle)
+
+## Learn more
+
+- [Animations](/guides/animations) — `transition`, delays, `call.settle()`
+- [Lifecycle](/concepts/lifecycle) — phase × transition model

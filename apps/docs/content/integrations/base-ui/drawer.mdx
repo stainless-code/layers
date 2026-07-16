@@ -1,0 +1,25 @@
+---
+title: Drawer + Base UI
+description: Compose Layers with Base UI for a slide-over drawer.
+search:
+  tags: ["integration"]
+---
+
+import buSrc from "../../../recipes/drawer/react.baseui.tsx?raw";
+
+`await client.open({ ...drawer, payload: { title: "Settings" } })` is the typed entry; the layer component renders Base UI's `Drawer.Root` (extends Dialog) with `Viewport`/`Popup`/`Content` while mounted. `call.end(true|false)` resolves on dismiss. See the [live demo](/examples/drawer) for the behavior.
+
+## Recipe
+
+<CodeBlock code={buSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use Base UI's `Dialog.Trigger` — Layers owns the imperative open; the layer component renders the controlled overlay directly while mounted (`open` starts `true`).
+- **Exit-animation crux** — on dismiss intent, set pending result and `setOpen(false)`; call `call.end(result)` in `onOpenChangeComplete(false)` after the exit animation completes so the slide-out is never cut off.
+- Base UI owns focus trap / portal / scroll-lock — don't double-apply Layers-side equivalents.
+
+## Learn more
+
+- [Drawer example](/examples/drawer) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

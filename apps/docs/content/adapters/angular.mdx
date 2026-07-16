@@ -1,0 +1,139 @@
+---
+title: Angular
+description: Angular adapter — provideLayerClient, signals, and imperative renderStack.
+search:
+  tags: ["adapter", "angular"]
+sidebar:
+  icon: /icons/angular.svg
+---
+
+`@stainless-code/angular-layers` bridges stacks into Angular signals, rendered imperatively via `renderStack(vcr)`. The core is re-exported.
+
+:::tip
+Angular builds compiler-free (tsdown, no framework compiler). Stack rendering is **intentional imperative design** — `renderStack(vcr)` instead of a shipped `StackOutlet` component. This is not a parity gap; see the [parity matrix](/adapters).
+:::
+
+## Install
+
+```package-install
+npm i @stainless-code/angular-layers
+```
+
+**Peer:** `@angular/core` >=17.0.0
+
+## Client
+
+Register `LAYER_CLIENT` with `provideLayerClient()` in your app config or component providers. Inject with `useLayerClient()`:
+
+```ts
+import { provideLayerClient, useLayerClient } from "@stainless-code/angular-layers";
+
+export const appConfig = {
+  providers: [provideLayerClient()],
+};
+```
+
+## Render a stack
+
+There is no `StackOutlet`. Call `renderStack(vcr)` inside an injection context — it imperatively creates components in a `ViewContainerRef`, keyed by layer `id` so state changes update inputs via `setInput` without recreating instances:
+
+```ts
+import { Component, ViewContainerRef, inject } from "@angular/core";
+import { renderStack } from "@stainless-code/angular-layers";
+
+@Component({
+  selector: "app-root",
+  template: `<ng-container #outlet />`,
+})
+export class AppComponent {
+  private vcr = inject(ViewContainerRef);
+
+  constructor() {
+    renderStack(this.vcr, "confirm");
+  }
+}
+```
+
+`useStack(stack, selector)` returns a readonly `Signal` — the idiomatic equivalent of `StackSubscribe`.
+
+## Confirm dialog
+
+```ts
+import { Component, ViewContainerRef, inject } from "@angular/core";
+import {
+  layerOptions,
+  provideLayerClient,
+  renderStack,
+  useLayerClient,
+  type LayerComponentProps,
+} from "@stainless-code/angular-layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+@Component({
+  selector: "confirm-dialog",
+  template: `
+    <div role="dialog">
+      <h2>{{ payload.title }}</h2>
+      <button (click)="call.end(true)">Yes</button>
+      <button (click)="call.end(false)">No</button>
+    </div>
+  `,
+})
+class ConfirmDialogComponent {
+  call!: LayerComponentProps<ConfirmPayload, ConfirmResponse>["call"];
+  payload!: ConfirmPayload;
+}
+
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialogComponent,
+});
+
+@Component({
+  selector: "app-root",
+  providers: [provideLayerClient()],
+  template: `<button (click)="remove()">Remove</button><ng-container #outlet />`,
+})
+export class AppComponent {
+  private client = useLayerClient();
+  private vcr = inject(ViewContainerRef);
+
+  constructor() {
+    renderStack(this.vcr, "confirm");
+  }
+
+  async remove() {
+    await this.client.open({ ...confirm, payload: { title: "Remove item?" } });
+  }
+}
+```
+
+## Primitives
+
+| Export | Role |
+| ------ | ---- |
+| `LAYER_CLIENT` | `InjectionToken<LayerClient>` |
+| `provideLayerClient(client?)` | `FactoryProvider` for `LAYER_CLIENT` |
+| `useLayerClient()` | Inject the app client (injection context required) |
+| `useStack(stackId?, selector?, compare?)` | Readonly `Signal<T>` of the selected stack slice |
+| `useLayer(key, stackId?, compare?)` | `Signal<LayerState \| null>` for one active key |
+
+Both `useStack` and `useLayer` accept an optional leading `LayerClient` argument. Must run in an injection context.
+
+## Ergonomic APIs
+
+| Export | Role |
+| ------ | ---- |
+| `useStackHandles(stackId?, rootProps?)` | `{ states: Signal, getCall }` for headless rendering |
+| `renderStack(vcr, stackId?, rootProps?)` | Imperative outlet — **the Angular rendering surface** |
+| `useMutationFlow(call)` | `pending` is a `Signal<boolean>`; `run(fn).orEnd(response)` |
+| `useLayerGroup(call, options?)` | Child stack with `renderInto(vcr)` instead of `Outlet` |
+| `createStackHook(config?)` | `{ provideClient, useAppStack, renderInto }` — no `AppHost`/`AppLayer` |
+
+## Learn more
+
+- [Lifecycle](/concepts/lifecycle) · [Identity & types](/concepts/identity-and-types)
+- [Adapter parity](/adapters)

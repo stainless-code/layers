@@ -1,0 +1,55 @@
+---
+title: Progress with live updates
+description: Open a layer and live-update its payload while it stays mounted.
+search:
+  tags: ["example"]
+---
+
+import progressSrc from "../../recipes/progress/react.tsx?raw";
+import progressWiringSrc from "../../recipes/progress/react.wiring.tsx?raw";
+import progressPreactSrc from "../../recipes/progress/preact.tsx?raw";
+import progressVueLayerSrc from "../../recipes/progress/vue.vue?raw";
+import progressVueHostSrc from "../../recipes/progress/vue-host.vue?raw";
+import progressSolidSrc from "../../recipes/progress/solid.tsx?raw";
+import progressSvelteRunesSrc from "../../recipes/progress/svelte-runes.svelte?raw";
+import progressSvelteStoreSrc from "../../recipes/progress/svelte-store.svelte?raw";
+import progressAngularSrc from "../../recipes/progress/angular.ts?raw";
+
+A file upload mounts a progress layer once; `stack.update(layer, { percent })` pushes new percentages from outside the component without re-opening.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below.
+:::
+
+<ProgressExample />
+
+## Layers wiring
+
+Live payload updates — open with a payload, mutate it via the stack while the layer is open, then dismiss. The recipes below wrap it in a real progress bar.
+
+<CodeBlock code={progressWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={progressSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={progressPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={progressSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={progressAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={progressVueLayerSrc} lang="vue" title="Progress.vue" /><CodeBlock code={progressVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={progressSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={progressSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Variations
+
+- **Fire-and-forget** — no await, auto-dismiss; see [Toast](/examples/toast)
+- **Singleton upsert** — one active instance per key; see [Singletons](/guides/singletons)
+
+## Learn more
+
+- [Singletons](/guides/singletons) — `upsert` and keyed reuse
+- [Getting started](/guides/getting-started) — declare, mount, open, await

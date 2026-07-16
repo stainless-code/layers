@@ -1,0 +1,56 @@
+---
+title: Route guard open from non-UI code
+description: Open a layer from non-UI code with a module-level LayerClient.
+search:
+  tags: ["example"]
+---
+
+import routeGuardSrc from "../../recipes/route-guard-open/react.tsx?raw";
+import routeGuardWiringSrc from "../../recipes/route-guard-open/react.wiring.tsx?raw";
+import routeGuardPreactSrc from "../../recipes/route-guard-open/preact.tsx?raw";
+import routeGuardVueLayerSrc from "../../recipes/route-guard-open/vue.vue?raw";
+import routeGuardVueHostSrc from "../../recipes/route-guard-open/vue-host.vue?raw";
+import routeGuardSolidSrc from "../../recipes/route-guard-open/solid.tsx?raw";
+import routeGuardSvelteRunesSrc from "../../recipes/route-guard-open/svelte-runes.svelte?raw";
+import routeGuardSvelteStoreSrc from "../../recipes/route-guard-open/svelte-store.svelte?raw";
+import routeGuardAngularSrc from "../../recipes/route-guard-open/angular.ts?raw";
+
+A route guard or event handler opens a confirm layer without React hooks — the same client powers the UI.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below.
+:::
+
+<RouteGuardExample />
+
+## Layers wiring
+
+Open a layer from anywhere — here a plain `async` function (a route guard) — and `await` a typed boolean to decide whether to navigate. The recipes below wrap it in a real guard dialog.
+
+<CodeBlock code={routeGuardWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={routeGuardSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={routeGuardPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={routeGuardSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={routeGuardAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={routeGuardVueLayerSrc} lang="vue" title="RouteGuard.vue" /><CodeBlock code={routeGuardVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={routeGuardSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={routeGuardSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Variations
+
+- **Hook-based open** — `useLayerClient()` inside a component; see [Confirm dialog](/examples/confirm-dialog)
+- **Payload validation** — reject bad input before mount; see [Payload validation](/guides/payload-validation)
+- **Shared client** — pass one `LayerClient` across routes via `StackProvider`; see [Getting started](/guides/getting-started)
+
+## Learn more
+
+- [Awaiting results](/guides/awaiting-results) — typed promises from `client.open(...)`
+- [Overview](/concepts/overview) — imperative open from anywhere in the app

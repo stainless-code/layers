@@ -13,7 +13,10 @@ export type DataTag<
   Key extends LayerKey,
   R,
   E = DefaultLayerError,
-> = Key extends { [dataTagSymbol]: unknown; [dataTagErrorSymbol]: unknown }
+> = Key extends {
+  [dataTagSymbol]: unknown;
+  [dataTagErrorSymbol]: unknown;
+}
   ? Key
   : Key & {
       [dataTagSymbol]: R;

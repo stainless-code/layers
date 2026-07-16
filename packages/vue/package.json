@@ -14,7 +14,7 @@
     "typescript",
     "vue"
   ],
-  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/vue#readme",
+  "homepage": "https://stainless-code.com/layers/adapters/vue",
   "bugs": {
     "url": "https://github.com/stainless-code/layers/issues"
   },

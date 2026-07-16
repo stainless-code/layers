@@ -1,0 +1,29 @@
+---
+title: Integrations
+description: Compose Layers with accessible overlay libraries.
+search:
+  tags: ["integration"]
+---
+
+Your modal library ships its own triggers and open state — Layers keeps orchestration (`open`, `await`, queue, blockers). These pages show controlled composition with React Aria and Base UI: no trigger wrappers, no double portals.
+
+<CardGroup cols={2}>
+  <Card
+    title="React Aria"
+    description="RAC `ModalOverlay`, `Dialog`, drawers, and toasts — Layers owns the imperative entry."
+    href="/integrations/react-aria"
+    icon="/icons/react-aria.svg"
+    arrow
+  />
+  <Card
+    title="Base UI"
+    description="Base UI `Dialog`, `Drawer`, and alert primitives — same orchestration contract."
+    href="/integrations/base-ui"
+    icon="/icons/base-ui.svg"
+    arrow
+  />
+</CardGroup>
+
+:::note
+Integrations are React-only seams — React Aria and Base UI ship React only. Non-React adopters use the per-framework recipes on each [example](/examples) page.
+:::

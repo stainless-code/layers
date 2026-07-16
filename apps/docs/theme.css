@@ -1,0 +1,47 @@
+:root {
+  /* Warm light surface — cream off-white */
+  --blume-background: #faf8f5;
+  --blume-foreground: #1c1b19;
+  --blume-muted: #f0ede8;
+  --blume-muted-foreground: #6b6863;
+  --blume-border: #e2ddd6;
+  /* Keep teal accent (the Layers brand color) */
+  --blume-accent: #0d9488;
+  --blume-accent-foreground: #ffffff;
+  /* Refined success — deeper emerald that pairs with the warm cream surface */
+  --blume-success: #059669;
+}
+
+:root[data-theme="dark"] {
+  /* Warm dark — near-black with warm undertone */
+  --blume-background: #18181b;
+  --blume-foreground: #f5f0e8;
+  --blume-muted: #27272a;
+  --blume-muted-foreground: #a1a1aa;
+  --blume-border: #3f3f46;
+  --blume-accent: #2dd4bf;
+  --blume-accent-foreground: #18181b;
+  --blume-success: #34d399;
+}
+
+/* Base UI: SVG uses currentColor, but Blume renders icons as <img> — isolated
+   document, no inherited color. Defaults to black; invert on dark theme. */
+img[src*="base-ui.svg"] {
+  @apply dark:invert;
+}
+
+/* Logo hover: the teal "active" layer + the top layer slide to center,
+   forming a symmetric pyramid. Triggers on hovering any part of the logo
+   (icon + wordmark) via :has(). */
+.logo-active,
+.logo-top {
+  transition: transform 250ms ease;
+}
+
+a:has(> span > .logo-svg):hover .logo-active {
+  transform: translateX(-1px);
+}
+
+a:has(> span > .logo-svg):hover .logo-top {
+  transform: translateX(1px);
+}

@@ -1,0 +1,41 @@
+---
+title: Guides
+description: Task-oriented recipes for building with Layers.
+search:
+  tags: ["guide"]
+---
+
+From your first `open` call through queues, nesting, animations, and SSR. Each guide is framework-agnostic where possible; parallel adapter syntax uses tabs.
+
+<Steps>
+<Step title="Start here">
+
+1. [Getting started](/guides/getting-started) — declare a layer, mount an outlet, open and await
+2. [Install](/guides/install) — packages and peer dependencies
+
+</Step>
+<Step title="Core patterns">
+
+3. [Awaiting results](/guides/awaiting-results) — `await open`, DataTag inference, fire-and-forget
+4. [Singletons](/guides/singletons) — `upsert` + `update` for toasts and progress
+5. [Serial queues](/guides/serial-queues) — `scope: serial`, `getQueuedSnapshot`
+6. [Nested overlays](/guides/nested-overlays) — layer groups, child stacks, inline outlets
+
+</Step>
+<Step title="Polish and safety">
+
+7. [Animations](/guides/animations) — `transition`, delays, `call.settle()`
+8. [Dismissal blockers](/guides/dismissal-blockers) — `addBlocker`, `dismissing`, `dismissAll` modes
+9. [Payload validation](/guides/payload-validation) — Standard Schema, `PayloadValidationError`
+10. [Error handling](/guides/error-handling) — promise rejections, `Register`, narrowing
+
+</Step>
+<Step title="Advanced">
+
+11. [Headless rendering](/guides/headless-rendering) — `useStackHandles`, `StackSubscribe`, custom hosts
+12. [SSR](/guides/ssr) — per-adapter server rendering posture
+
+</Step>
+</Steps>
+
+For the engine model and terminology, see [Concepts](/concepts/overview).

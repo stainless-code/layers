@@ -1,0 +1,106 @@
+---
+title: Getting started
+description: React quickstart — declare a layer, mount an outlet, open and await a typed result.
+search:
+  tags: ["guide"]
+---
+
+This guide uses **React**. Install packages first — see [Install](/guides/install).
+
+```tsx
+const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+//    ^? boolean
+```
+
+Declare the layer once, mount an outlet, then open from anywhere and `await` a typed result — the sections below walk through each step.
+
+## Install
+
+```bash
+bun add @stainless-code/react-layers
+```
+
+The core (`@stainless-code/layers`) is pulled in automatically and re-exported from the adapter.
+
+## Declare
+
+Name the contract once — payload in, response out — with `layerOptions`:
+
+```tsx
+import {
+  layerOptions,
+  type LayerComponentProps,
+} from "@stainless-code/react-layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+function ConfirmDialog({
+  call,
+  payload,
+}: LayerComponentProps<ConfirmPayload, ConfirmResponse>) {
+  return (
+    <div role="dialog">
+      <h2>{payload.title}</h2>
+      <button onClick={() => void call.end(true)}>Yes</button>
+      <button onClick={() => void call.end(false)}>No</button>
+    </div>
+  );
+}
+
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({ // [!code highlight]
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+```
+
+A typical layout keeps layer declarations in one folder so any component can import them:
+
+<FileTree>
+
+- src/
+  - layers/
+    - confirm.ts
+    - toast.ts
+  - App.tsx
+  - main.tsx
+
+</FileTree>
+
+## Mount
+
+Wrap your app with `StackProvider` and render active layers with `StackOutlet`:
+
+```tsx
+import { StackProvider, StackOutlet } from "@stainless-code/react-layers";
+
+function App() {
+  return (
+    <StackProvider>
+      <StackOutlet stack="confirm" />
+    </StackProvider>
+  );
+}
+```
+
+## Open and await
+
+Call `client.open` from anywhere inside the provider — the response type is inferred:
+
+```tsx
+import { useLayerClient } from "@stainless-code/react-layers";
+
+function useRemove() {
+  const client = useLayerClient();
+  return async () => {
+    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } }); // [!code highlight]
+    //    ^? boolean
+    if (ok) {
+      /* … */
+    }
+  };
+}
+```
+
+> **Both payload and response are optional.** The response type `R` defaults to `void` (fire-and-forget), and `payload` is omittable whenever the layer needs no input. For a fire-and-forget layer, declare it with `layerOptions({ stack, key, component })` and call `client.open(about)` — the layer dismisses itself via `call.dismiss()`.

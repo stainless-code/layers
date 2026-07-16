@@ -1,0 +1,133 @@
+---
+title: Svelte (store)
+description: Svelte store adapter — Readable stacks, $stack, standalone callFor.
+search:
+  tags: ["adapter", "svelte"]
+sidebar:
+  badge: "3+"
+---
+
+`@stainless-code/svelte-layers/store` binds stacks to Svelte `readable` stores. The core is re-exported. Use this entry for Svelte 3+ projects that prefer the store contract over runes.
+
+:::tip
+Like the [runes entry](/adapters/svelte/runes), this adapter ships no `.svelte` components — render with `{#each $stack}` + `callFor(client, stackId, s)` in your own markup. **Intentional compiler-free design**; see the [parity matrix](/adapters).
+:::
+
+## Install
+
+```package-install
+npm i @stainless-code/svelte-layers
+```
+
+Import from the `/store` subpath:
+
+```ts
+import { useStack, callFor } from "@stainless-code/svelte-layers/store";
+```
+
+**Peer:** `svelte` >=3.0.0
+
+For Svelte 5.7+ runes, see [Svelte (runes)](/adapters/svelte/runes).
+
+## Client
+
+`setLayerClient()` in a parent; `useLayerClient()` in descendants — same as the runes entry.
+
+:::note
+Import client/stack APIs from **one** entry only. Mixing `@stainless-code/svelte-layers` and `@stainless-code/svelte-layers/store` in the same tree breaks context (separate client Symbols per entry).
+:::
+
+## Render a stack
+
+`useStack()` returns a `Readable<T>`. Subscribe with `$stack` in components. Pair each state with the standalone `callFor(client, stackId, state)`:
+
+```svelte
+<script>
+  import {
+    callFor,
+    setLayerClient,
+    useLayerClient,
+    useStack,
+  } from "@stainless-code/svelte-layers/store";
+
+  setLayerClient();
+  const client = useLayerClient();
+  const stack = useStack("confirm");
+</script>
+
+{#each $stack as state (state.id)}
+  {@const call = callFor(client, "confirm", state)}
+  {#if call}
+    <Confirm {call} payload={state.payload} />
+  {/if}
+{/each}
+```
+
+## Confirm dialog
+
+```svelte
+<script lang="ts">
+  import {
+    callFor,
+    layerOptions,
+    setLayerClient,
+    useLayerClient,
+    useStack,
+  } from "@stainless-code/svelte-layers/store";
+
+  type ConfirmPayload = { title: string };
+  type ConfirmResponse = boolean;
+
+  setLayerClient();
+  const client = useLayerClient();
+  const confirmStack = useStack("confirm");
+
+  const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+    stack: "confirm",
+    key: ["confirm", "remove"],
+  });
+
+  async function remove() {
+    await client.open({ ...confirm, payload: { title: "Remove item?" } });
+  }
+</script>
+
+{#each $confirmStack as state (state.id)}
+  {@const call = callFor(client, "confirm", state)}
+  {#if call}
+    <div role="dialog">
+      <h2>{state.payload.title}</h2>
+      <button onclick={() => void call.end(true)}>Yes</button>
+      <button onclick={() => void call.end(false)}>No</button>
+    </div>
+  {/if}
+{/each}
+
+<button onclick={remove}>Remove</button>
+```
+
+## Primitives
+
+| Export | Role |
+| ------ | ---- |
+| `setLayerClient(client?)` | Provide a `LayerClient` via Svelte context |
+| `useLayerClient()` | Read the nearest context client |
+| `useStack(stackId?, selector?, compare?)` | `Readable<T>` of the selected stack slice |
+| `useLayer(key, stackId?, compare?)` | `Readable<LayerState \| null>` for one active key |
+| `callFor(client, stackId, state, rootProps?)` | Standalone call-context builder |
+
+Both `useStack` and `useLayer` accept an optional leading `LayerClient` argument.
+
+## Ergonomic APIs
+
+| Export | Role |
+| ------ | ---- |
+| `useMutationFlow(call)` | `pending` is a `Readable<boolean>` — subscribe with `$pending` |
+| `useLayerGroup(call, options?)` | Child stack as `Readable<LayerState[]>` — render `{#each $group.stack}` + `callFor` |
+
+No `StackOutlet`, `StackSubscribe`, `useStackHandles`, or `createStackHook` — by design.
+
+## Learn more
+
+- [Svelte (runes)](/adapters/svelte/runes) — Svelte 5.7+ with `.current`
+- [Lifecycle](/concepts/lifecycle) · [Adapter parity](/adapters)
