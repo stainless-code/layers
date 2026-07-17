@@ -158,6 +158,46 @@ export interface LayerClientOptions {
   defaultStackOptions?: StackDefaults;
 }
 
+/** Coarse mutation label for devtools / {@link LayerClient#subscribeNotify}. */
+export type StackNotifyAction =
+  | "register"
+  | "open"
+  | "queue"
+  | "update"
+  | "setRunning"
+  | "settle"
+  | "dismiss"
+  | "dismissAll"
+  | "cancelQueued"
+  | "phase"
+  | "remove";
+
+/** JSON-safe layer projection on {@link StackNotifyEvent}. */
+export interface LayerNotifyView {
+  id: string;
+  /** Display string from {@link keySignature}. */
+  key: string;
+  phase: LayerPhase;
+  transition: LayerTransition;
+  actionStatus: LayerActionStatus;
+  dismissing: boolean;
+  ended: boolean;
+  index: number;
+  stackSize: number;
+  payload?: unknown;
+  payloadTruncated?: boolean;
+}
+
+/** Emitted when a stack snapshot changes after a labeled mutation. */
+export interface StackNotifyEvent {
+  stackId: string;
+  seq: number;
+  ts: number;
+  action: StackNotifyAction;
+  active: LayerNotifyView[];
+  queued: LayerNotifyView[];
+}
+
 /**
  * Module-augmentation point for app-wide type defaults.
  * Augment `defaultError` to set the library-wide error type once.

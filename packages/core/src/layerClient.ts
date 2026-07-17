@@ -8,6 +8,7 @@ import type {
   OmitKeyof,
   OpenLayerOptions,
   StackDefaults,
+  StackNotifyEvent,
   StackOptions,
 } from "./types";
 import type {
@@ -33,6 +34,7 @@ export class LayerClient {
   #stacks = new Map<string, LayerStack>();
   #childStacksByParent = new Map<string, Set<string>>();
   #stackListeners = new Set<(stackId: string) => void>();
+  #notifyListeners = new Set<(event: StackNotifyEvent) => void>();
   #defaultStackOptions: StackDefaults;
 
   constructor(opts: LayerClientOptions = {}) {
@@ -49,7 +51,13 @@ export class LayerClient {
       };
       stack = new LayerStack(id, mergedOptions);
       stack.onLayerDismiss = (layer) => this.#drainChildStacks(layer.id);
+      stack.onNotify = (event) => {
+        for (const listener of this.#notifyListeners) {
+          listener(event);
+        }
+      };
       this.#stacks.set(id, stack);
+      stack.emitRegisterNotify();
       this.#stackListeners.forEach((l) => l(id));
     }
     return stack;
@@ -156,6 +164,12 @@ export class LayerClient {
   subscribeStacks(listener: (stackId: string) => void): () => void {
     this.#stackListeners.add(listener);
     return () => this.#stackListeners.delete(listener);
+  }
+
+  /** Subscribes to labeled stack snapshot transitions (devtools). */
+  subscribeNotify(listener: (event: StackNotifyEvent) => void): () => void {
+    this.#notifyListeners.add(listener);
+    return () => this.#notifyListeners.delete(listener);
   }
 
   dismissAll(

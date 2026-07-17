@@ -16,5 +16,6 @@ export default defineMeta({
     "error-handling",
     "headless-rendering",
     "ssr",
+    "devtools",
   ],
 });

@@ -1,0 +1,85 @@
+---
+title: Devtools
+description: Inspect live stacks in TanStack Devtools.
+search:
+  tags: ["guide"]
+---
+
+Debug stuck modals, serial queues, and dismiss blockers without adding admin routes. Mount the Layers panel next to Query / Router in [TanStack Devtools](https://tanstack.com/devtools/latest).
+
+> Experimental — the API may change between minor releases. Pin your version.
+
+## Install
+
+Peer the React adapter and TanStack's React shell. The panel package (`@stainless-code/layers-devtools`) comes transitively.
+
+```package-install
+npm i -D @stainless-code/react-layers-devtools @tanstack/react-devtools
+```
+
+## Mount inside `StackProvider`
+
+The plugin auto-attaches the context `LayerClient`. Keep `<TanStackDevtools />` under `<StackProvider>` (or pass `{ client }`).
+
+```tsx
+import { StackProvider, StackOutlet } from "@stainless-code/react-layers";
+import { TanStackDevtools } from "@tanstack/react-devtools";
+import { layersDevtoolsPlugin } from "@stainless-code/react-layers-devtools";
+
+function App() {
+  return (
+    <StackProvider>
+      <Routes />
+      <StackOutlet />
+      {import.meta.env.DEV && (
+        <TanStackDevtools plugins={[layersDevtoolsPlugin()]} />
+      )}
+    </StackProvider>
+  );
+}
+```
+
+Override when the shell sits outside the provider:
+
+```tsx
+layersDevtoolsPlugin({ client: myLayerClient });
+```
+
+## What the panel shows
+
+- Named stacks and active / queued rows (phase, transition, `actionStatus`, id, key)
+- JSON-safe payload projection (`payloadTruncated` when a value cannot be cloned)
+- Coarse `action` labels from the core `#dispatch` stream (`open`, `dismiss`, …)
+
+## Panel actions
+
+Buttons call the **live** `LayerClient` (not a bus command protocol):
+
+| Control | Behavior |
+| ------- | -------- |
+| Dismiss | Soft dismiss — respects blockers |
+| Cancel queued | `cancelQueued` on the FIFO head |
+| Force dismiss | `{ force: true }` after confirm |
+| Dismiss all | Modes: `skipBlocked` / `stopAtBlocked` / `force` |
+
+## Headless stream
+
+Apps that only need events (tests, custom inspectors) skip the panel:
+
+```ts
+import { LayerClient } from "@stainless-code/layers";
+
+const client = new LayerClient();
+const off = client.subscribeNotify((event) => {
+  console.log(event.action, event.stackId, event.active);
+});
+// later: off()
+```
+
+Zero listeners ⇒ ~zero cost. Core stays free of `@tanstack/*` (tenet: technology-agnostic engine).
+
+## Related
+
+- [Dismissal blockers](/guides/dismissal-blockers) — soft vs force / `dismissAll` modes
+- [Serial queues](/guides/serial-queues) — queued rows in the inspector
+- [Glossary](/concepts/glossary) — `StackNotifyEvent`, `subscribeNotify`, `#dispatch`

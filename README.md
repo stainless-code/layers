@@ -14,19 +14,21 @@ Full docs: [stainless-code.com/layers](https://stainless-code.com/layers).
 
 ## Packages
 
-| Package                                              | Peer                  | Install                                  |
-| ---------------------------------------------------- | --------------------- | ---------------------------------------- |
-| [`@stainless-code/layers`](packages/core)            | —                     | `bun add @stainless-code/layers`         |
-| [`@stainless-code/react-layers`](packages/react)     | `react`               | `bun add @stainless-code/react-layers`   |
-| [`@stainless-code/preact-layers`](packages/preact)   | `preact`              | `bun add @stainless-code/preact-layers`  |
-| [`@stainless-code/solid-layers`](packages/solid)     | `solid-js`            | `bun add @stainless-code/solid-layers`   |
-| [`@stainless-code/angular-layers`](packages/angular) | `@angular/core`       | `bun add @stainless-code/angular-layers` |
-| [`@stainless-code/vue-layers`](packages/vue)         | `vue`                 | `bun add @stainless-code/vue-layers`     |
-| [`@stainless-code/lit-layers`](packages/lit)         | `lit`, `@lit/context` | `bun add @stainless-code/lit-layers`     |
-| [`@stainless-code/alpine-layers`](packages/alpine)   | `alpinejs`            | `bun add @stainless-code/alpine-layers`  |
-| [`@stainless-code/svelte-layers`](packages/svelte)   | `svelte`              | `bun add @stainless-code/svelte-layers`  |
+| Package                                                            | Peer                                                                | Install                                            |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------- | -------------------------------------------------- |
+| [`@stainless-code/layers`](packages/core)                          | —                                                                   | `bun add @stainless-code/layers`                   |
+| [`@stainless-code/react-layers`](packages/react)                   | `react`                                                             | `bun add @stainless-code/react-layers`             |
+| [`@stainless-code/preact-layers`](packages/preact)                 | `preact`                                                            | `bun add @stainless-code/preact-layers`            |
+| [`@stainless-code/solid-layers`](packages/solid)                   | `solid-js`                                                          | `bun add @stainless-code/solid-layers`             |
+| [`@stainless-code/angular-layers`](packages/angular)               | `@angular/core`                                                     | `bun add @stainless-code/angular-layers`           |
+| [`@stainless-code/vue-layers`](packages/vue)                       | `vue`                                                               | `bun add @stainless-code/vue-layers`               |
+| [`@stainless-code/lit-layers`](packages/lit)                       | `lit`, `@lit/context`                                               | `bun add @stainless-code/lit-layers`               |
+| [`@stainless-code/alpine-layers`](packages/alpine)                 | `alpinejs`                                                          | `bun add @stainless-code/alpine-layers`            |
+| [`@stainless-code/svelte-layers`](packages/svelte)                 | `svelte`                                                            | `bun add @stainless-code/svelte-layers`            |
+| [`@stainless-code/layers-devtools`](packages/devtools)             | — (Solid panel)                                                     | `bun add -d @stainless-code/layers-devtools`       |
+| [`@stainless-code/react-layers-devtools`](packages/react-devtools) | `react`, `@stainless-code/react-layers`, `@tanstack/react-devtools` | `bun add -d @stainless-code/react-layers-devtools` |
 
-Install only the adapter for your framework — it pulls the core in transitively and re-exports it, so adapter APIs (`StackProvider`, `useStack`, …) and core APIs (`LayerClient`, `layerOptions`, …) both come from the one package. Each adapter lists its framework as a required peer. Svelte ships two entries: `@stainless-code/svelte-layers` (runes, 5.7+) and `@stainless-code/svelte-layers/store` (stores, 3+).
+Install only the adapter for your framework — it pulls the core in transitively and re-exports it, so adapter APIs (`StackProvider`, `useStack`, …) and core APIs (`LayerClient`, `layerOptions`, …) both come from the one package. Each adapter lists its framework as a required peer. Svelte ships two entries: `@stainless-code/svelte-layers` (runes, 5.7+) and `@stainless-code/svelte-layers/store` (stores, 3+). Devtools packages are optional; see [Devtools](https://stainless-code.com/layers/guides/devtools).
 
 ## Taste (React)
 

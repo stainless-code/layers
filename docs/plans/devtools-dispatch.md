@@ -1,6 +1,6 @@
 # Devtools + `#dispatch` (TanStack shell)
 
-> Plan owner: open. Status: **Ready** (grilled). Linked from [`docs/roadmap.md`](../roadmap.md) Robustness.
+> Plan owner: open. Status: **In progress** (slices 1–5 landed in tree; folders `packages/devtools` + `packages/react-devtools`, npm `@stainless-code/layers-devtools` + `@stainless-code/react-layers-devtools`). Linked from [`docs/roadmap.md`](../roadmap.md) Robustness.
 
 ## Problem
 

@@ -7,8 +7,11 @@ import type {
   DismissAllOptions,
   DismissOptions,
   LayerKey,
+  LayerNotifyView,
   LayerState,
   StackBlockerFn,
+  StackNotifyAction,
+  StackNotifyEvent,
   StackOptions,
 } from "./types";
 import { keySignature } from "./utils";
@@ -47,10 +50,15 @@ export class LayerStack<
   /** @internal Allows LayerClient to drain child stacks on dismissal. */
   onLayerDismiss?: (layer: Layer<P, R, E, D>) => void;
 
+  /** @internal Fan-out hook for {@link LayerClient#subscribeNotify}. */
+  onNotify?: (event: StackNotifyEvent) => void;
+
   #layers: Layer<P, R, E, D>[] = [];
   #snapshot: LayerState<P, R, E, D>[] = [];
   #queuedSnapshot: LayerState<P, R, E, D>[] = [];
   #scopeQueue: QueuedEntry<P, R, E, D>[] = [];
+  #notifySeq = 0;
+  #pendingNotifyAction?: StackNotifyAction;
   #gcCache = createLayerGcCache<P, R, E, D>({
     gcTime: () => this.options.gcTime ?? 0,
     onBeforeStore: (layer) =>
@@ -69,6 +77,11 @@ export class LayerStack<
 
   /** Returns serially queued layers, which are excluded from `getSnapshot`. */
   getQueuedSnapshot = (): LayerState<P, R, E, D>[] => this.#queuedSnapshot;
+
+  /** @internal First materialization ping for devtools registry. */
+  emitRegisterNotify(): void {
+    this.#emitNotify("register");
+  }
 
   getLayer(id: string): Layer<P, R, E, D> | undefined {
     return this.#layers.find((l) => l.id === id);
@@ -118,8 +131,10 @@ export class LayerStack<
       if (opts.upsert) {
         const existing = this.find(opts.key);
         if (existing) {
-          existing.setPartial({ payload });
-          this.#flush();
+          this.#dispatch("update", () => {
+            existing.setPartial({ payload });
+            this.#flush();
+          });
           return existing;
         }
       }
@@ -143,13 +158,17 @@ export class LayerStack<
       const commit = () => this.#commit(layer, loadFn);
 
       if (this.#serial && this.#hasActive()) {
-        this.#scopeQueue.push({ layer, commit });
-        layer.setPartial({ phase: "queued" });
-        this.#flush();
+        this.#dispatch("queue", () => {
+          this.#scopeQueue.push({ layer, commit });
+          layer.setPartial({ phase: "queued" });
+          this.#flush();
+        });
         return layer;
       }
 
-      commit();
+      this.#dispatch("open", () => {
+        commit();
+      });
       return layer;
     });
   }
@@ -177,8 +196,10 @@ export class LayerStack<
   #settleEnter(layer: Layer<P, R, E, D>): void {
     layer.enterTimer = undefined;
     notifyManager.batch(() => {
-      layer.setPartial({ transition: "settled" });
-      this.#flush();
+      this.#dispatch("settle", () => {
+        layer.setPartial({ transition: "settled" });
+        this.#flush();
+      });
     });
   }
 
@@ -195,14 +216,18 @@ export class LayerStack<
         return;
       }
       layer.setPartial({ data, phase: "active" });
-      this.#flush();
+      this.#dispatch("phase", () => {
+        this.#flush();
+      });
     } catch (error) {
       if (layer.aborted) {
         return;
       }
       layer.setPartial({ error: error as E, phase: "error" });
       layer.reject(error as E);
-      this.#flush();
+      this.#dispatch("phase", () => {
+        this.#flush();
+      });
     }
   }
 
@@ -233,8 +258,10 @@ export class LayerStack<
     response: R,
   ): Promise<boolean> {
     notifyManager.batch(() => {
-      layer.setPartial({ dismissing: true });
-      this.#flush();
+      this.#dispatch("phase", () => {
+        layer.setPartial({ dismissing: true });
+        this.#flush();
+      });
     });
     const vetoed = await this.#vetoed(layer);
     // A concurrent force may have already dismissed while we awaited.
@@ -243,8 +270,10 @@ export class LayerStack<
     }
     if (vetoed) {
       notifyManager.batch(() => {
-        layer.setPartial({ dismissing: false });
-        this.#flush();
+        this.#dispatch("phase", () => {
+          layer.setPartial({ dismissing: false });
+          this.#flush();
+        });
       });
       return false;
     }
@@ -275,17 +304,19 @@ export class LayerStack<
 
   #commitDismiss(layer: Layer<P, R, E, D>, response: R): void {
     notifyManager.batch(() => {
-      layer.abort();
-      layer.resolve(response);
-      layer.setPartial({
-        phase: "dismissed",
-        transition: "exiting",
-        ended: true,
-        response,
-        dismissing: false,
+      this.#dispatch("dismiss", () => {
+        layer.abort();
+        layer.resolve(response);
+        layer.setPartial({
+          phase: "dismissed",
+          transition: "exiting",
+          ended: true,
+          response,
+          dismissing: false,
+        });
+        this.#flush();
+        this.onLayerDismiss?.(layer);
       });
-      this.#flush();
-      this.onLayerDismiss?.(layer);
     });
     if (layer.exitingDelay > 0) {
       layer.exitTimer = setTimeout(
@@ -305,8 +336,10 @@ export class LayerStack<
         layer.enterTimer = undefined;
       }
       notifyManager.batch(() => {
-        layer.setPartial({ transition: "settled" });
-        this.#flush();
+        this.#dispatch("settle", () => {
+          layer.setPartial({ transition: "settled" });
+          this.#flush();
+        });
       });
     } else if (t === "exiting") {
       if (layer.exitTimer) {
@@ -320,21 +353,23 @@ export class LayerStack<
   async dismissAll(response: R, opts?: DismissAllOptions): Promise<void> {
     const mode = opts?.mode ?? this.options.dismissAllMode ?? "skipBlocked";
     notifyManager.batch(() => {
-      // Drain the queue FIRST so a dismissed active layer's #remove does
-      // not activate a queued one. Queued callers get their response
-      // without ever mounting.
-      for (const entry of [...this.#scopeQueue]) {
-        entry.layer.abort();
-        entry.layer.resolve(response);
-        entry.layer.setPartial({
-          phase: "dismissed",
-          transition: "settled",
-          ended: true,
-          response,
-        });
-      }
-      this.#scopeQueue = [];
-      this.#flush();
+      this.#dispatch("dismissAll", () => {
+        // Drain the queue FIRST so a dismissed active layer's #remove does
+        // not activate a queued one. Queued callers get their response
+        // without ever mounting.
+        for (const entry of [...this.#scopeQueue]) {
+          entry.layer.abort();
+          entry.layer.resolve(response);
+          entry.layer.setPartial({
+            phase: "dismissed",
+            transition: "settled",
+            ended: true,
+            response,
+          });
+        }
+        this.#scopeQueue = [];
+        this.#flush();
+      });
     });
     for (const l of this.#layers) {
       if (mode === "force") {
@@ -354,56 +389,66 @@ export class LayerStack<
    */
   cancelQueued(key: LayerKey, response: R, opts?: { id?: string }): boolean {
     return notifyManager.batch(() => {
-      const sig = keySignature(key);
-      const idx = this.#scopeQueue.findIndex((entry) => {
-        if (keySignature(entry.layer.key) !== sig) return false;
-        if (opts?.id !== undefined) return entry.layer.id === opts.id;
+      return this.#dispatch("cancelQueued", () => {
+        const sig = keySignature(key);
+        const idx = this.#scopeQueue.findIndex((entry) => {
+          if (keySignature(entry.layer.key) !== sig) return false;
+          if (opts?.id !== undefined) return entry.layer.id === opts.id;
+          return true;
+        });
+        if (idx === -1) {
+          return false;
+        }
+        const entry = this.#scopeQueue[idx]!;
+        entry.layer.abort();
+        entry.layer.resolve(response);
+        entry.layer.setPartial({
+          phase: "dismissed",
+          transition: "settled",
+          ended: true,
+          response,
+        });
+        this.#scopeQueue.splice(idx, 1);
+        this.#flush();
         return true;
       });
-      if (idx === -1) {
-        return false;
-      }
-      const entry = this.#scopeQueue[idx]!;
-      entry.layer.abort();
-      entry.layer.resolve(response);
-      entry.layer.setPartial({
-        phase: "dismissed",
-        transition: "settled",
-        ended: true,
-        response,
-      });
-      this.#scopeQueue.splice(idx, 1);
-      this.#flush();
-      return true;
     });
   }
 
   update(layer: Layer<P, R, E, D>, patch: Partial<P>): void {
     notifyManager.batch(() => {
-      layer.setPartial({ payload: { ...layer.state.payload, ...patch } });
-      this.#flush();
+      this.#dispatch("update", () => {
+        layer.setPartial({ payload: { ...layer.state.payload, ...patch } });
+        this.#flush();
+      });
     });
   }
 
   setRunning(layer: Layer<P, R, E, D>, running: boolean): void {
     notifyManager.batch(() => {
-      layer.setRunning(running);
-      this.#flush();
+      this.#dispatch("setRunning", () => {
+        layer.setRunning(running);
+        this.#flush();
+      });
     });
   }
 
   #remove(layer: Layer<P, R, E, D>): void {
     notifyManager.batch(() => {
-      this.#layers = this.#layers.filter((l) => l.id !== layer.id);
-      this.#reindex();
-      this.#flush();
-      this.#gcCache.maybeStore(layer);
-      if (this.#serial && !this.#hasActive()) {
-        const next = this.#scopeQueue.shift();
-        if (next) {
-          next.commit();
+      this.#dispatch("remove", () => {
+        this.#layers = this.#layers.filter((l) => l.id !== layer.id);
+        this.#reindex();
+        this.#flush();
+        this.#gcCache.maybeStore(layer);
+        if (this.#serial && !this.#hasActive()) {
+          const next = this.#scopeQueue.shift();
+          if (next) {
+            this.#dispatch("open", () => {
+              next.commit();
+            });
+          }
         }
-      }
+      });
     });
   }
 
@@ -433,5 +478,71 @@ export class LayerStack<
       this.#queuedSnapshot = nextQueued;
     }
     this.notify();
+    const action = this.#pendingNotifyAction;
+    if (action !== undefined) {
+      this.#pendingNotifyAction = undefined;
+      this.#emitNotify(action);
+    }
+  }
+
+  #dispatch<T>(action: StackNotifyAction, run: () => T): T {
+    this.#pendingNotifyAction = action;
+    try {
+      return run();
+    } finally {
+      this.#pendingNotifyAction = undefined;
+    }
+  }
+
+  #emitNotify(action: StackNotifyAction): void {
+    if (!this.onNotify) {
+      return;
+    }
+    this.#notifySeq += 1;
+    this.onNotify({
+      stackId: this.id,
+      seq: this.#notifySeq,
+      ts: Date.now(),
+      action,
+      active: this.#snapshot.map((state) => projectLayerNotifyView(state)),
+      queued: this.#queuedSnapshot.map((state) =>
+        projectLayerNotifyView(state),
+      ),
+    });
+  }
+}
+
+function projectLayerNotifyView(
+  state: LayerState<unknown, unknown, unknown, unknown>,
+): LayerNotifyView {
+  const { payload, payloadTruncated } = projectJsonSafePayload(state.payload);
+  const view: LayerNotifyView = {
+    id: state.id,
+    key: keySignature(state.key),
+    phase: state.phase,
+    transition: state.transition,
+    actionStatus: state.actionStatus,
+    dismissing: state.dismissing,
+    ended: state.ended,
+    index: state.index,
+    stackSize: state.stackSize,
+  };
+  if (payload !== undefined) {
+    view.payload = payload;
+  }
+  if (payloadTruncated) {
+    view.payloadTruncated = true;
+  }
+  return view;
+}
+
+function projectJsonSafePayload(raw: unknown): {
+  payload?: unknown;
+  payloadTruncated?: boolean;
+} {
+  try {
+    return { payload: JSON.parse(JSON.stringify(raw)) as unknown };
+  } catch {
+    return { payloadTruncated: true };
   }
 }
