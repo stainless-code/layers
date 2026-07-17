@@ -1,6 +1,6 @@
 ---
 title: API
-description: Exhaustive CI-generated TypeDoc reference — every export across core and the adapters.
+description: Exhaustive CI-generated TypeDoc for core and the React/Preact/Solid/Angular/Vue/Svelte entries — Lit is on its adapter page.
 sidebar:
   label: Overview
 search:
@@ -10,7 +10,7 @@ search:
 import Card from "blume/components/content/Card.astro";
 import CardGroup from "blume/components/content/CardGroup.astro";
 
-One TypeDoc module per package. [Reference](/reference) · [Core API](/reference/core-api) · [Adapter hooks](/reference/adapter-hooks)
+One TypeDoc module per entry in `typedoc.json`. Lit is documented on its [adapter page](/adapters/lit) (not generated here yet). [Reference](/reference) · [Core API](/reference/core-api) · [Adapter hooks](/reference/adapter-hooks)
 
 <CardGroup cols={3}>
   <Card title="Core" href="/reference/api/core" icon="/icons/vanilla.svg" arrow>
@@ -30,6 +30,9 @@ One TypeDoc module per package. [Reference](/reference) · [Core API](/reference
   </Card>
   <Card title="Vue" href="/reference/api/vue" icon="/icons/vue.svg" arrow>
     `@stainless-code/vue-layers`
+  </Card>
+  <Card title="Lit" href="/adapters/lit" icon="/icons/lit.svg" arrow>
+    `@stainless-code/lit-layers` (adapter page)
   </Card>
   <Card title="Svelte (runes)" href="/reference/api/svelte" icon="/icons/svelte.svg" arrow>
     `@stainless-code/svelte-layers`
