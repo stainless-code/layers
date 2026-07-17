@@ -1,6 +1,14 @@
 import { createCallContext } from "@stainless-code/layers";
 import Alpine from "alpinejs";
-import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import {
+  afterEach,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 
 import layers, {
   layerOptions,
@@ -175,6 +183,39 @@ describe("Alpine adapter — plugin + outlet", () => {
     Alpine.destroyTree(app);
     app.remove();
     expect(stack.size).toBe(0);
+  });
+
+  it("x-layer-outlet warns and falls back to default when the stack id is not a string", async () => {
+    const warn = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const client = new LayerClient();
+    await mount(
+      `
+      <div id="app" x-data>
+        <template x-layer-outlet="confirm">
+          <div>
+            <span id="row" x-text="$layer.payload.title"></span>
+          </div>
+        </template>
+      </div>
+    `,
+      client,
+    );
+
+    expect(warn).toHaveBeenCalledWith(
+      expect.stringContaining(
+        "x-layer-outlet expected a non-empty string stack id",
+      ),
+    );
+
+    void client.open({
+      key: ["default", "warn"],
+      payload: { title: "On default" },
+      exitingDelay: 0,
+    });
+    await viWaitFor(() =>
+      expect(document.getElementById("row")?.textContent).toBe("On default"),
+    );
+    warn.mockRestore();
   });
 
   it("x-layer-outlet rebinds when the stack id expression changes", async () => {

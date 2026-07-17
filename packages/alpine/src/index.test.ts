@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "bun:test";
+import { afterEach, beforeEach, describe, expect, it } from "bun:test";
 
 import {
   createCallContext,
@@ -18,8 +18,16 @@ import {
 } from "./index";
 import { __resetLayerClientForTests } from "./layer-client";
 
+const originalWarn = console.warn;
+
 beforeEach(() => {
   __resetLayerClientForTests();
+  // Unit suite runs without Alpine.plugin — alpineReactive's one-shot warn is expected.
+  console.warn = () => {};
+});
+
+afterEach(() => {
+  console.warn = originalWarn;
 });
 
 describe("getLayerClient / setLayerClient", () => {

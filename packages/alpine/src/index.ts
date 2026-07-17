@@ -37,14 +37,29 @@ export { getLayerClient, setLayerClient } from "./layer-client.js";
 export type { AlpineLike } from "./alpine-types.js";
 
 let alpineRuntime: AlpineLike | undefined;
+let warnedMissingRuntime = false;
 
 function setAlpineRuntime(Alpine: AlpineLike | undefined): void {
   alpineRuntime = Alpine;
+  if (Alpine) warnedMissingRuntime = false;
+}
+
+/** Reactive holder when the plugin has run; plain object fallback for unit tests. */
+function alpineReactive<T extends object>(seed: T): T {
+  if (alpineRuntime) return alpineRuntime.reactive(seed);
+  if (process.env.NODE_ENV !== "production" && !warnedMissingRuntime) {
+    warnedMissingRuntime = true;
+    console.warn(
+      "[layers/alpine] useStack/useMutationFlow called before Alpine.plugin(layers); updates won't be reactive.",
+    );
+  }
+  return seed;
 }
 
 /** Props bag for the current outlet row — keyed on outlet root elements. */
 const layerPropsByElement = new WeakMap<Element, LayerComponentProps>();
 
+/** Alpine marks teleported nodes with `_x_teleportBack` (private; verified in outlet DOM tests). */
 type TeleportMarked = Element & { _x_teleportBack?: Element };
 
 function findLayerProps(el: Element): LayerComponentProps | undefined {
@@ -69,14 +84,7 @@ function syncLayerProps(
 ): void {
   const existing = layerPropsByElement.get(root);
   if (existing) {
-    existing.call = props.call;
-    existing.payload = props.payload;
-    existing.data = props.data;
-    existing.error = props.error;
-    existing.phase = props.phase;
-    existing.transition = props.transition;
-    existing.dismissing = props.dismissing;
-    existing.actionStatus = props.actionStatus;
+    Object.assign(existing, props);
     return;
   }
   layerPropsByElement.set(root, Alpine.reactive({ ...props }));
@@ -109,7 +117,7 @@ export interface UseLayerStateOptions<
   compare?: (a: U, b: U) => boolean;
 }
 
-/** Reactive stack accessor (Svelte-shaped `.current` + `callFor`). */
+/** Reactive stack accessor (`.current` + `callFor`). */
 export interface AlpineStack<RootProps = unknown, T = LayerState[]> {
   readonly current: T;
   callFor(
@@ -148,9 +156,7 @@ function makeAlpineStack<RootProps, T>(
 ): AlpineStack<RootProps, T> {
   const { runSelect } = createSnapshotSelector(select, compare);
   const initial = runSelect(getSource());
-  const holder = alpineRuntime?.reactive({ current: initial }) ?? {
-    current: initial,
-  };
+  const holder = alpineReactive({ current: initial });
 
   const unsubscribe = stack.subscribe(() => {
     const prev = holder.current;
@@ -186,10 +192,8 @@ function resolveClient(explicit?: LayerClient): LayerClient {
 }
 
 /**
- * Subscribe to a stack snapshot (Svelte-shaped `.current` + `callFor`).
+ * Subscribe to a stack snapshot (`.current` + `callFor`).
  *
- * @param opts Stack id, selector, compare, optional client.
- * @param client Optional client override (also accepted on `opts.client`).
  * @default `stack` is `"default"`; `select` is identity; `compare` is `Object.is`.
  */
 export function useStack<RootProps = unknown, T = LayerState[]>(
@@ -206,10 +210,8 @@ export function useStack<RootProps = unknown, T = LayerState[]>(
 }
 
 /**
- * Subscribe to a stack's queued snapshot (Svelte-shaped `.current` + `callFor`).
+ * Subscribe to a stack's queued snapshot (`.current` + `callFor`).
  *
- * @param opts Stack id, selector, compare, optional client.
- * @param client Optional client override (also accepted on `opts.client`).
  * @default `stack` is `"default"`; `select` is identity; `compare` is `Object.is`.
  */
 export function useQueuedStack<RootProps = unknown, T = LayerState[]>(
@@ -231,7 +233,7 @@ export function useQueuedStack<RootProps = unknown, T = LayerState[]>(
 }
 
 /**
- * Observe all mounted layers matching a key (Svelte-shaped `.current` + `callFor`).
+ * Observe all mounted layers matching a key (`.current` + `callFor`).
  *
  * A {@link DataTag} key infers its response and error types.
  */
@@ -421,11 +423,7 @@ export interface MutationFlow<R> {
 export function useMutationFlow<P, R, RootProps = unknown>(
   call: LayerCallContext<P, R, RootProps>,
 ): MutationFlow<R> {
-  const holder =
-    alpineRuntime?.reactive({ pending: false }) ??
-    ({ pending: false } as {
-      pending: boolean;
-    });
+  const holder = alpineReactive({ pending: false });
   return {
     get pending() {
       return holder.pending;
@@ -518,7 +516,7 @@ export interface StackHook {
 }
 
 /**
- * Bind a named stack + client (Angular-shaped). No `AppHost` / `AppLayer`.
+ * Bind a named stack + client.
  * @returns `{ setClient, useAppStack }` — open/dismissAll/states scoped to `stack`.
  */
 export function createStackHook(
@@ -646,8 +644,16 @@ function registerLayerOutletDirective(Alpine: AlpineLike): void {
       const evaluateStackId = utils.evaluateLater(expression);
       utils.effect(() => {
         evaluateStackId((value) => {
-          stackId =
-            typeof value === "string" && value.length > 0 ? value : "default";
+          if (typeof value === "string" && value.length > 0) {
+            stackId = value;
+          } else {
+            if (process.env.NODE_ENV !== "production") {
+              console.warn(
+                `[layers/alpine] x-layer-outlet expected a non-empty string stack id, got ${typeof value}; using "default". Quote the id: x-layer-outlet="'confirm'".`,
+              );
+            }
+            stackId = "default";
+          }
           bindStack();
         });
       });

@@ -252,7 +252,7 @@ Set `enteringDelay` / `exitingDelay` on `layerOptions`. For spring or variable-d
 
 ### Rendering location
 
-The adapter has no built-in outlet, portal host, `StackOutlet`, `StackSubscribe`, or `createStackHook`. Render active layers inline in a layout with `useStack().current` and `callFor`, or move them with the app's portal pattern; nested child stacks from `useLayerGroup` follow the same render path.
+The adapter has no built-in outlet or portal host. Render active layers inline in a layout with `useStack().current` and `callFor`, or move them with the app's portal pattern; nested child stacks from `useLayerGroup` follow the same render path.
 
 ## Wired handle: createLayer
 
@@ -350,7 +350,7 @@ Stores entry: same names (`createLayer`, `createLayerState`, `createQueuedStack`
 
 ## Nested stacks
 
-`useLayerGroup(call, options?)` creates a child stack scoped to the calling layer's lifetime. Returns `{ open, dismissAll, stack, stackId }`. The group is disposed and all child layers dismissed on `onDestroy`. Render child layers inline with the group's stack handle — there is no `StackOutlet`, `StackSubscribe`, or `createStackHook`.
+`useLayerGroup(call, options?)` creates a child stack scoped to the calling layer's lifetime. Returns `{ open, dismissAll, stack, stackId }`. The group is disposed and all child layers dismissed on `onDestroy`. Render child layers inline with the group's stack handle.
 
 ### Runes
 

@@ -1,6 +1,6 @@
 ---
 name: alpine-layers
-description: Alpine.js adapter for @stainless-code/alpine-layers; plugin magics, x-layer-outlet, layerStack data, and Svelte-shaped JS hooks for typed layer stacks
+description: Alpine.js adapter for @stainless-code/alpine-layers; plugin magics, x-layer-outlet, layerStack data, and JS hooks for typed layer stacks
 license: MIT
 keywords:
   - tanstack-intent

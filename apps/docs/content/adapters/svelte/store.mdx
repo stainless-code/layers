@@ -10,7 +10,7 @@ sidebar:
 `@stainless-code/svelte-layers/store` binds stacks to Svelte `readable` stores. Most core symbols are re-exported. Core's headless `createLayer` is `createLayerHandle`; the wired handle is `createLayer`. Use this entry for Svelte 3+ projects that prefer the store contract over runes.
 
 :::tip
-Like the [runes entry](/adapters/svelte/runes), this adapter ships no `.svelte` components — render with `{#each $stack}` + `callFor(client, stackId, s)` in your own markup. **Intentional compiler-free design**; see the [parity matrix](/adapters).
+Like the [runes entry](/adapters/svelte/runes), this adapter ships no `.svelte` components — render with `{#each $stack}` + `callFor(client, stackId, s)` in your own markup. **Intentional primitive design**, not a parity gap. See the [parity matrix](/adapters).
 :::
 
 ## Install
@@ -127,7 +127,7 @@ Options bag plus optional trailing `LayerClient`. **Drive** with `createLayer(op
 | `useMutationFlow(call)` | `pending` is a `Readable<boolean>` — subscribe with `$pending` |
 | `useLayerGroup(call, options?)` | Child stack as `Readable<LayerState[]>` — render `{#each $group.stack}` + `callFor` |
 
-No `StackOutlet`, `StackSubscribe`, `useStackHandles`, or `createStackHook` — by design.
+No shipped outlet or subscribe components — render with `$stack` + `callFor` in your markup.
 
 ## Learn more
 

@@ -296,7 +296,7 @@ class OpenCount {
 }
 ```
 
-No `StackSubscribe` — `useStack({ stack, select })` as a signal is the equivalent.
+`useStack({ stack, select })` returns a signal — bind it in the template.
 
 </Tab>
 <Tab title="Vue" icon="/icons/vue.svg">
@@ -358,7 +358,7 @@ Alpine.data("openCount", () => {
 </div>
 ```
 
-No `StackSubscribe` — `useStack({ stack, select })` with `.current`, or Rank-2 `layerStack` + `x-for`.
+Bind `count.current` in markup, or use Rank-2 `layerStack` + `x-for`.
 
 </Tab>
 <Tab title="Svelte (runes)" icon="/icons/svelte.svg">
@@ -373,7 +373,7 @@ No `StackSubscribe` — `useStack({ stack, select })` with `.current`, or Rank-2
 <span>{count.current} open</span>
 ```
 
-No `StackSubscribe` — `useStack({ stack, select })` with `.current` is the equivalent.
+`useStack({ stack, select })` returns `.current` — bind it in markup.
 
 </Tab>
 <Tab title="Svelte (store)" icon="/icons/svelte.svg">
@@ -388,7 +388,7 @@ No `StackSubscribe` — `useStack({ stack, select })` with `.current` is the equ
 <span>{$count} open</span>
 ```
 
-No `StackSubscribe` — subscribe to the selector `Readable` with `$count`.
+Subscribe to the selector `Readable` with `$count`.
 
 </Tab>
 </Tabs>
@@ -409,10 +409,10 @@ For fully-typed selector output in Vue, prefer `useStack({ stack, select })` in 
 | Svelte (store) | `$stack` + `callFor(client, stackId, state)` | —                         |
 
 :::tip
-Svelte's `useStack()` already returns the headless pair — `.current` for states and `callFor` for call contexts. No separate `useStackHandles` export. Alpine's `layerStack` / `useStack()` is the same shape.
+Svelte's `useStack()` already returns the headless pair — `.current` for states and `callFor` for call contexts. No separate `useStackHandles` export.
 :::
 
-Angular has no `StackSubscribe`; `useStack({ stack, select })` as a signal is the idiomatic equivalent.
+Angular: `useStack({ stack, select })` as a signal is the idiomatic projected-value path.
 
 ## When to skip StackOutlet
 

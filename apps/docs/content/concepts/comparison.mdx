@@ -22,7 +22,7 @@ Experimental — the API may change between minor releases. Pin your version. Se
 
 Layers owns **state coordination, not UI ownership**. The matrix below scores engine axes only — typed <Tooltip tip="A branded key on layerOptions; open() infers payload and response types via DataTag.">await</Tooltip>, named stacks, serial queues, <Tooltip tip="A consumer predicate that gates dismissal; true allows, falsy or a thrown error vetoes.">blockers</Tooltip>, and the rest. Focus traps, portals, backdrop, and confirm chrome live in your component library.
 
-Two views: this matrix contrasts **one exemplar per category**; the [full spectrum](#across-the-whole-landscape) below scores **every audited library across all eight frameworks**. Columns here are the libraries evaluators most often weigh against Layers — the React registry incumbents (`nice-modal`, `overlay-kit`), the closest React DX peer (`react-call`), the highest-adoption batteries-included manager (`@mantine/modals` — the category contrast), and the closest multi-framework peer (`overlastic`). Non-React peers like `kolirt/vue-modal`, `@gwn-sheet-stack`, and `dialog-fn` are in the full-spectrum tables.
+Two views: this matrix contrasts **one exemplar per category**; the [full spectrum](#across-the-whole-landscape) below scores **every audited library** on the engine axes Layers targets. Columns here are the libraries evaluators most often weigh against Layers — the React registry incumbents (`nice-modal`, `overlay-kit`), the closest React DX peer (`react-call`), the highest-adoption batteries-included manager (`@mantine/modals` — the category contrast), and the closest multi-framework peer (`overlastic`). Non-React peers like `kolirt/vue-modal`, `@gwn-sheet-stack`, and `dialog-fn` are in the full-spectrum tables.
 
 | Capability            |        Layers        |      react-call      |     nice-modal     |    overlay-kit     |    @mantine/modals    |      overlastic      |
 | --------------------- | :------------------: | :------------------: | :----------------: | :----------------: | :-------------------: | :------------------: |
@@ -48,7 +48,7 @@ Focus containment, ARIA/dialog semantics, portals/top-layer, backdrop/Escape, sc
 
 ## Across the whole landscape
 
-The matrix above contrasts one exemplar per category. The tables below are the full spectrum — every audited library a real evaluator weighs, across all eight frameworks, scored on the engine axes Layers targets. One table per category (orchestration engines split into multi-framework and single-framework so no table is wider than the eye can scan). **Layers is the baseline column in every table — the only column green on every row.** `R/V/S/Solid/Ang/Lit/Alpine` = React/Vue/Svelte/Solid/Angular/Lit/Alpine; `Nfw` = N frameworks.
+The matrix above contrasts one exemplar per category. The tables below are the full spectrum — every audited library a real evaluator weighs, scored on the engine axes Layers targets. One table per category (orchestration engines split into multi-framework and single-framework so no table is wider than the eye can scan). Layers is the baseline column in every table. Layers' `✅ 8` is its adapter count; peer cells use `R/V/S/Solid/Ang/Lit/Alpine` = React/Vue/Svelte/Solid/Angular/Lit/Alpine (no audited Preact peer in these tables); `Nfw` = N frameworks.
 
 **Multi-framework orchestration engines**
 

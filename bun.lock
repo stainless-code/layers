@@ -47,6 +47,7 @@
         "@astrojs/vue": "7.0.1",
         "@base-ui/react": "1.6.0",
         "@lit/context": "1.1.6",
+        "@stainless-code/alpine-layers": "workspace:*",
         "@stainless-code/angular-layers": "workspace:*",
         "@stainless-code/lit-layers": "workspace:*",
         "@stainless-code/preact-layers": "workspace:*",
@@ -77,7 +78,7 @@
         "vitest": "4.1.9",
       },
       "peerDependencies": {
-        "@alpinejs/focus": "*",
+        "@alpinejs/focus": ">=3.13.0",
         "alpinejs": ">=3.13.0",
       },
       "optionalPeers": [

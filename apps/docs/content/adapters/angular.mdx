@@ -10,7 +10,7 @@ sidebar:
 `@stainless-code/angular-layers` bridges stacks into Angular signals, rendered imperatively via `renderStack(vcr)`. The core is re-exported.
 
 :::tip
-Angular builds compiler-free (tsdown, no framework compiler). Stack rendering is **intentional imperative design** — `renderStack(vcr)` instead of a shipped `StackOutlet` component. This is not a parity gap; see the [parity matrix](/adapters).
+Angular builds compiler-free (tsdown, no framework compiler). Stack rendering is **intentional imperative design** — `renderStack(vcr)` instead of a shipped outlet component. **Not a parity gap.** See the [parity matrix](/adapters).
 :::
 
 ## Install
@@ -134,7 +134,7 @@ Options bag plus optional trailing `LayerClient`. **Drive** with `injectLayer(op
 | `renderStack(vcr, stackId?, rootProps?)` | Imperative outlet — **the Angular rendering surface** |
 | `useMutationFlow(call)` | `pending` is a `Signal<boolean>`; `run(fn).orEnd(response)` |
 | `useLayerGroup(call, options?)` | Child stack with `renderInto(vcr)` instead of `Outlet` |
-| `createStackHook(config?)` | `{ provideClient, useAppStack, renderInto }` — no `AppHost`/`AppLayer` |
+| `createStackHook(config?)` | `{ provideClient, useAppStack, renderInto }` |
 
 ## Learn more
 
