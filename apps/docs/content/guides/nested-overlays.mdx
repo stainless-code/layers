@@ -9,7 +9,7 @@ A drawer that opens a sub-dialog needs its own stack — but tied to the parent 
 
 ## Core primitive
 
-`createLayerGroup(client, call, options?)` registers a child stack derived from the parent's `stackId` and instance `layerId`. Adapters wrap it as `useLayerGroup(call)`:
+`createLayerGroup(client, call, options?)` registers a child stack derived from the parent's `stackId` and instance `layerId`. Adapters wrap it as `useLayerGroup(call)` (Lit: `useLayerGroup(host, call, …)`):
 
 ```ts lineNumbers
 import { createLayerGroup } from "@stainless-code/layers";
@@ -127,11 +127,12 @@ const group = useLayerGroup(call);</script>
 <Tab title="Lit" icon="/icons/lit.svg">
 
 ```ts lineNumbers
-import { LitElement, html } from "lit";
+import { LitElement, html, type PropertyValues } from "lit";
 import { useLayerGroup } from "@stainless-code/lit-layers";
 import type { LayerComponentProps } from "@stainless-code/lit-layers";
 
 class Drawer extends LitElement {
+  static properties = { call: { attribute: false } };
   declare call: LayerComponentProps<void, void>["call"];
   #group?: ReturnType<typeof useLayerGroup>;
 
@@ -139,8 +140,14 @@ class Drawer extends LitElement {
     return this;
   }
 
+  willUpdate(changed: PropertyValues<this>) {
+    // `call` arrives as a layer prop — bind the group once it is set.
+    if (changed.has("call") && this.call && !this.#group) {
+      this.#group = useLayerGroup(this, this.call);
+    }
+  }
+
   render() {
-    this.#group ??= useLayerGroup(this, this.call);
     return html`<div role="dialog">
       <button
         type="button"
@@ -148,7 +155,7 @@ class Drawer extends LitElement {
       >
         Edit details
       </button>
-      ${this.#group.outlet()}
+      ${this.#group?.outlet()}
     </div>`;
   }
 }

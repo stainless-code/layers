@@ -48,7 +48,7 @@ From `LayerClient` down to `keySignature` — every term in code, docs, and issu
     - **createLayer** — core factory: `options` + `client` → headless `LayerHandle` / `ValidatedLayerHandle` (layer ops + `stack`/`client`/`options`/`current` escapes; no reactive field).
     - **LayerHandle** — return of plain `createLayer`. `open`/`upsert` take payload only; `dismiss` takes `{ id?, force? }`; `update` / `cancelQueued` take `{ id? }` (see **cancelQueued**).
     - **ValidatedLayerHandle** — when `options.validate` is set: `open`/`upsert` = schema **input**; `current`/`update` = parsed **output**. Wired adapters also expose reactive `state`/`queued`/`top` as output.
-    - **useLayer** — adapter wired handle (`createLayer` + reactive `state`/`queued`/`top`). Svelte: `createLayer`; Angular: `injectLayer`.
+    - **useLayer** — adapter wired handle (`createLayer` + reactive `state`/`queued`/`top`). Lit: `useLayer(host, options, client?)`. Svelte: `createLayer`; Angular: `injectLayer`.
     - **useLayerState** / **useLayerQueuedState** / **useQueuedStack** — observe-only (mounted per-key / queued per-key / queued whole-stack); return `LayerState[]` (or framework wrappers). Renamed/added vs the old singular `useLayer(key, …)`.
     - **current** — live-checked bound instance on a handle (`Layer | null`); correlation + explicit `{ id }` — not a hidden control default.
     - **Drive vs observe** — **drive** = wired handle (`useLayer` / `injectLayer` / `createLayer`) for `open`/`upsert`/`dismiss`/`update`/`cancelQueued`; **observe** = `useLayerState` / `useLayerQueuedState` / `useQueuedStack` / `useStack` for reactive snapshots without control. Both paths are first-class; `client.open({ …layerOptions, payload })` remains valid.

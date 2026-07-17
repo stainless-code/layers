@@ -278,7 +278,11 @@ function warnMissingLayerComponent(id: string, key: unknown): void {
   );
 }
 
-/** Reactive controller that mirrors a {@link LayerClient} stack snapshot. */
+/**
+ * Reactive controller that mirrors a {@link LayerClient} stack snapshot.
+ * Prefer {@link useStack} / {@link useQueuedStack}; `queued` / `deferClient` /
+ * {@link bindClient} are for adapter internals (shared lazy context resolve).
+ */
 export class StackController<T = LayerState[]> implements ReactiveController {
   #host: ReactiveControllerHost;
   #snapshot: ReturnType<typeof subscribeStackSnapshot<T>> | null = null;
@@ -292,6 +296,12 @@ export class StackController<T = LayerState[]> implements ReactiveController {
   #queued: boolean;
   #connected = false;
 
+  /**
+   * @param queued When `true`, observe {@link LayerStack.getQueuedSnapshot}
+   *   instead of the mounted snapshot (`useQueuedStack`).
+   * @param deferClient When `true`, skip lazy context resolve so a sibling
+   *   controller can call {@link bindClient} after one shared resolve.
+   */
   constructor(
     host: ReactiveControllerHost,
     options: UseStackOptions<T> = {},

@@ -48,7 +48,7 @@ Create controllers as class fields (`useStack(this, …)`). They subscribe in `h
 
 `<stack-provider>` is a Lit-idiomatic shadow root + `<slot>` (context still reaches light children). `<stack-outlet>` and `<stack-subscribe>` render in **light DOM** so overlays stack inline where mounted.
 
-`StackOutlet` maps registered `component` entries — a `LitElement` constructor or `(props) => TemplateResult` (no tag strings in v1). Id-keyed `repeat` keeps instances stable. Headless: `useStackHandles(this, stack, rootProps)`.
+`<stack-outlet>` (the `StackOutlet` CE from `defineStackElements()`) maps registered `component` entries — a `LitElement` constructor or `(props) => TemplateResult` (no tag strings in v1). Id-keyed `repeat` keeps instances stable. Headless: `useStackHandles(this, stack, rootProps)`.
 
 `<stack-subscribe .selector .renderer>` takes a `(value) => TemplateResult` callback.
 

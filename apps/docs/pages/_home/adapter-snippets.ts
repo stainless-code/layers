@@ -225,12 +225,14 @@ async function remove() {
     installCommand: "bun add @stainless-code/lit-layers",
     lang: "ts",
     code: `import {
-  LayerClient,
   createLayer,
   defineStackElements,
   layerOptions,
+  provideLayerClient,
+  useLayer,
 } from "@stainless-code/lit-layers";
 import { LitElement, html } from "lit";
+import { customElement } from "lit/decorators.js";
 
 defineStackElements();
 
@@ -240,18 +242,26 @@ const confirm = layerOptions({
   component: ConfirmDialog,
 });
 
-const client = new LayerClient();
-const c = createLayer(confirm, client);
+@customElement("app-shell")
+class AppShell extends LitElement {
+  #client = provideLayerClient(this);
+  #confirm = useLayer(this, confirm, this.#client);
 
-async function remove() {
-  const ok = await c.open({ title: "Remove?" });
-  //    ^? boolean
-}
+  createRenderRoot() {
+    return this;
+  }
 
-// Shell:
-// <stack-provider .client=\${client}>
-//   <stack-outlet stack="confirm"></stack-outlet>
-// </stack-provider>`,
+  render() {
+    return html\`
+      <button
+        @click=\${() => void this.#confirm.open({ title: "Remove?" })}
+      >
+        Remove
+      </button>
+      <stack-outlet stack="confirm"></stack-outlet>
+    \`;
+  }
+}`,
   },
   {
     framework: "svelte",
