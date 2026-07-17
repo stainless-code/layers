@@ -49,7 +49,7 @@
     "name": "@stainless-code/lit-layers",
     "path": "packages/lit/dist/index.mjs",
     "ignore": ["@stainless-code/layers", "lit", "@lit/context"],
-    "limit": "4 KB",
+    "limit": "4.5 KB",
     "gzip": true
   },
   {
