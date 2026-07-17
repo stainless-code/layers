@@ -37,7 +37,7 @@ git checkout -b your-branch-name
 git push -u origin your-branch-name
 ```
 
-Then open a PR on GitHub into **`main`**.
+Then open a PR on GitHub into **`main`**. PRs that change the public docs site (`apps/docs/**`) should carry the **`docs`** label — merge deploys https://stainless-code.com/layers (see [`.github/workflows/deploy-docs.yml`](workflows/deploy-docs.yml)).
 
 ### Git hooks
 
