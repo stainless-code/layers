@@ -28,16 +28,14 @@ import {
   shallowArrayEqual,
   LayerClient,
 } from "@stainless-code/layers";
-import { LitElement, nothing } from "lit";
+import { LitElement, nothing, html } from "lit";
 import type {
   PropertyValues,
   ReactiveController,
   ReactiveControllerHost,
   TemplateResult,
 } from "lit";
-import { html } from "lit";
-import { directive } from "lit/directive.js";
-import { Directive } from "lit/directive.js";
+import { directive, Directive } from "lit/directive.js";
 import { repeat } from "lit/directives/repeat.js";
 
 export * from "@stainless-code/layers";

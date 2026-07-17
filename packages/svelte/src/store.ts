@@ -31,7 +31,10 @@ import { getContext, onDestroy, setContext } from "svelte";
 import { derived, readable, writable } from "svelte/store";
 import type { Readable } from "svelte/store";
 
-/** Core headless factory — not the wired {@link createLayer}. */
+/**
+ * Core headless factory — not the wired {@link createLayer}.
+ * @reexport
+ */
 export { createLayer as createLayerHandle } from "@stainless-code/layers";
 export {
   hashKey,
