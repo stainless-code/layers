@@ -34,6 +34,15 @@ jobs:
       - name: Setup Bun
         uses: ./.github/actions/setup
 
+      # Islands import published package entrypoints (`dist/`); build before Blume.
+      - name: Build packages
+        run: bun run build
+
+      - name: Generate API reference (Markdown)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: bun run docs:api
+
       - name: Build docs site
         env:
           # Populates the /changelog github-releases source and avoids unauthenticated
