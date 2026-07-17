@@ -13,6 +13,8 @@ Shipped features live in [Overview](/concepts/overview) + [Glossary](/concepts/g
 
 - **Devtools for other frameworks** — Vue / Solid / … plugins mirroring the React TanStack plugin (React MVP: [Devtools](/guides/devtools)).
 - **Devtools bus commands / time-travel** — EventClient bidirectional + recorder (panel actions already call the live `LayerClient`).
+- **Devtools React DOM harness** — panel button integration under `StackProvider`.
+- **Devtools fine action labels** — `dismiss-begin` / `vetoed` beyond coarse `#dispatch` labels.
 - **Infer `D` from `loadFn`** — type a layer's `data` from the `loadFn` return without an explicit generic. Needs a dedicated type pass (interacts with the `const Key` inference).
 - **`initialSnapshot` (SSR rehydration)** — seed a stack so layers render server-side and hydrate (layers are client-only today; the `transition` axis would hydrate as `settled`).
 - **Thenable `.status`** — expose a layer / `open` promise that React Suspense can read.

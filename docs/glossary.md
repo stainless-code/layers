@@ -7,7 +7,8 @@ Ubiquitous language for the `@stainless-code/layers` domain. Keep terms stable a
 - **Client** (`LayerClient`) — app-wide orchestrator owning named stacks; `open()` returns a typed `Promise<Response>`.
 - **`#dispatch`** — internal `LayerStack` choke point: label a snapshot-changing mutation, apply it, `#flush`. Not public; feeds `subscribeNotify`.
 - **StackNotifyEvent** — JSON-safe record of one observable stack transition (`action` + `active`/`queued` views + optional projected `payload`). Emitted by core; Devtools bridges to TanStack `EventClient`.
-- **subscribeNotify** — `LayerClient`: `(listener) => unsubscribe` for `StackNotifyEvent`s. Zero cost with no listeners. Distinct from `subscribe` / `subscribeStacks` (snapshot / stack-created).
+- **subscribeNotify** — `LayerClient`: `(listener) => unsubscribe` for `StackNotifyEvent`s. Distinct from `subscribe` / `subscribeStacks` (snapshot / stack-created).
+- **seedNotify** — `LayerClient`: re-emit a `register` `StackNotifyEvent` for one stack, or all when omitted (Devtools attach / late subscribers).
 - **Key** — the **logical** identity of a layer (`find`/`upsert`/`gcTime` operate on `keySignature(key)`); multiple live layers may share a key in a `parallel` stack.
 - **Instance id** (`LayerState.id`) — the **physical**, unique id of one `Layer` instance (`` `${hashKey(key)}#n` ``); used for rendering keys and instance lookup/removal (`getLayer`, `#remove`).
 - **Phase** — resolution lifecycle axis: `pending` → `active` → `dismissed`; or `queued` (serial-waiting, not mounted); or `error`. Does **not** include `exiting` — animation is on `transition`. Distinct from `actionStatus` and `transition`.

@@ -28,7 +28,7 @@ Cross-package type resolution in dev uses a `@stainless-code/source` export cond
 
 The isolation invariant: each adapter package imports **only** `@stainless-code/layers` + its library or framework peer. The package boundary enforces it structurally (an undeclared import fails install/build); `sherif` (workspace dependency lint) + per-package `knip` catch drift, and core keeps a zero-dependency guard. No cross-adapter coupling.
 
-Optional Devtools packages (`layers-devtools`, `react-layers-devtools`) sit outside this seam — TanStack UI, not zero-dep core and not framework adapters.
+Optional Devtools packages (`layers-devtools`, `react-layers-devtools`) sit outside this seam — TanStack UI, not zero-dep core and not framework adapters. Core owns `StackNotifyEvent` + `subscribeNotify` / `seedNotify` (no `@tanstack/*`); `EventClient` lives only in `layers-devtools`. Notify emits when `#flush` changes snapshot/queued refs (plus `register`) — not on every labeled `#dispatch`. Rejected for v1: `EventClient` in core; bus-bidirectional panel commands (live `LayerClient` actions instead).
 
 ## Adapter ergonomics
 

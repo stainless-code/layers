@@ -55,7 +55,7 @@
     "check:pack": "attw --pack . --profile esm-only && publint --strict",
     "test": "bun test ./src",
     "test:coverage": "bun test ./src --coverage --coverage-threshold=0.75",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "bun run --filter '@stainless-code/layers' --filter '@stainless-code/layers-devtools' --filter '@stainless-code/react-layers' build && tsc --noEmit"
   },
   "dependencies": {
     "@stainless-code/layers-devtools": "workspace:*",
