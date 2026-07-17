@@ -517,6 +517,19 @@ describe("LayerStack — transitions", () => {
     expect(stack.getSnapshot()).toHaveLength(0);
   });
 
+  it("soft dismiss during exiting does not stick dismissing true", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s");
+    const layer = stack.open({
+      key: ["a"],
+      payload: { n: 1 },
+      exitingDelay: 50,
+    });
+    await stack.dismiss(layer, true);
+    expect(stack.getSnapshot()[0]?.transition).toBe("exiting");
+    expect(await stack.dismiss(layer, true)).toBe(true);
+    expect(stack.getSnapshot()[0]?.dismissing).toBe(false);
+  });
+
   it("settle during entering leaves phase untouched (pending load)", async () => {
     const stack = new LayerStack<{ id: number }, void, Error, string>("s");
     const layer = stack.open({

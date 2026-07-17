@@ -2,13 +2,10 @@
 
 Forward-looking work only — not a mirror of `src/`. Shipped features live in [`architecture.md`](./architecture.md) + [`glossary.md`](./glossary.md). Pull requests welcome; open an issue first for anything below so we can agree on shape.
 
-## Robustness
-
-- **Devtools** — `@stainless-code/layers-devtools` stack inspector; also owns the public `StackNotifyEvent` event bus. Design-first, once the public API is stable (co-design the event schema against the inspector's real needs); fires the architecture-priming rule (new subpath entry + core/UI split).
-- **`#dispatch` reducer** — route every `LayerStack` mutation through one internal transition choke point; unlocks the devtools event stream. Do alongside Devtools.
-
 ## Backlog (grill before building)
 
+- **Devtools framework doorbells** — Vue/Solid/… thin packages mirroring `react-layers-devtools` (after React MVP).
+- **Devtools bus commands / time-travel** — EventClient bidirectional + recorder (live-ref actions cover v1).
 - **`LayerStack.setOptions`** — mutate `scope`/`gcTime`/`dismissAllMode` post-construction so `handle.stack.setOptions(...)` works.
 - **Multi-TypeScript type-test matrix** — run `.test-d` across TS versions in CI to guard the inference surface (DataTag / overloads). Low effort, high ROI.
 - **Infer `D` from `loadFn`** — type a layer's `data` from the `loadFn` return without an explicit generic. Needs a dedicated type pass (interacts with the `const Key` inference).

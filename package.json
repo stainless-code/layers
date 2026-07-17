@@ -18,7 +18,7 @@
   ],
   "type": "module",
   "scripts": {
-    "build": "bun run build:core && bun run --filter '@stainless-code/*-layers' build",
+    "build": "bun run build:core && bun run --filter '@stainless-code/*-layers' build && bun run --filter '@stainless-code/*-devtools' build",
     "build:core": "bun run --filter '@stainless-code/layers' build",
     "changeset": "changeset",
     "check": "bun run build && bun run --parallel format:check lint:ci test test:dom typecheck",

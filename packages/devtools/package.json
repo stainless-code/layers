@@ -1,0 +1,72 @@
+{
+  "name": "@stainless-code/layers-devtools",
+  "version": "0.2.0",
+  "description": "TanStack Devtools panel for @stainless-code/layers — stack picker and layer state inspector.",
+  "keywords": [
+    "devtools",
+    "dialog",
+    "drawer",
+    "headless",
+    "layer",
+    "modal",
+    "stack",
+    "tanstack-intent",
+    "typescript"
+  ],
+  "homepage": "https://stainless-code.com/layers",
+  "bugs": {
+    "url": "https://github.com/stainless-code/layers/issues"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/stainless-code/layers.git",
+    "directory": "packages/devtools"
+  },
+  "funding": "https://github.com/sponsors/SutuSebastian",
+  "files": [
+    "dist",
+    "src",
+    "!src/**/*.test.ts"
+  ],
+  "type": "module",
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "@stainless-code/source": "./src/index.ts",
+      "types": "./dist/index.d.mts",
+      "import": "./dist/index.mjs"
+    },
+    "./production": {
+      "@stainless-code/source": "./src/production.ts",
+      "types": "./dist/production/index.d.mts",
+      "import": "./dist/production/index.mjs"
+    },
+    "./package.json": "./package.json"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsdown",
+    "check:pack": "attw --pack . --profile esm-only && publint --strict",
+    "test": "bun test ./src",
+    "test:coverage": "bun test ./src --coverage --coverage-threshold=0.75",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@stainless-code/layers": "workspace:*",
+    "@tanstack/devtools-event-client": "0.5.0",
+    "@tanstack/devtools-ui": "0.5.2",
+    "@tanstack/devtools-utils": "0.5.1",
+    "solid-js": "1.9.14"
+  },
+  "devDependencies": {
+    "rolldown-plugin-solid": "0.2.1"
+  },
+  "engines": {
+    "bun": ">=1.0.0",
+    "node": "^20.19.0 || >=22.12.0"
+  }
+}
