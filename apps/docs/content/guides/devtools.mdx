@@ -21,6 +21,8 @@ npm i -D @stainless-code/react-layers-devtools @tanstack/react-devtools
 
 The plugin auto-attaches the context `LayerClient`. Keep `<TanStackDevtools />` under `<StackProvider>` (or pass `{ client }`).
 
+`<TanStackDevtools />` stays in production unless you gate the mount or strip with [`@tanstack/devtools-vite`](https://tanstack.com/devtools/latest/docs/vite-plugin). The Layers plugin no-ops outside development; that leaves the shell mounted.
+
 ```tsx
 import { StackProvider, StackOutlet } from "@stainless-code/react-layers";
 import { TanStackDevtools } from "@tanstack/react-devtools";

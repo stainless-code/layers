@@ -12,6 +12,8 @@ React doorbell for `@stainless-code/layers-devtools` — one plugin line into `<
 
 ## Taste
 
+Gate the shell (it does not self-hide) — details in the [Devtools guide](https://stainless-code.com/layers/guides/devtools).
+
 ```tsx
 import { StackProvider, StackOutlet } from "@stainless-code/react-layers";
 import { TanStackDevtools } from "@tanstack/react-devtools";
