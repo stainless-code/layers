@@ -23,7 +23,7 @@
   "publicPath": "/reference/api/",
   "preserveAnchorCasing": true,
   "fileExtension": ".mdx",
-  "entryFileName": "index.mdx",
+  "entryFileName": "_typedoc-entry.mdx",
   "modulesFileName": "_typedoc-modules.mdx",
   "flattenOutputFiles": true,
   "useCodeBlocks": true,

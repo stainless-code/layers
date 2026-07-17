@@ -12,8 +12,15 @@ const DEFAULT_DIR = "apps/docs/content/reference/api";
 const API_BASE = "/reference/api";
 /** Hand-authored pages — never deleted by `--clean` or link-rewrite passes. */
 const HAND_AUTHORED = new Set(["index.mdx"]);
-/** TypeDoc modules listing — generated beside the hand-authored index, then discarded. */
-const TYPEDOC_MODULES_INDEX = "_typedoc-modules.mdx";
+/**
+ * TypeDoc project/modules scaffolding — written beside the hand-authored
+ * Overview (`index.mdx`), then discarded. Keep `typedoc.json` `entryFileName`
+ * / `modulesFileName` on these names so TypeDoc never clobbers `index.mdx`.
+ */
+const TYPEDOC_SCAFFOLD = new Set([
+  "_typedoc-entry.mdx",
+  "_typedoc-modules.mdx",
+]);
 
 const MARKDOWN_LINK = /\[([^\]]*)\]\(((?!https?:\/\/)[^)]+)\)/g;
 const MARKDOWN_HEADING = /^(#{1,6})\s+(.+)$/;
@@ -38,7 +45,7 @@ function parseArgs(argv: string[]): Options {
       console.log(
         `Usage: bun apps/docs/scripts/rewrite-api-links.ts [dir] [--clean]\n\n` +
           `  dir      Generated API markdown directory (default: ${DEFAULT_DIR})\n` +
-          `  --clean  Delete generated .mdx/.md files (keeps meta.ts and index.mdx), then exit`,
+          `  --clean  Delete generated .mdx/.md files (keeps meta.ts + hand-authored index.mdx), then exit`,
       );
       process.exit(0);
     }
@@ -567,14 +574,16 @@ async function main(): Promise<void> {
 
   const collected = await collectMarkdownFiles(rootDir);
   const renamed = await renameToDashSlugs(collected, rootDir);
-  // Drop TypeDoc's modules listing — `/reference/api` is the hand-authored
-  // Overview page (`index.mdx`); the generated package table is redundant.
+  // Drop TypeDoc scaffolding — `/reference/api` is the hand-authored Overview
+  // (`index.mdx`); the generated package/modules table is redundant.
   const files = renamed.filter(
     (f) =>
-      path.basename(f) !== TYPEDOC_MODULES_INDEX &&
+      !TYPEDOC_SCAFFOLD.has(path.basename(f)) &&
       !HAND_AUTHORED.has(path.basename(f)),
   );
-  await unlink(path.join(rootDir, TYPEDOC_MODULES_INDEX)).catch(() => {});
+  for (const name of TYPEDOC_SCAFFOLD) {
+    await unlink(path.join(rootDir, name)).catch(() => {});
+  }
   const { slugMap, htmlIdMap } = await buildAnchorMaps(files);
 
   let totalLinks = 0;
