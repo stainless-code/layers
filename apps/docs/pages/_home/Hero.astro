@@ -16,15 +16,8 @@ const defaultFramework = "vanilla";
 ---
 
 <section class="text-center">
-  <a
-    class="inline-flex items-center rounded-full border border-border px-3 py-1 text-muted-foreground text-xs transition-colors hover:border-foreground hover:text-foreground"
-    href={contentHref("/concepts/stability")}
-  >
-    Experimental — the API may change between minor releases. Pin your version.
-  </a>
-
   <h1
-    class="mx-auto mt-6 max-w-3xl text-balance font-medium text-4xl tracking-tight sm:text-5xl lg:text-6xl"
+    class="mx-auto max-w-3xl text-balance font-medium text-4xl tracking-tight sm:text-5xl lg:text-6xl"
   >
     <span class="block">Open any layer</span>
     <span class="block text-accent">from anywhere.</span>
@@ -65,7 +58,12 @@ const defaultFramework = "vanilla";
           data-install-command={snippet.installCommand}
           type="button"
         >
-          <Icon name={snippet.icon} size={16} />
+          {/* size-* beats global img { height: auto } so non-square brand SVGs don't drift pill height */}
+          <Icon
+            class="size-4 shrink-0 object-contain"
+            name={snippet.icon}
+            size={16}
+          />
           {snippet.label}
         </button>
       ))

@@ -1,8 +1,7 @@
 # @stainless-code/solid-layers
 
-<!-- TODO: once the docs site (https://stainless-code.com/layers) is deployed, swap this src to https://stainless-code.com/layers/logo.svg for a stable, self-owned URL. -->
 <p align="center">
-  <img src="https://raw.githubusercontent.com/stainless-code/layers/main/apps/docs/public/logo.svg" alt="Layers" height="48" />
+  <img src="https://stainless-code.com/layers/icon.svg" alt="Layers" height="48" />
 </p>
 
 Modals are just async functions you forgot to `await`.

@@ -1,49 +1,59 @@
 name: Deploy docs
 
-# Manual dispatch for now. Once the /layers FTP account + repository secrets
-# (FTP_HOST, FTP_USERNAME, FTP_PASSWORD) are configured, enable auto-deploy on
-# main by uncommenting the `push` block below.
+# Unversioned /layers FTP. `docs` label = deploy on merge without waiting for a package release.
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - apps/docs/**
-  #     - .github/workflows/deploy-docs.yml
+  release:
+    types: [published]
+  pull_request:
+    types: [closed]
+    branches: [main]
 
 permissions:
   contents: read
 
-# Don't overlap production deploys; let the queued one finish.
+# Single FTP root — don't overlap uploads.
 concurrency:
-  group: deploy-docs-${{ github.ref }}
+  group: deploy-docs-production
   cancel-in-progress: false
 
 jobs:
   deploy:
     name: 🚀 Build & Deploy docs (FTP)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'release' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'docs'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           persist-credentials: false
-          # Full history: lastModified (sitemap <lastmod>) uses `git log` per file.
+          # Closed PR checkout defaults to a dead merge ref — pin the merge commit on main.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || github.sha }}
+          # Sitemap lastmod uses `git log` per file.
           fetch-depth: 0
 
       - name: Setup Bun
         uses: ./.github/actions/setup
 
+      # Islands resolve workspace package `dist/` — same order as CI docs job.
+      - name: Build packages
+        run: bun run build
+
+      - name: Generate API reference (Markdown)
+        run: bun run docs:api
+
       - name: Build docs site
         env:
-          # Populates the /changelog github-releases source and avoids unauthenticated
-          # GitHub API rate limits in CI.
+          # Changelog github-releases source + avoid unauthenticated API rate limits.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bun run docs:build
 
-      # The FTP account is scoped to the /layers subfolder only, so its root IS
-      # /layers — upload dist/ contents there. If the account root is the web
-      # root instead, set server-dir to ./layers/.
+      # FTP account root is already /layers — server-dir ./ is correct (not ./layers/).
       - name: Upload to /layers via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:

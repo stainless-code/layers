@@ -116,7 +116,11 @@ const featureClass =
               adapters.map((adapter) => (
                 <th class={thClass}>
                   <span class="inline-flex items-center gap-1.5">
-                    <Icon name={adapter.icon} size={14} />
+                    <Icon
+                      class="size-3.5 shrink-0 object-contain"
+                      name={adapter.icon}
+                      size={14}
+                    />
                     {adapter.name}
                   </span>
                 </th>
