@@ -12,7 +12,7 @@ Pick a framework binding — same engine, native reactivity. The [core](/adapter
 
 ## Adapter ergonomics
 
-Same primitives on every adapter: client context, `useStack`, **drive** handles, **observe** hooks. Engine parity; wrappers (`StackOutlet`, `createStackHook`, …) are sugar and diverge by design. React/Preact/Solid/Angular/Vue/Lit re-export the full core; Svelte re-exports selectively. Angular and Svelte ship compiler-free — imperative / primitive render, no shipped host components.
+Same primitives on every adapter: client context, `useStack`, **drive** handles, **observe** hooks. Engine parity; wrappers (`StackOutlet`, `createStackHook`, …) are sugar and diverge by design. React/Preact/Solid/Angular/Vue/Lit re-export the full core; Svelte re-exports selectively. Angular and Svelte ship compiler-free — imperative / primitive render, no shipped host components. Lit: `<stack-provider>` is shadow + `<slot>`; outlet / subscribe / `app-host` are light DOM.
 
 | Capability                                             | React | Preact | Solid | Angular | Vue | Lit | Svelte (runes) | Svelte (store) |
 | ------------------------------------------------------ | :---: | :----: | :---: | :-----: | :-: | :-: | :------------: | :------------: |

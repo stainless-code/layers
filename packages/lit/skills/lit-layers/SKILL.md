@@ -44,7 +44,7 @@ Core is included. `lit` (>=3.2.0) and `@lit/context` (>=1.1.0) are required peer
 
 ## Binding model
 
-Layers binds via **Reactive Controllers** + `requestUpdate`; the adapter ships light-DOM custom elements for provider/outlet/subscribe. Controllers are host-first factories: `useStack(this, { stack })`, `useLayer(this, options, client?)`. A controller's `.current` mirrors the selected snapshot and requests a host update on change.
+Binding: Reactive Controllers + `requestUpdate`. Host-first factories — `useStack(this, { stack })`, `useLayer(this, options, client?)`. `.current` mirrors the selected snapshot and requests a host update on change. `<stack-provider>` is shadow + `<slot>`; outlet / subscribe / `app-host` are light DOM.
 
 ```ts
 import { useStack } from "@stainless-code/lit-layers";
@@ -134,7 +134,7 @@ Low-level bag-form: `client.open({ ...confirm, payload })`.
 
 ## Primitives
 
-Options bag plus optional trailing `LayerClient`. **Drive** with `useLayer(this, options, client)`; **observe** with `useLayerState(this, { key, ... }, client?)`.
+Options bag plus optional trailing `LayerClient`. **Drive** with `useLayer(this, options, client?)`; **observe** with `useLayerState(this, { key, ... }, client?)`.
 
 | Export                                                             | Role                                                                                    |
 | ------------------------------------------------------------------ | --------------------------------------------------------------------------------------- |

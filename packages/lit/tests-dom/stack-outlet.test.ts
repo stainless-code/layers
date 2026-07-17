@@ -2,6 +2,7 @@ import { LitElement, html } from "lit";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  AppHostElement,
   defineStackElements,
   layerOptions,
   LayerClient,
@@ -11,7 +12,7 @@ import {
   useLayerGroup,
   useMutationFlow,
 } from "../src/index";
-import type { LayerCallContext } from "../src/index";
+import type { LayerCallContext, LayerComponentProps } from "../src/index";
 
 defineStackElements();
 
@@ -80,6 +81,10 @@ describe("Lit adapter — StackOutlet", () => {
 
     expect(outlet.querySelector('[role="dialog"]')).toBeTruthy();
     expect(outlet.textContent).toContain("Remove export");
+    expect(outlet.shadowRoot).toBeNull();
+    const dialog = outlet.querySelector('[role="dialog"]');
+    expect(dialog).toBeTruthy();
+    expect(outlet.contains(dialog)).toBe(true);
 
     (outlet.querySelector("button") as HTMLButtonElement).click();
     await expect(pending).resolves.toBe(true);
@@ -111,6 +116,86 @@ describe("Lit adapter — StackOutlet", () => {
     expect(outlet.querySelector('[role="dialog"]')).toBeNull();
     expect(outlet.querySelector("button")).toBeNull();
     warnSpy.mockRestore();
+  });
+
+  it("renders a TemplateResult function component", async () => {
+    const fnOptions = layerOptions<{ title: string }, boolean>({
+      stack: "fn",
+      key: ["fn", "template"],
+      component: (props: LayerComponentProps<{ title: string }, boolean>) =>
+        html`<div role="dialog" data-fn>${props.payload.title}</div>`,
+      exitingDelay: 0,
+    });
+    const client = new LayerClient();
+    const { outlet } = await mountProvider(client, "fn");
+
+    void client.open({ ...fnOptions, payload: { title: "Fn layer" } });
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+    await Promise.resolve();
+
+    expect(outlet.querySelector("[data-fn]")?.textContent).toBe("Fn layer");
+  });
+
+  it("stops updating after disconnect", async () => {
+    const client = new LayerClient();
+    const { provider, outlet } = await mountProvider(client);
+
+    void client.open({
+      ...confirmOptions,
+      payload: { title: "Mounted" },
+    });
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+    await Promise.resolve();
+
+    provider.remove();
+    await Promise.resolve();
+
+    expect(() => {
+      void client.open({
+        ...confirmOptions,
+        payload: { title: "After disconnect" },
+      });
+    }).not.toThrow();
+  });
+
+  it("switches stacks when the stack property changes", async () => {
+    const stackAOpts = layerOptions<{ title: string }, boolean>({
+      stack: "a",
+      key: ["a", "dialog"],
+      component: (props: LayerComponentProps<{ title: string }, boolean>) =>
+        html`<div data-stack="a">${props.payload.title}</div>`,
+      exitingDelay: 0,
+    });
+    const stackBOpts = layerOptions<{ title: string }, boolean>({
+      stack: "b",
+      key: ["b", "dialog"],
+      component: (props: LayerComponentProps<{ title: string }, boolean>) =>
+        html`<div data-stack="b">${props.payload.title}</div>`,
+      exitingDelay: 0,
+    });
+
+    const client = new LayerClient();
+    const { outlet } = await mountProvider(client, "a");
+
+    void client.open({ ...stackAOpts, payload: { title: "On A" } });
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+    await Promise.resolve();
+    expect(outlet.querySelector('[data-stack="a"]')?.textContent).toBe("On A");
+
+    outlet.stack = "b";
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+
+    void client.open({ ...stackBOpts, payload: { title: "On B" } });
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+    await Promise.resolve();
+
+    expect(outlet.querySelector('[data-stack="b"]')?.textContent).toBe("On B");
+    expect(outlet.querySelector('[data-stack="a"]')).toBeNull();
   });
 });
 
@@ -305,11 +390,35 @@ describe("Lit adapter — useLayerGroup", () => {
   });
 });
 
+describe("Lit adapter — StackProvider", () => {
+  it("uses shadow DOM + slot (context still reaches light children)", async () => {
+    const client = new LayerClient();
+    const { provider, outlet } = await mountProvider(client);
+
+    expect(provider.shadowRoot).toBeTruthy();
+    expect(provider.shadowRoot?.querySelector("slot")).toBeTruthy();
+    // Light-DOM child remains a direct child; composed context still resolves.
+    expect(outlet.parentElement).toBe(provider);
+    expect(outlet.shadowRoot).toBeNull();
+
+    void client.open({
+      ...confirmOptions,
+      payload: { title: "Via shadow provider" },
+    });
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+    await Promise.resolve();
+
+    expect(outlet.textContent).toContain("Via shadow provider");
+  });
+});
+
 describe("Lit adapter — defineStackElements", () => {
   it("is idempotent (no double-register)", () => {
     expect(() => defineStackElements()).not.toThrow();
     expect(customElements.get("stack-provider")).toBe(StackProvider);
     expect(customElements.get("stack-outlet")).toBe(StackOutlet);
     expect(customElements.get("stack-subscribe")).toBe(StackSubscribe);
+    expect(customElements.get("app-host")).toBe(AppHostElement);
   });
 });

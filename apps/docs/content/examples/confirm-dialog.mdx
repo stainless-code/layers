@@ -14,6 +14,7 @@ import confirmSolidSrc from "../../recipes/confirm-dialog/solid.tsx?raw";
 import confirmSvelteRunesSrc from "../../recipes/confirm-dialog/svelte-runes.svelte?raw";
 import confirmSvelteStoreSrc from "../../recipes/confirm-dialog/svelte-store.svelte?raw";
 import confirmAngularSrc from "../../recipes/confirm-dialog/angular.ts?raw";
+import confirmLitSrc from "../../recipes/confirm-dialog/lit.ts?raw";
 
 A delete button in a sidebar needs a yes/no. `useLayer(confirm)` + `await confirm.open({ title })` returns the typed boolean.
 
@@ -41,6 +42,7 @@ One complete recipe per framework adapter (live demo above is React).
   <Tab title="Solid"><CodeBlock code={confirmSolidSrc} lang="tsx" /></Tab>
   <Tab title="Angular"><CodeBlock code={confirmAngularSrc} lang="ts" /></Tab>
   <Tab title="Vue"><CodeBlock code={confirmVueLayerSrc} lang="vue" title="ConfirmDialog.vue" /><CodeBlock code={confirmVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Lit"><CodeBlock code={confirmLitSrc} lang="ts" /></Tab>
   <Tab title="Svelte (runes)"><CodeBlock code={confirmSvelteRunesSrc} lang="svelte" /></Tab>
   <Tab title="Svelte (store)"><CodeBlock code={confirmSvelteStoreSrc} lang="svelte" /></Tab>
 </Tabs>

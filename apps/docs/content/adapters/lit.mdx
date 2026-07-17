@@ -7,7 +7,7 @@ sidebar:
   icon: /icons/lit.svg
 ---
 
-Stop threading `isOpen` props and `onConfirm` callbacks through your element tree — open a confirm, drawer, or toast from any controller and `await` its typed result. `@stainless-code/lit-layers` binds stacks into Lit via Reactive Controllers + `requestUpdate`, with light-DOM custom elements for provider/outlet/subscribe. The core is re-exported.
+`@stainless-code/lit-layers` binds stacks via Reactive Controllers + `requestUpdate`. The core is re-exported.
 
 ## Install
 
@@ -19,7 +19,7 @@ npm i @stainless-code/lit-layers
 
 ## Client
 
-Call `provideLayerClient(host, client?)` on a host element (a new `LayerClient` is created when omitted), or mount `<stack-provider .client=${client}>` high in the tree. Descendants resolve it by omitting `client`, or with `useLayerClient(host).current`:
+Call `provideLayerClient(host, client?)` on a host (creates a `LayerClient` when omitted), or mount `<stack-provider .client=${client}>` high in the tree. Descendants omit `client`, or read `useLayerClient(host).current`:
 
 ```ts
 import { LitElement, html } from "lit";
@@ -41,14 +41,16 @@ class MyShell extends LitElement {
 ```
 
 :::note
-Controllers subscribe in `hostConnected` and tear down in `hostDisconnected` — create them as class fields on a `LitElement` (`useStack(this, …)`). Omit `client` on any hook to resolve it from a `provideLayerClient()` / `<stack-provider>` ancestor via `@lit/context` (the wired handle builds after the host connects); pass it explicitly for synchronous access at construction.
+Create controllers as class fields (`useStack(this, …)`). They subscribe in `hostConnected` and tear down in `hostDisconnected`. Omit `client` to resolve from a `provideLayerClient()` / `<stack-provider>` ancestor after connect; pass `client` for synchronous construction.
 :::
 
 ## Render a stack
 
-`<stack-outlet stack="…">` renders registered `component` entries in **light DOM** (`createRenderRoot() { return this }`) so overlays stack inline where mounted. A `component` is a `LitElement` constructor or a `(props) => TemplateResult` render function — no tag strings in v1. Id-keyed `repeat` keeps element instances stable across updates. For headless rendering, use `useStackHandles(this, stack, rootProps)`.
+`<stack-provider>` is a Lit-idiomatic shadow root + `<slot>` (context still reaches light children). `<stack-outlet>` and `<stack-subscribe>` render in **light DOM** so overlays stack inline where mounted.
 
-`<stack-subscribe .selector .renderer>` renders a selected stack value through `.renderer(value)` (a `(value) => TemplateResult`).
+`StackOutlet` maps registered `component` entries — a `LitElement` constructor or `(props) => TemplateResult` (no tag strings in v1). Id-keyed `repeat` keeps instances stable. Headless: `useStackHandles(this, stack, rootProps)`.
+
+`<stack-subscribe .selector .renderer>` takes a `(value) => TemplateResult` callback.
 
 ## Confirm dialog
 
@@ -58,7 +60,6 @@ import { customElement } from "lit/decorators.js";
 import {
   layerOptions,
   type LayerCallContext,
-  type LayerComponentProps,
 } from "@stainless-code/lit-layers";
 
 type ConfirmPayload = { title: string };

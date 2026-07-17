@@ -54,10 +54,10 @@ From `LayerClient` down to `keySignature` — every term in code, docs, and issu
     - **Drive vs observe** — **drive** = wired handle (`useLayer` / `injectLayer` / `createLayer`) for `open`/`upsert`/`dismiss`/`update`/`cancelQueued`; **observe** = `useLayerState` / `useLayerQueuedState` / `useQueuedStack` / `useStack` for reactive snapshots without control. Both paths are first-class; `client.open({ …layerOptions, payload })` remains valid.
   </AccordionItem>
   <AccordionItem title="Adapters & rendering">
-    - **Observer / selector** — adapters subscribe to `LayerStack.getSnapshot()` and project via a selector (React/Preact `useSyncExternalStore`, Solid `from`, Angular `signal`, Vue `shallowRef`, Svelte runes).
+    - **Observer / selector** — adapters subscribe to `LayerStack.getSnapshot()` and project via a selector (React/Preact `useSyncExternalStore`, Solid `from`, Angular `signal`, Vue `shallowRef`, Lit reactive controllers, Svelte runes).
     - **Options helper** (`layerOptions`) — identity function carrying `<P, R, E, D>` generics so `LayerClient.open` infers the response type end-to-end.
-    - **Outlet** — renders the active stack. React, Preact, and Solid ship `StackOutlet`; Angular exposes `renderStack(vcr)`; Vue ships `StackOutlet`; Svelte renders from `useStack().current` + `callFor`. See [adapter ergonomics](/adapters#adapter-ergonomics).
-    - **Stack handles** (`useStackHandles`) — headless `{ states, getCall }` for custom hosts (React/Preact/Solid/Angular/Vue; Svelte's `useStack()` already returns `.current` + `callFor`). `StackOutlet` is the registered-component convenience built on it where shipped.
+    - **Outlet** — renders the active stack. React, Preact, Solid, and Vue ship `StackOutlet`; Angular exposes `renderStack(vcr)`; Lit ships `<stack-outlet>`; Svelte renders from `useStack().current` + `callFor`. See [adapter ergonomics](/adapters#adapter-ergonomics).
+    - **Stack handles** (`useStackHandles`) — headless `{ states, getCall }` for custom hosts (React/Preact/Solid/Angular/Vue/Lit; Svelte's `useStack()` already returns `.current` + `callFor`). `StackOutlet` is the registered-component convenience built on it where shipped.
     - **Validator** (`validate`) — a Standard Schema or sync `(input) => output` fn that parses/validates a layer's `payload` at `open`; the layer stores the parsed output. Failure rejects `open` with a `PayloadValidationError`.
   </AccordionItem>
 </Accordion>

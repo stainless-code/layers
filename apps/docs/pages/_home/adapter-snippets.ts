@@ -219,6 +219,41 @@ async function remove() {
 </template>`,
   },
   {
+    framework: "lit",
+    icon: "/icons/lit.svg",
+    label: "Lit",
+    installCommand: "bun add @stainless-code/lit-layers",
+    lang: "ts",
+    code: `import {
+  LayerClient,
+  createLayer,
+  defineStackElements,
+  layerOptions,
+} from "@stainless-code/lit-layers";
+import { LitElement, html } from "lit";
+
+defineStackElements();
+
+const confirm = layerOptions({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+
+const client = new LayerClient();
+const c = createLayer(confirm, client);
+
+async function remove() {
+  const ok = await c.open({ title: "Remove?" });
+  //    ^? boolean
+}
+
+// Shell:
+// <stack-provider .client=\${client}>
+//   <stack-outlet stack="confirm"></stack-outlet>
+// </stack-provider>`,
+  },
+  {
     framework: "svelte",
     icon: "/icons/svelte.svg",
     label: "Svelte",

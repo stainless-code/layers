@@ -30,6 +30,7 @@ import {
 } from "@stainless-code/layers";
 import { LitElement, nothing } from "lit";
 import type {
+  PropertyValues,
   ReactiveController,
   ReactiveControllerHost,
   TemplateResult,
@@ -69,6 +70,8 @@ function isElementHost(
  * {@link useLayerClient} or by omitting `client` on a hook. A new client is
  * created when `client` is omitted.
  *
+ * @param host Lit element host that owns the context provider.
+ * @param client Optional client to provide; a new {@link LayerClient} is created when omitted.
  * @returns The provided client.
  */
 export function provideLayerClient(
@@ -129,6 +132,8 @@ export class LayerClientConsumer implements ReactiveController {
  * `.current` (throws when no provider has supplied one yet). Prefer passing
  * `client` explicitly on `useStack` / `useLayer` for synchronous access at
  * construction time — context only resolves once the host is connected.
+ *
+ * @returns A {@link LayerClientConsumer} controller; read `.current` for the client.
  */
 export function useLayerClient(host: LitControllerHost): LayerClientConsumer {
   return new LayerClientConsumer(host);
@@ -261,6 +266,18 @@ function subscribeStackSnapshot<T>(
   };
 }
 
+const warnedMissingComponent = new Set<string>();
+
+function warnMissingLayerComponent(id: string, key: unknown): void {
+  if (process.env.NODE_ENV === "production") return;
+  const sig = `${id}:${JSON.stringify(key)}`;
+  if (warnedMissingComponent.has(sig)) return;
+  warnedMissingComponent.add(sig);
+  console.warn(
+    `[layers/lit] No component for layer ${id} (key ${JSON.stringify(key)}); StackOutlet renders nothing. Provide a \`component\` or use useStackHandles.`,
+  );
+}
+
 /** Reactive controller that mirrors a {@link LayerClient} stack snapshot. */
 export class StackController<T = LayerState[]> implements ReactiveController {
   #host: ReactiveControllerHost;
@@ -269,6 +286,8 @@ export class StackController<T = LayerState[]> implements ReactiveController {
   #select: (states: LayerState[]) => T;
   #compare: (a: T, b: T) => boolean;
   #stack: LayerStack | null = null;
+  #client: LayerClient | undefined;
+  #stackId = "default";
   #initial: T;
   #queued: boolean;
   #connected = false;
@@ -289,16 +308,52 @@ export class StackController<T = LayerState[]> implements ReactiveController {
     // `[]` for the default selector, `select([])` otherwise.
     this.#initial = this.#select([]);
 
+    this.#stackId = options.stack ?? "default";
     resolveClientLazy(host, client ?? options.client, (c) => {
       if (this.#stack === null) {
-        this.#initStack(c, options.stack ?? "default");
+        this.#initStack(c, this.#stackId);
         if (this.#connected) this.#setup();
       }
     });
     host.addController(this);
   }
 
+  /**
+   * Tear down the current subscription, apply new options, and re-subscribe when
+   * the host is connected.
+   */
+  reconfigure(options: UseStackOptions<T> = {}, client?: LayerClient): void {
+    this.#snapshot?.unsubscribe();
+    this.#snapshot = null;
+    this.#stack = null;
+    this.#getSource = null;
+
+    if (options.select !== undefined) {
+      this.#select = options.select;
+    }
+    if (options.compare !== undefined) {
+      this.#compare = options.compare;
+    }
+    const stackId = options.stack ?? this.#stackId;
+    this.#stackId = stackId;
+
+    const c = client ?? options.client ?? this.#client;
+    if (!c) {
+      this.#initial = this.#select([]);
+      this.#host.requestUpdate();
+      return;
+    }
+
+    this.#initStack(c, stackId);
+    if (this.#connected) {
+      this.#setup();
+    }
+    this.#host.requestUpdate();
+  }
+
   #initStack(client: LayerClient, stackId: string): void {
+    this.#client = client;
+    this.#stackId = stackId;
     this.#stack = client.getStack(stackId);
     this.#getSource = this.#queued
       ? () => this.#stack!.getQueuedSnapshot()
@@ -348,6 +403,10 @@ export class StackController<T = LayerState[]> implements ReactiveController {
  * @param host Reactive controller host (typically `this` on a `LitElement`).
  * @param opts `stack`, `select`, `compare`, and optional `client`.
  * @param client Client to observe when not passed on `opts`.
+ * @returns A {@link StackController} whose `.current` mirrors the selected snapshot.
+ * @default opts.stack `"default"`
+ * @default opts.select all mounted states (identity)
+ * @default opts.compare `Object.is`
  */
 export function useStack<T = LayerState[]>(
   host: ReactiveControllerHost,
@@ -873,12 +932,14 @@ export class LayerGroupController<
     this.#client?.dismissAll(this.#stackId, response);
   };
 
-  outlet = (rootProps?: unknown): TemplateResult =>
-    renderStack(
-      this.#client ?? new LayerClient(),
+  outlet = (rootProps?: unknown): TemplateResult => {
+    if (!this.#client) return html``;
+    return renderStack(
+      this.#client,
       this.#stackId,
       rootProps ?? this.#rootProps,
     );
+  };
 }
 
 /**
@@ -987,7 +1048,7 @@ function renderLayer(
  * Shared by {@link StackOutlet} and {@link LayerGroupController.outlet}. Keys by
  * `state.id` so prop changes update in place without recreating instances.
  */
-export function renderStack(
+function renderStack(
   client: LayerClient,
   stackId: string,
   rootProps?: unknown,
@@ -1001,11 +1062,7 @@ export function renderStack(
       const layer = stack.getLayer(s.id);
       const component = layer?.component as LitLayerComponent | undefined;
       if (!layer || !component) {
-        if (process.env.NODE_ENV !== "production") {
-          console.warn(
-            `[layers/lit] No component for layer ${s.id} (key ${JSON.stringify(s.key)}); StackOutlet renders nothing. Provide a \`component\` or use useStackHandles.`,
-          );
-        }
+        warnMissingLayerComponent(s.id, s.key);
         return nothing;
       }
       const call = createCallContext(
@@ -1020,33 +1077,45 @@ export function renderStack(
 }
 
 /**
- * `<stack-provider>` — provides a {@link LayerClient} to descendants via
- * `@lit/context`. Light DOM; projects children through a default slot.
+ * `<stack-provider>` — provides a {@link LayerClient} via `@lit/context`.
+ * Shadow root + `<slot>`; composed `context-request` still reaches light children.
  *
- * Register with {@link defineStackElements}. Set `.client` to supply your own;
- * a new client is created when omitted.
+ * Register with {@link defineStackElements}. Omitting `.client` creates one.
  */
 export class StackProvider extends LitElement {
   static properties = {
     client: { attribute: false },
   };
   declare client: LayerClient | undefined;
-  #provided: LayerClient | null = null;
+  #provider: ContextProvider<Context<string, LayerClient>, this> | null = null;
 
   constructor() {
     super();
     this.client = undefined;
   }
 
-  createRenderRoot(): this {
-    return this;
-  }
-
   connectedCallback(): void {
     super.connectedCallback();
-    if (this.#provided === null) {
-      this.#provided = provideLayerClient(this, this.client ?? undefined);
+    if (this.#provider === null) {
+      const c = this.client ?? new LayerClient();
+      this.#provider = new ContextProvider(this, {
+        context: layerClientContext,
+        initialValue: c,
+      });
     }
+  }
+
+  updated(changed: PropertyValues<this>): void {
+    // Only react to an explicit `.client` assignment — do not replace the
+    // auto-created client when `client` is still undefined.
+    if (
+      !changed.has("client") ||
+      this.#provider === null ||
+      this.client === undefined
+    ) {
+      return;
+    }
+    this.#provider.setValue(this.client);
   }
 
   render(): TemplateResult {
@@ -1070,6 +1139,7 @@ export class StackOutlet extends LitElement {
   declare client: LayerClient | undefined;
   #states: StackController<LayerState[]> | null = null;
   #stack: LayerStack | null = null;
+  #clientRef: LayerClient | undefined;
 
   constructor() {
     super();
@@ -1084,6 +1154,7 @@ export class StackOutlet extends LitElement {
 
   #init(client: LayerClient): void {
     if (this.#stack !== null) return;
+    this.#clientRef = client;
     this.#stack = client.getStack(this.stack);
     this.#states = new StackController(
       this,
@@ -1092,6 +1163,28 @@ export class StackOutlet extends LitElement {
       false,
     );
     this.requestUpdate();
+  }
+
+  updated(changed: PropertyValues<this>): void {
+    if (this.#stack === null || this.#states === null) return;
+
+    if (
+      changed.has("client") &&
+      this.client &&
+      this.client !== this.#clientRef
+    ) {
+      this.#clientRef = this.client;
+      this.#states.reconfigure({ stack: this.stack }, this.client);
+      this.#stack = this.client.getStack(this.stack);
+      this.requestUpdate();
+      return;
+    }
+
+    if (changed.has("stack") && this.#clientRef) {
+      this.#states.reconfigure({ stack: this.stack }, this.#clientRef);
+      this.#stack = this.#clientRef.getStack(this.stack);
+      this.requestUpdate();
+    }
   }
 
   connectedCallback(): void {
@@ -1118,11 +1211,7 @@ export class StackOutlet extends LitElement {
         const layer = stack.getLayer(s.id);
         const component = layer?.component as LitLayerComponent | undefined;
         if (!layer || !component) {
-          if (process.env.NODE_ENV !== "production") {
-            console.warn(
-              `[layers/lit] No component for layer ${s.id} (key ${JSON.stringify(s.key)}); StackOutlet renders nothing. Provide a \`component\` or use useStackHandles.`,
-            );
-          }
+          warnMissingLayerComponent(s.id, s.key);
           return nothing;
         }
         const call = createCallContext(
@@ -1168,6 +1257,16 @@ export class StackSubscribe extends LitElement {
     super.connectedCallback();
     if (this.#controller === null) {
       this.#controller = useStack<unknown>(this, {
+        stack: this.stack,
+        select: this.selector,
+      });
+    }
+  }
+
+  updated(changed: PropertyValues<this>): void {
+    if (this.#controller === null) return;
+    if (changed.has("stack") || changed.has("selector")) {
+      this.#controller.reconfigure({
         stack: this.stack,
         select: this.selector,
       });
