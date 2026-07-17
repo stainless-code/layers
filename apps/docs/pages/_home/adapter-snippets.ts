@@ -266,6 +266,51 @@ class AppShell extends LitElement {
 }`,
   },
   {
+    framework: "alpine",
+    icon: "/icons/alpine.svg",
+    label: "Alpine",
+    installCommand: "bun add @stainless-code/alpine-layers",
+    lang: "html",
+    code: `<script type="module">
+  import Alpine from "alpinejs";
+  import layers, {
+    createLayer,
+    layerOptions,
+    setLayerClient,
+  } from "@stainless-code/alpine-layers";
+
+  Alpine.plugin(layers);
+  setLayerClient();
+
+  const confirm = layerOptions<{ title: string }, boolean>({
+    stack: "confirm",
+    key: ["confirm", "remove"],
+  });
+
+  const c = createLayer(confirm);
+
+  Alpine.data("demo", () => ({
+    async remove() {
+      const ok = await c.open({ title: "Remove?" });
+      //    ^? boolean
+    },
+  }));
+
+  window.Alpine = Alpine;
+  Alpine.start();
+</script>
+
+<div x-data="demo">
+  <template x-layer-outlet="'confirm'">
+    <div role="dialog">
+      <h2 x-text="$layer.payload.title"></h2>
+      <button type="button" @click="$layer.call.end(true)">Yes</button>
+    </div>
+  </template>
+  <button type="button" @click="remove()">Remove</button>
+</div>`,
+  },
+  {
     framework: "svelte",
     icon: "/icons/svelte.svg",
     label: "Svelte",

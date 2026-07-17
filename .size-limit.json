@@ -53,6 +53,13 @@
     "gzip": true
   },
   {
+    "name": "@stainless-code/alpine-layers",
+    "path": "packages/alpine/dist/index.mjs",
+    "ignore": ["@stainless-code/layers", "alpinejs"],
+    "limit": "3 KB",
+    "gzip": true
+  },
+  {
     "name": "@stainless-code/solid-layers",
     "path": "packages/solid/dist/index.mjs",
     "ignore": ["@stainless-code/layers", "solid-js"],

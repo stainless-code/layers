@@ -16,6 +16,9 @@ By-design or false-positive findings — do not re-raise.
 
 - **[public-api]** `packages/lit/src/index.ts` `layerClientContext` export — by-design; rationale on the const JSDoc.
 - **[public-api]** `packages/lit/src/index.ts` `StackController` `queued`/`deferClient`/`bindClient` — by-design; rationale on the class/ctor JSDoc (factories are the supported path).
+- **[correctness]** `packages/alpine/src/index.ts` multi-child `x-layer-outlet` template — by-design; Alpine `<template>` loops (`x-for`/`x-if`) require a single root element; outlet matches that contract (document in alpine.mdx).
+- **[docs]** `typedoc.json` omit Alpine/Lit entryPoints — by-design for now; TypeDoc covers core + compiler-friendly adapters; Lit/Alpine documented on adapter pages + softened reference/index claim.
+- **[docs]** `apps/docs/content/adapters/index.mdx` Alpine footnote `⁷` vs `docs/architecture.md` `⁸` — by-design; each matrix numbers footnotes for its own footnote set (architecture also has Lit `⁷`).
 
 ## Deferred
 

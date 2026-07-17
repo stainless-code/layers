@@ -152,15 +152,41 @@ class CustomHost extends LitElement {
 
   render() {
     return html`${this.#handles.states.current.map(
-      (s) => html`<my-modal
-        .call=${this.#handles.getCall(s)}
-        .payload=${s.payload}
-        .transition=${s.transition}
-      ></my-modal>`,
+      (s) =>
+        html`<my-modal
+          .call=${this.#handles.getCall(s)}
+          .payload=${s.payload}
+          .transition=${s.transition}
+        ></my-modal>`,
     )}`;
   }
 }
 ```
+
+</Tab>
+<Tab title="Alpine" icon="/icons/alpine.svg">
+
+```html lineNumbers
+<!-- Rank-2: Alpine.data('layerStack') + x-for + callFor -->
+<div x-data="layerStack('modal')">
+  <template x-for="s in states" :key="s.id">
+    <div role="dialog">
+      <h2 x-text="s.payload.title"></h2>
+      <button type="button" @click="callFor(s)?.end(true)">OK</button>
+    </div>
+  </template>
+</div>
+
+<!-- Convenience outlet: x-layer-outlet + $layer bag -->
+<template x-layer-outlet="'modal'">
+  <div role="dialog">
+    <h2 x-text="$layer.payload.title"></h2>
+    <button type="button" @click="$layer.call.end(true)">OK</button>
+  </div>
+</template>
+```
+
+`layerStack` / `useStack().current` + `callFor` — no `useStackHandles`. Prefer `x-layer-outlet` when markup-per-row is enough.
 
 </Tab>
 <Tab title="Svelte (runes)" icon="/icons/svelte.svg">
@@ -241,7 +267,6 @@ function OpenCount() {
 }
 ```
 
-
 </Tab>
 <Tab title="Solid" icon="/icons/solid.svg">
 
@@ -313,6 +338,29 @@ class OpenCount extends LitElement {
 ```
 
 </Tab>
+<Tab title="Alpine" icon="/icons/alpine.svg">
+
+```ts lineNumbers
+import Alpine from "alpinejs";
+import layers, { useStack } from "@stainless-code/alpine-layers";
+
+Alpine.plugin(layers);
+
+Alpine.data("openCount", () => {
+  const count = useStack({ stack: "modal", select: (s) => s.length });
+  return { count };
+});
+```
+
+```html lineNumbers
+<div x-data="openCount">
+  <span x-text="count.current + ' open'"></span>
+</div>
+```
+
+No `StackSubscribe` — `useStack({ stack, select })` with `.current`, or Rank-2 `layerStack` + `x-for`.
+
+</Tab>
 <Tab title="Svelte (runes)" icon="/icons/svelte.svg">
 
 ```svelte lineNumbers
@@ -356,11 +404,12 @@ For fully-typed selector output in Vue, prefer `useStack({ stack, select })` in 
 | Angular        | `useStackHandles`, `renderStack(vcr)`        | `renderStack`             |
 | Vue            | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
 | Lit            | `useStackHandles`, `<stack-subscribe>`       | `<stack-outlet>`          |
+| Alpine         | `layerStack` + `x-for` + `callFor`           | `x-layer-outlet`          |
 | Svelte (runes) | `useStack().current` + `callFor`             | — (render in your markup) |
 | Svelte (store) | `$stack` + `callFor(client, stackId, state)` | —                         |
 
 :::tip
-Svelte's `useStack()` already returns the headless pair — `.current` for states and `callFor` for call contexts. No separate `useStackHandles` export.
+Svelte's `useStack()` already returns the headless pair — `.current` for states and `callFor` for call contexts. No separate `useStackHandles` export. Alpine's `layerStack` / `useStack()` is the same shape.
 :::
 
 Angular has no `StackSubscribe`; `useStack({ stack, select })` as a signal is the idiomatic equivalent.
@@ -370,6 +419,6 @@ Angular has no `StackSubscribe`; `useStack({ stack, select })` as a signal is th
 - Custom portal targets or z-index layering
 - Switching on `state.key` to pick arbitrary components (not the registered `component`)
 - Integrating with a design-system modal primitive that owns its own DOM
-- Angular and Svelte — imperative/primitive rendering by design
+- Angular, Alpine, and Svelte — imperative/primitive rendering by design
 
 Dev warning: `StackOutlet` logs when a layer has no `component` and renders nothing.

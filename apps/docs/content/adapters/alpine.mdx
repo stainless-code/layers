@@ -1,0 +1,182 @@
+---
+title: Alpine
+description: Alpine adapter — plugin magics, x-layer-outlet, Rank-2 layerStack + callFor.
+search:
+  tags: ["adapter", "alpine"]
+sidebar:
+  icon: /icons/alpine.svg
+---
+
+`@stainless-code/alpine-layers` binds stacks through an Alpine plugin and markup directives. The core is re-exported.
+
+:::tip
+Alpine builds compiler-free (tsdown, no framework components shipped). Render with `x-layer-outlet` or Rank-2 `layerStack` + `x-for` + `callFor` in your markup — **intentional primitive design**, not a parity gap. See the [parity matrix](/adapters).
+:::
+
+## Install
+
+```package-install
+npm i @stainless-code/alpine-layers
+```
+
+**Peer:** `alpinejs` >=3.13
+
+**Optional peer:** `@alpinejs/focus` >=3.13 — focus trap / inert backdrop (`x-trap.inert.noscroll`)
+
+## Register the plugin
+
+**Vite / bundled app** — register before `Alpine.start()`:
+
+```ts
+import Alpine from "alpinejs";
+import layers from "@stainless-code/alpine-layers";
+
+Alpine.plugin(layers);
+window.Alpine = Alpine;
+Alpine.start();
+```
+
+**CDN** — load the bootstrap **before** Alpine core (registers on `alpine:init`):
+
+```html
+<script
+  type="module"
+  src="https://cdn.jsdelivr.net/npm/@stainless-code/alpine-layers/cdn"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/alpinejs@3/dist/cdn.min.js"
+></script>
+```
+
+The plugin registers `$layers`, `$layer`, `x-layer-outlet`, and `Alpine.data('layerStack', …)`.
+
+## Client
+
+Hold the client in the plugin closure — not `Alpine.store`. `getLayerClient()` lazy-inits on first access. Call `setLayerClient(client?)` only when you need to pin a custom client **before** first use (creates a `LayerClient` when omitted). `createStackHook({ client })` calls `setLayerClient` for you.
+
+```js
+import { setLayerClient } from "@stainless-code/alpine-layers";
+
+setLayerClient(); // optional — only to pin a client before first stack use
+```
+
+:::note
+`setLayerClient` after the singleton exists **throws**. Custom apps: set explicitly in bootstrap; `createStackHook` is the Angular-shaped `{ setClient, useAppStack }` helper (no `AppHost` / `AppLayer`).
+:::
+
+## Render a stack
+
+**Outlet** — declare markup inside `x-layer-outlet`; the directive evaluates the expression as a stack id. Bare `confirm` resolves to `window.confirm` (a function), so the outlet falls back to the `"default"` stack — always quote: `x-layer-outlet="'confirm'"`. Keys by `state.id` and exposes the active row as `$layer` (`LayerComponentProps` bag — `$layer.call`, `$layer.payload`, …):
+
+```html
+<template x-layer-outlet="'confirm'">
+  <div role="dialog">
+    <h2 x-text="$layer.payload.title"></h2>
+    <button type="button" @click="$layer.call.end(true)">Yes</button>
+    <button type="button" @click="$layer.call.end(false)">No</button>
+  </div>
+</template>
+```
+
+:::tip
+Outlet templates need a **single root** element (same Alpine convention as `x-for` / `x-if`). Wrap siblings in one `<div>` (or teleport target).
+:::
+
+**Rank-2** — `Alpine.data('layerStack', stackId?)` returns reactive `{ states, callFor(state) }`; pair with `x-for` where an outlet is not enough:
+
+```html
+<div x-data="layerStack('confirm')">
+  <template x-for="state in states" :key="state.id">
+    <div role="dialog">
+      <h2 x-text="state.payload.title"></h2>
+      <button type="button" @click="callFor(state)?.end(true)">Yes</button>
+    </div>
+  </template>
+</div>
+```
+
+`layerOptions` has **no** `component` field — Alpine markup lives in the outlet / loop, like Svelte runes without shipped `.svelte` files.
+
+:::tip
+No `StackSubscribe` — Rank-2 `layerStack` + `x-for` + `callFor` is intentional (same story as [Svelte runes](/adapters/svelte/runes)). Focus trapping and scroll lock: optional [`@alpinejs/focus`](https://alpinejs.dev/plugins/focus); portaling: consumer [`x-teleport`](https://alpinejs.dev/directives/teleport), not the adapter.
+:::
+
+## Confirm dialog
+
+```html
+<div x-data="demo">
+  <button type="button" @click="remove()">Remove</button>
+
+  <template x-layer-outlet="'confirm'">
+    <div role="dialog">
+      <h2 x-text="$layer.payload.title"></h2>
+      <button type="button" @click="$layer.call.end(true)">Yes</button>
+      <button type="button" @click="$layer.call.end(false)">No</button>
+    </div>
+  </template>
+</div>
+```
+
+```ts
+import Alpine from "alpinejs";
+import layers, {
+  createLayer,
+  layerOptions,
+  setLayerClient,
+} from "@stainless-code/alpine-layers";
+
+Alpine.plugin(layers);
+setLayerClient();
+
+const confirm = layerOptions<{ title: string }, boolean>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+});
+
+const confirmHandle = createLayer(confirm);
+
+async function remove() {
+  const ok = await confirmHandle.open({ title: "Remove item?" });
+  //    ^? boolean
+}
+
+Alpine.data("demo", () => ({ remove }));
+
+window.Alpine = Alpine;
+Alpine.start();
+```
+
+Prefer `createLayer` / `confirmHandle.open` from JS. `$layers.open` is the template-reachable facade over `client.open` (it lives in Alpine scope; a module-local `client` does not). Pass a full options bag that is in scope (e.g. put `confirm` on `Alpine.data`). For strict CSP, pair Alpine with [`@alpinejs/csp`](https://alpinejs.dev/advanced/csp).
+
+## Primitives
+
+Options bag plus optional trailing `LayerClient`. **Drive** with `createLayer(options, client?)`; **observe** with `createLayerState({ key, … })`. Core headless `createLayer` is re-exported as `createLayerHandle`.
+
+| Export                                                          | Role                                                                                                   |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `getLayerClient()` / `setLayerClient(client?)`                  | Singleton client in plugin closure (not `Alpine.store`); `get` lazy-inits; `set` only before first use |
+| `useStack({ stack?, select?, compare? }, client?)`              | Subscribe stack slice into Alpine reactivity                                                           |
+| `useQueuedStack({ … }, client?)`                                | Queued snapshot binding                                                                                |
+| `createLayer(options, client?)`                                 | **Drive** — wired handle + reactive `state` / `queued` / `top`                                         |
+| `createLayerState({ key, stack?, select?, compare? }, client?)` | **Observe** — mounted same-key layers                                                                  |
+| `createLayerQueuedState({ key, … }, client?)`                   | **Observe** — queued same-key layers                                                                   |
+
+## Ergonomic APIs
+
+| Export / surface                 | Role                                                                                                                            |
+| -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `$layers`                        | Magic facade — `open`, `dismissAll`, `getStack` (per-layer dismiss via `$layer.call.dismiss`)                                   |
+| `$layer`                         | Current outlet row as `LayerComponentProps` inside `x-layer-outlet`                                                             |
+| `x-layer-outlet="'<stackId>'"`   | `<template>` outlet; id-keyed, directive `effect` + `cleanup`                                                                   |
+| `Alpine.data('layerStack', id?)` | Rank-2 `{ states, callFor(state) }` + subscribe teardown in `destroy()`                                                         |
+| `useMutationFlow(call)`          | Reactive `pending`; `run(fn).orEnd(response)`                                                                                   |
+| `useLayerGroup(call, options?)`  | `{ open, dismissAll, states, stackId, dispose }` — nest `x-layer-outlet` in markup; call `dispose()` when tearing down manually |
+| `createStackHook(config?)`       | `{ setClient, useAppStack }` — no `AppHost` / `AppLayer`                                                                        |
+
+No `StackSubscribe`, `useStackHandles`, or React-shaped `component` registry — by design. Optional `Alpine.data('confirm', …)` is for reusable **behavior**, not template registration.
+
+## Learn more
+
+- [Lifecycle](/concepts/lifecycle) · [Identity & types](/concepts/identity-and-types)
+- [Adapter parity](/adapters)

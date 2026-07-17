@@ -1,6 +1,6 @@
 ---
 title: API
-description: Exhaustive CI-generated TypeDoc reference — every export across core and the adapters.
+description: Exhaustive CI-generated TypeDoc for core and the React/Preact/Solid/Angular/Vue/Svelte entries — Lit and Alpine are on their adapter pages.
 sidebar:
   label: Overview
 search:
@@ -10,7 +10,7 @@ search:
 import Card from "blume/components/content/Card.astro";
 import CardGroup from "blume/components/content/CardGroup.astro";
 
-One TypeDoc module per package. [Reference](/reference) · [Core API](/reference/core-api) · [Adapter hooks](/reference/adapter-hooks)
+One TypeDoc module per entry in `typedoc.json`. Lit and Alpine are on their adapter pages (not generated here yet). [Reference](/reference) · [Core API](/reference/core-api) · [Adapter hooks](/reference/adapter-hooks)
 
 <CardGroup cols={3}>
   <Card title="Core" href="/reference/api/core" icon="/icons/vanilla.svg" arrow>
@@ -19,22 +19,48 @@ One TypeDoc module per package. [Reference](/reference) · [Core API](/reference
   <Card title="React" href="/reference/api/react" icon="/icons/react.svg" arrow>
     `@stainless-code/react-layers`
   </Card>
-  <Card title="Preact" href="/reference/api/preact" icon="/icons/preact.svg" arrow>
+  <Card
+    title="Preact"
+    href="/reference/api/preact"
+    icon="/icons/preact.svg"
+    arrow
+  >
     `@stainless-code/preact-layers`
   </Card>
   <Card title="Solid" href="/reference/api/solid" icon="/icons/solid.svg" arrow>
     `@stainless-code/solid-layers`
   </Card>
-  <Card title="Angular" href="/reference/api/angular" icon="/icons/angular.svg" arrow>
+  <Card
+    title="Angular"
+    href="/reference/api/angular"
+    icon="/icons/angular.svg"
+    arrow
+  >
     `@stainless-code/angular-layers`
   </Card>
   <Card title="Vue" href="/reference/api/vue" icon="/icons/vue.svg" arrow>
     `@stainless-code/vue-layers`
   </Card>
-  <Card title="Svelte (runes)" href="/reference/api/svelte" icon="/icons/svelte.svg" arrow>
+  <Card title="Lit" href="/adapters/lit" icon="/icons/lit.svg" arrow>
+    `@stainless-code/lit-layers` (adapter page)
+  </Card>
+  <Card title="Alpine" href="/adapters/alpine" icon="/icons/alpine.svg" arrow>
+    `@stainless-code/alpine-layers` (adapter page)
+  </Card>
+  <Card
+    title="Svelte (runes)"
+    href="/reference/api/svelte"
+    icon="/icons/svelte.svg"
+    arrow
+  >
     `@stainless-code/svelte-layers`
   </Card>
-  <Card title="Svelte (store)" href="/reference/api/svelte-store" icon="/icons/svelte.svg" arrow>
+  <Card
+    title="Svelte (store)"
+    href="/reference/api/svelte-store"
+    icon="/icons/svelte.svg"
+    arrow
+  >
     `@stainless-code/svelte-layers/store`
   </Card>
   <Card

@@ -1,0 +1,49 @@
+<!-- Bundler recipe (Vite / Blume). For CDN: load @stainless-code/alpine-layers/cdn before alpinejs@3, then register Alpine.data on alpine:init. -->
+<script type="module">
+  import Alpine from "alpinejs";
+  import layers, {
+    createLayer,
+    layerOptions,
+    setLayerClient,
+  } from "@stainless-code/alpine-layers";
+
+  Alpine.plugin(layers);
+  setLayerClient();
+
+  // Under TypeScript: layerOptions<{ title: string }, boolean>({ … })
+  const confirm = layerOptions({
+    stack: "example-confirm",
+    key: ["example-confirm"],
+  });
+
+  const c = createLayer(confirm);
+
+  Alpine.data("demo", () => ({
+    result: null,
+    async deleteFile() {
+      this.result = null;
+      const ok = await c.open({ title: "Delete this file?" });
+      this.result = ok;
+    },
+  }));
+
+  window.Alpine = Alpine;
+  Alpine.start();
+</script>
+
+<div x-data="demo">
+  <button type="button" @click="deleteFile()">Delete file</button>
+  <template x-if="result !== null">
+    <span x-text="'Result: ' + result"></span>
+  </template>
+
+  <template x-layer-outlet="'example-confirm'">
+    <div role="dialog" aria-modal="true">
+      <h2 x-text="$layer.payload.title"></h2>
+      <div>
+        <button type="button" @click="$layer.call.end(false)">No</button>
+        <button type="button" @click="$layer.call.end(true)">Yes</button>
+      </div>
+    </div>
+  </template>
+</div>
