@@ -80,8 +80,8 @@
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/react-devtools": {
-      "entry": ["src/**/*.test.ts"],
-      "project": ["src/**/*.{ts,tsx}"]
+      "entry": ["src/**/*.test.ts", "tests-dom/**/*.test.tsx"],
+      "project": ["src/**/*.{ts,tsx}", "tests-dom/**/*.tsx"]
     }
   },
   "ignoreWorkspaces": ["apps/docs"],

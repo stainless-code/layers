@@ -49,7 +49,7 @@ layersDevtoolsPlugin({ client: myLayerClient });
 
 ## Read the panel
 
-Active / queued rows carry coarse `#dispatch` `action` labels. Payloads are JSON-safe (`payloadTruncated` when a value cannot be cloned).
+Active / queued rows carry coarse `#dispatch` `action` labels (including `dismissVetoed` when a soft dismiss is blocked). Payloads are JSON-safe (`payloadTruncated` when a value cannot be cloned).
 
 ## Dismiss from the panel
 

@@ -107,6 +107,26 @@ describe("LayerClient — subscribeNotify", () => {
     expect(events.at(-1)?.active).toHaveLength(0);
   });
 
+  it("emits dismissVetoed when a soft dismiss is blocked", async () => {
+    const client = new LayerClient();
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+    void client.open({ key: ["a"], payload: { n: 1 } });
+    await Promise.resolve();
+    const stack = client.getStack();
+    const layer = stack.getLayer(stack.getSnapshot()[0]!.id)!;
+    layer.addBlocker(() => false);
+    events.length = 0;
+    expect(await stack.dismiss(layer)).toBe(false);
+    expect(events.at(-1)?.action).toBe("dismissVetoed");
+    expect(stack.getSnapshot()).toHaveLength(1);
+    expect(stack.getSnapshot()[0]?.phase).toBe("active");
+    expect(stack.getSnapshot()[0]?.dismissing).toBe(false);
+    expect(events.at(-1)?.active[0]?.dismissing).toBe(false);
+  });
+
   it("marks payloadTruncated when payload is not JSON-cloneable", () => {
     const client = new LayerClient();
     const events: StackNotifyEvent[] = [];

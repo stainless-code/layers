@@ -270,7 +270,7 @@ export class LayerStack<
     }
     if (vetoed) {
       notifyManager.batch(() => {
-        this.#dispatch("phase", () => {
+        this.#dispatch("dismissVetoed", () => {
           layer.setPartial({ dismissing: false });
           this.#flush();
         });

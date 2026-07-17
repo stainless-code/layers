@@ -6,8 +6,6 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 
 - **Devtools framework doorbells** — Vue/Solid/… thin packages mirroring `react-layers-devtools` (after React MVP).
 - **Devtools bus commands / time-travel** — EventClient bidirectional + recorder (live-ref actions cover v1).
-- **Devtools React DOM harness** — panel button integration under `StackProvider`.
-- **Devtools fine action labels** — `dismiss-begin` / `vetoed` beyond coarse `#dispatch` labels.
 - **`LayerStack.setOptions`** — mutate `scope`/`gcTime`/`dismissAllMode` post-construction so `handle.stack.setOptions(...)` works.
 - **Multi-TypeScript type-test matrix** — run `.test-d` across TS versions in CI to guard the inference surface (DataTag / overloads). Low effort, high ROI.
 - **Infer `D` from `loadFn`** — type a layer's `data` from the `loadFn` return without an explicit generic. Needs a dedicated type pass (interacts with the `const Key` inference).

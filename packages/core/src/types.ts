@@ -167,6 +167,7 @@ export type StackNotifyAction =
   | "setRunning"
   | "settle"
   | "dismiss"
+  | "dismissVetoed"
   | "dismissAll"
   | "cancelQueued"
   | "phase"

@@ -29,7 +29,8 @@
     "dist",
     "src",
     "!src/**/*.test.ts",
-    "!src/**/*.test.tsx"
+    "!src/**/*.test.tsx",
+    "!tests-dom"
   ],
   "type": "module",
   "sideEffects": false,
@@ -55,6 +56,7 @@
     "check:pack": "attw --pack . --profile esm-only && publint --strict",
     "test": "bun test ./src",
     "test:coverage": "bun test ./src --coverage --coverage-threshold=0.75",
+    "test:dom": "vitest run",
     "typecheck": "bun run --filter '@stainless-code/layers' --filter '@stainless-code/layers-devtools' --filter '@stainless-code/react-layers' build && tsc --noEmit"
   },
   "dependencies": {
@@ -64,9 +66,15 @@
   "devDependencies": {
     "@stainless-code/layers": "workspace:*",
     "@stainless-code/react-layers": "workspace:*",
+    "@testing-library/dom": "10.4.1",
+    "@testing-library/react": "16.3.2",
     "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
     "@vitejs/plugin-react": "6.0.1",
-    "react": "19.2.7"
+    "jsdom": "29.1.1",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "vitest": "4.1.10"
   },
   "peerDependencies": {
     "@stainless-code/react-layers": ">=0.2.0",
