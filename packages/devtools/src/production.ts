@@ -7,3 +7,9 @@ export type {
   LayersStackRegistryPayload,
 } from "./event-client";
 export type { LayersDevtoolsInit } from "./core";
+export {
+  cancelQueuedHead,
+  dismissAllWithMode,
+  forceDismissTop,
+  softDismissTop,
+} from "./live-actions";
