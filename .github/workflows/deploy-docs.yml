@@ -1,9 +1,6 @@
 name: Deploy docs
 
-# Production FTP for the unversioned /layers docs site.
-# Triggers: manual, GitHub Release published (Changesets), or a PR merged to
-# main that carries the `docs` label (docs-ahead of the next package release).
-# Requires repo secrets: FTP_HOST, FTP_USERNAME, FTP_PASSWORD.
+# Unversioned /layers FTP. `docs` label = deploy on merge without waiting for a package release.
 on:
   workflow_dispatch:
   release:
@@ -15,7 +12,7 @@ on:
 permissions:
   contents: read
 
-# One production FTP root — serialize all deploys.
+# Single FTP root — don't overlap uploads.
 concurrency:
   group: deploy-docs-production
   cancel-in-progress: false
@@ -35,15 +32,15 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           persist-credentials: false
-          # PR merge: deploy the merge commit on main. Release / dispatch: event SHA.
+          # Closed PR checkout defaults to a dead merge ref — pin the merge commit on main.
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || github.sha }}
-          # Full history: lastModified (sitemap <lastmod>) uses `git log` per file.
+          # Sitemap lastmod uses `git log` per file.
           fetch-depth: 0
 
       - name: Setup Bun
         uses: ./.github/actions/setup
 
-      # Islands import published package entrypoints (`dist/`); build before Blume.
+      # Islands resolve workspace package `dist/` — same order as CI docs job.
       - name: Build packages
         run: bun run build
 
@@ -54,14 +51,11 @@ jobs:
 
       - name: Build docs site
         env:
-          # Populates the /changelog github-releases source and avoids unauthenticated
-          # GitHub API rate limits in CI.
+          # Changelog github-releases source + avoid unauthenticated API rate limits.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bun run docs:build
 
-      # The FTP account is scoped to the /layers subfolder only, so its root IS
-      # /layers — upload dist/ contents there. If the account root is the web
-      # root instead, set server-dir to ./layers/.
+      # FTP account root is already /layers — server-dir ./ is correct (not ./layers/).
       - name: Upload to /layers via FTP
         uses: SamKirkland/FTP-Deploy-Action@v4.4.0
         with:
