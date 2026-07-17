@@ -261,6 +261,64 @@ describe("useLayer (lit)", () => {
     ).toThrow("[layers/lit]");
   });
 
+  it("accepts a trailing client argument", async () => {
+    const client = new LayerClient();
+    const { host } = createHost();
+    const handle = useLayer(
+      host,
+      layerOptions<{ msg: string }, void>({
+        key: ["toast-trail"],
+        exitingDelay: 0,
+      }),
+      client,
+    );
+    void handle.open({ msg: "hi" });
+    expect(handle.state.current).toHaveLength(1);
+    expect(handle.client).toBe(client);
+    await handle.dismiss(undefined as void);
+  });
+
+  it("opens a void-payload layer without an argument", async () => {
+    const client = new LayerClient();
+    const { host } = createHost();
+    const handle = useLayer(
+      host,
+      layerOptions<void, void>({ key: ["void-layer"], exitingDelay: 0 }),
+      client,
+    );
+    void handle.open();
+    expect(handle.state.current).toHaveLength(1);
+    await handle.dismiss(undefined as void);
+  });
+
+  it("upsert updates the active same-key layer", async () => {
+    const client = new LayerClient();
+    const { host } = createHost();
+    const handle = useLayer(host, toastOptions, client);
+    void handle.open({ msg: "a" });
+    void handle.upsert({ msg: "b" });
+    expect(handle.state.current).toHaveLength(1);
+    expect(handle.top?.payload.msg).toBe("b");
+    await handle.dismiss(undefined as void);
+  });
+
+  it("dismisses one of two same-key layers by id", async () => {
+    const client = new LayerClient();
+    const { host } = createHost();
+    const a = useLayer(host, toastOptions, client);
+    const b = useLayer(host, toastOptions, client);
+    void a.open({ msg: "a" });
+    void b.open({ msg: "b" });
+    expect(a.state.current).toHaveLength(2);
+    const id = a.current?.id;
+    expect(id).toBeDefined();
+    await a.dismiss(undefined as void, { id });
+    await Promise.resolve();
+    expect(a.state.current).toHaveLength(1);
+    expect(b.top?.payload.msg).toBe("b");
+    await b.dismiss(undefined as void);
+  });
+
   it("validated handle stores parsed output in state", async () => {
     const idSchema = {
       "~standard": {

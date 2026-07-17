@@ -15,6 +15,8 @@ By-design or false-positive findings — do not re-raise.
 -->
 
 - **[public-api]** `packages/lit/src/index.ts` `layerClientContext` export — intentional (Solid exports `LayerClientContext`; advanced ContextProvider wiring).
+- **[public-api]** `packages/lit/src/index.ts` `StackController` ctor `queued`/`deferClient` + `bindClient` — Lit controller surface needs them for `useQueuedStack` / shared lazy resolve; factories are the supported path; `@internal` JSDoc on `bindClient`.
+- **[docs]** `docs/plans/lit-adapter.md` kept until post-merge delete+lift — plan status says so; changeset deferred to publish PR.
 
 ## Deferred
 

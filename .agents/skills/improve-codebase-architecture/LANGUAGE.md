@@ -31,7 +31,7 @@ _Examples in this repo_: the package seam in `docs/architecture.md` — **core v
 
 **Adapter**
 A concrete thing that satisfies an interface at a seam. Describes _role_ (what slot it fills), not substance (what's inside).
-_Examples in this repo_: each framework binding (`react`, `svelte`, `vue`, `solid`, `preact`, `angular`) is an adapter at the core/adapter seam. Six adapters across the seam = a real seam (the engine is genuinely framework-agnostic); a single adapter would be hypothetical.
+_Examples in this repo_: each framework binding (`react`, `preact`, `solid`, `angular`, `vue`, `lit`, `svelte`) is an adapter at the core/adapter seam. Seven adapters across the seam = a real seam (the engine is genuinely framework-agnostic); a single adapter would be hypothetical.
 
 **Leverage**
 What callers get from depth. More capability per unit of interface they have to learn. One implementation pays back across N call sites and M tests.

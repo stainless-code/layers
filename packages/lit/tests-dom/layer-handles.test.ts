@@ -9,6 +9,7 @@ import {
   LayerClient,
   StackProvider,
   useLayer,
+  useStack,
 } from "../src/index";
 import type { LayerCallContext } from "../src/index";
 
@@ -142,5 +143,61 @@ describe("Lit adapter — useLayer lazy client", () => {
 
     expect(() => host.openLayer()).toThrow("[layers/lit]");
     document.body.removeChild(host);
+  });
+
+  it("rebinds useStack when <stack-provider> pushes a new client", async () => {
+    class StackProbe extends LitElement {
+      #stack = useStack(this, {
+        stack: "confirm",
+        select: (s) => s.length,
+      });
+
+      createRenderRoot(): this {
+        return this;
+      }
+
+      get count(): number {
+        return this.#stack.current;
+      }
+
+      render() {
+        return html`<span>${this.#stack.current}</span>`;
+      }
+    }
+    customElements.define("test-stack-probe", StackProbe);
+
+    const first = new LayerClient();
+    const second = new LayerClient();
+    const provider = document.createElement("stack-provider") as StackProvider &
+      HTMLElement;
+    provider.client = first;
+    const probe = document.createElement("test-stack-probe") as StackProbe & {
+      updateComplete: Promise<unknown>;
+      count: number;
+    };
+    provider.appendChild(probe);
+    document.body.appendChild(provider);
+    await probe.updateComplete;
+
+    void first.open({
+      ...confirmOptions,
+      payload: { title: "on first" },
+    });
+    await probe.updateComplete;
+    expect(probe.count).toBe(1);
+
+    provider.client = second;
+    await provider.updateComplete;
+    await probe.updateComplete;
+    expect(probe.count).toBe(0);
+
+    void second.open({
+      ...confirmOptions,
+      payload: { title: "on second" },
+    });
+    await probe.updateComplete;
+    expect(probe.count).toBe(1);
+
+    document.body.removeChild(provider);
   });
 });

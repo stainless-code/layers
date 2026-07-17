@@ -48,7 +48,8 @@ export const layerClientContext: Context<string, LayerClient> = createContext<
   string
 >("layers-client");
 
-type LitControllerHost = ReactiveControllerHost & HTMLElement;
+/** Lit host that can own reactive controllers and participate in `@lit/context`. */
+export type LitControllerHost = ReactiveControllerHost & HTMLElement;
 type ClientConsumer = ContextConsumer<
   Context<string, LayerClient>,
   LitControllerHost
@@ -144,11 +145,10 @@ export function useLayerClient(host: LitControllerHost): LayerClientConsumer {
  * client once it is supplied — synchronously when `client` is passed, or after
  * the host connects under a `provideLayerClient()` ancestor via `@lit/context`.
  *
- * `onResolved` fires once with the resolved client (synchronously for an
- * explicit client, asynchronously on context callback otherwise) so callers
- * that need to react (subscribe, build a handle) can. Throws synchronously when
- * no client is supplied and `host` is not an element host context can resolve
- * on; `.get()` throws when accessed before context has supplied a client.
+ * `onResolved` fires for the initial client and again when context pushes a new
+ * value (synchronously for an explicit client). Throws synchronously when no
+ * client is supplied and `host` is not an element host context can resolve on;
+ * `.get()` throws when accessed before context has supplied a client.
  */
 function resolveClientLazy(
   host: ReactiveControllerHost,
@@ -311,11 +311,9 @@ export class StackController<T = LayerState[]> implements ReactiveController {
 
     this.#stackId = options.stack ?? "default";
     if (!deferClient) {
+      // Rebind on later context pushes (e.g. <stack-provider> `.client` setValue).
       resolveClientLazy(host, client ?? options.client, (c) => {
-        if (this.#stack === null) {
-          this.#initStack(c, this.#stackId);
-          if (this.#connected) this.#setup();
-        }
+        this.bindClient(c);
       });
     }
     host.addController(this);
@@ -436,7 +434,14 @@ export function useStack<T = LayerState[]>(
   return new StackController(host, opts, client, false);
 }
 
-/** Reactive controller that mirrors a stack's queued snapshot. */
+/**
+ * Subscribe a Lit host to a stack's queued snapshot via {@link StackController}.
+ *
+ * @param host Reactive controller host (typically `this` on a `LitElement`).
+ * @param opts `stack`, `select`, `compare`, and optional `client`.
+ * @param client Client to observe when not passed on `opts`.
+ * @returns A {@link StackController} whose `.current` mirrors the queued snapshot.
+ */
 export function useQueuedStack<T = LayerState[]>(
   host: ReactiveControllerHost,
   opts: UseStackOptions<T> = {},
@@ -576,6 +581,8 @@ export class LayerController<
     this.#client = resolveClientLazy(host, client, (c) => {
       this.#state.bindClient(c);
       this.#queued.bindClient(c);
+      // Drop a handle built against a previous client so the next access rebuilds.
+      this.#handle = null;
     });
     host.addController(this);
   }
@@ -915,7 +922,13 @@ export class LayerGroupController<
       this.#init(client);
     } else if (isElementHost(host)) {
       resolveClientLazy(host, undefined, (c) => {
-        if (this.#group === null) this.#init(c);
+        if (this.#group === null) {
+          this.#init(c);
+        } else if (this.#client !== c) {
+          this.#group.dispose();
+          this.#client?.dismissAll(this.#stackId);
+          this.#init(c);
+        }
         this.#states.bindClient(c);
         this.#host.requestUpdate();
       });
@@ -1340,27 +1353,28 @@ export class AppStackController implements ReactiveController {
     stackId: string,
   ) {
     this.#stackId = stackId;
+    // One shared resolve for open/dismissAll and `#states` (same pattern as
+    // LayerController / LayerGroupController).
+    this.#states = new StackController(
+      host,
+      { stack: stackId },
+      undefined,
+      false,
+      !client,
+    );
     if (client) {
       this.#client = client;
+      this.#states.bindClient(client);
     } else if (isElementHost(host)) {
-      new ContextConsumer(host, {
-        context: layerClientContext,
-        subscribe: true,
-        callback: (c: LayerClient) => {
-          this.#client = c;
-        },
+      resolveClientLazy(host, undefined, (c) => {
+        this.#client = c;
+        this.#states.bindClient(c);
       });
     } else {
       throw new Error(
         "[layers/lit] useAppStack needs an explicit `client` or a LitElement host so context can resolve.",
       );
     }
-    this.#states = new StackController(
-      host,
-      { stack: stackId, client: this.#client },
-      undefined,
-      false,
-    );
     host.addController(this);
   }
 
@@ -1445,6 +1459,7 @@ export class AppLayerController<
   #stackId: string;
   #opened = false;
   #connected = false;
+  #pendingOpen: Promise<R> | null = null;
 
   options: OmitKeyof<LayerOptions<P, R>, "stack">;
   #open: boolean;
@@ -1465,13 +1480,9 @@ export class AppLayerController<
     if (client) {
       this.#client = client;
     } else if (isElementHost(host)) {
-      new ContextConsumer(host, {
-        context: layerClientContext,
-        subscribe: true,
-        callback: (c: LayerClient) => {
-          this.#client = c;
-          if (this.#connected) this.#sync();
-        },
+      resolveClientLazy(host, undefined, (c) => {
+        this.#client = c;
+        if (this.#connected) this.#sync();
       });
     }
     host.addController(this);
@@ -1492,11 +1503,24 @@ export class AppLayerController<
 
   hostDisconnected(): void {
     this.#connected = false;
-    if (this.#opened && this.#client) {
-      const stack = this.#client.getStack(this.#stackId);
-      const layer = stack.find(this.options.key);
+    if (!this.#opened || !this.#client) return;
+    const client = this.#client;
+    const stackId = this.#stackId;
+    const key = this.options.key;
+    const pending = this.#pendingOpen;
+    this.#opened = false;
+    this.#pendingOpen = null;
+
+    const dismissIfMounted = (): void => {
+      const stack = client.getStack(stackId);
+      const layer = stack.find(key);
       if (layer) stack.dismiss(layer, undefined as never);
-      this.#opened = false;
+    };
+
+    dismissIfMounted();
+    // Open may still be mounting — dismiss once it lands so the layer cannot leak.
+    if (pending) {
+      void pending.then(dismissIfMounted, dismissIfMounted);
     }
   }
 
@@ -1504,21 +1528,24 @@ export class AppLayerController<
     if (!this.#client) return;
     if (this.#open && !this.#opened) {
       this.#opened = true;
-      void this.#client
-        .open({
-          ...this.options,
-          stack: this.#stackId,
-          payload: this.payload,
-        } as OpenLayerOptions<P, R>)
-        .then((response) => {
-          this.#opened = false;
-          this.onResolved?.(response as R);
-        });
+      const pending = this.#client.open({
+        ...this.options,
+        stack: this.#stackId,
+        payload: this.payload,
+      } as OpenLayerOptions<P, R>) as Promise<R>;
+      this.#pendingOpen = pending;
+      void pending.then((response) => {
+        if (this.#pendingOpen !== pending) return;
+        this.#opened = false;
+        this.#pendingOpen = null;
+        this.onResolved?.(response);
+      });
     } else if (!this.#open && this.#opened) {
       const stack = this.#client.getStack(this.#stackId);
       const layer = stack.find(this.options.key);
       if (layer) stack.dismiss(layer, undefined as never);
       this.#opened = false;
+      this.#pendingOpen = null;
     }
   }
 }

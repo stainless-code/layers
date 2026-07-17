@@ -5,7 +5,7 @@ body:
   - type: markdown
     attributes:
       value: |
-        **Adapters** plug in via one seam — a binding that subscribes to `LayerStack.subscribe`/`getSnapshot` and renders the active stack in that library or framework's reactivity (`useSyncExternalStore`, Svelte runes, Vue refs, Solid accessors, Angular signals, Preact compat). See [`docs/architecture.md`](https://github.com/stainless-code/layers/blob/main/docs/architecture.md). Open an issue here first so we can agree on shape (entry point, optional peer, API) before a large PR.
+        **Adapters** plug in via one seam — a binding that subscribes to `LayerStack.subscribe`/`getSnapshot` and renders the active stack in that library or framework's reactivity (`useSyncExternalStore`, Svelte runes, Vue refs, Solid accessors, Angular signals, Preact compat, Lit Reactive Controllers). See [`docs/architecture.md`](https://github.com/stainless-code/layers/blob/main/docs/architecture.md). Open an issue here first so we can agree on shape (entry point, optional peer, API) before a large PR.
 
   - type: textarea
     id: problem
