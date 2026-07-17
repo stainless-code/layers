@@ -1,0 +1,100 @@
+---
+title: Core
+description: UI-agnostic engine — LayerClient, LayerStack, layerOptions, and headless stack observation.
+search:
+  tags: ["adapter", "core"]
+sidebar:
+  icon: /icons/vanilla.svg
+---
+
+`@stainless-code/layers` is the zero-dependency engine. App developers usually install a [framework adapter](/adapters) instead — it pulls the core in transitively and re-exports it. Reach for the core directly when building an adapter, or driving stack state in a headless, non-UI context.
+
+## Install
+
+```package-install
+npm i @stainless-code/layers
+```
+
+## Engine surface
+
+| Export | Role |
+| ------ | ---- |
+| `<Tooltip tip="App-wide coordinator for named layer stacks.">LayerClient</Tooltip>` | App-wide orchestrator — `open()`, `getStack()`, `ensureStack()`, `subscribeStacks()`, `dismissAll()` |
+| `LayerStack` | One named surface — `getSnapshot()`, `subscribe()`, `dismiss()`, `dismissAll()`, `addBlocker()`, `settle()`, `cancelQueued()` |
+| `layerOptions()` | Brand a reusable layer definition; `key` carries a `DataTag` for response inference |
+| `layerKey()` | Brand a key alone: `layerKey<R>()(key)` |
+| `DataTag`, `InferDataTagResponse`, `ResponseOf`, `ErrorOf` | Compile-time key branding helpers |
+| `createCallContext()` | Build the imperative `call` handle (`end`, `dismiss`, `update`, `settle`, `addBlocker`, …) |
+| `createLayer()` | Wire `layerOptions` + `LayerClient` → headless `LayerHandle` / `ValidatedLayerHandle` |
+| `createLayerGroup()` | Child stack scoped to a parent layer's lifetime |
+| `notifyManager` | `{ batch, batchCalls }` — coalesce notifications inside a tick |
+| `Register` | Module augmentation interface for app-wide `DefaultLayerError` |
+
+The core also exports `Layer`, `Subscribable`, `ControlledPromise`, `PayloadValidationError`, `isPayloadValidationError`, `hashKey`, `keySignature`, `childStackId`, and the full type surface (`LayerState`, `LayerPhase`, `LayerCallContext`, `StackOptions`, …). See [Core API](/reference/core-api).
+
+## Headless quick start
+
+Declare once, observe the stack, wire `call` in your renderer:
+
+```ts
+import {
+  LayerClient,
+  layerOptions,
+  createCallContext,
+} from "@stainless-code/layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+const client = new LayerClient();
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+});
+
+const stack = client.getStack("confirm");
+stack.subscribe(() => {
+  for (const state of stack.getSnapshot()) {
+    const layer = stack.getLayer(state.id)!;
+    const call = createCallContext(stack, layer, state);
+    // render state + call in your UI; call.end(response) resolves the caller's await
+  }
+});
+
+const ok = await client.open({
+  ...confirm,
+  payload: { title: "Remove item?" },
+});
+```
+
+Or bind the declaration once with `createLayer` — payload-only `open`, plus `stack`/`client`/`current` escapes:
+
+```ts
+import { createLayer } from "@stainless-code/layers";
+
+const c = createLayer(confirm, client);
+const ok = await c.open({ title: "Remove item?" });
+//    ^? boolean
+```
+
+`createLayer` has no reactive fields — adapters add `state`/`queued`/`top` via `useLayer` (see [Adapter hooks](/reference/adapter-hooks)).
+
+## App-wide error typing
+
+Augment `Register` once to set `DefaultLayerError`:
+
+```ts
+declare module "@stainless-code/layers" {
+  interface Register {
+    defaultError: AppError;
+  }
+}
+```
+
+## When to use the core directly
+
+- Building a new framework adapter
+- Headless scripts, tests, or non-UI hosts
+- Custom renderers that don't map to an existing adapter
+
+For lifecycle, blockers, transitions, and stacking rules, see [Concepts](/concepts). For adapter-specific bindings, pick a page from the [parity matrix](/adapters).

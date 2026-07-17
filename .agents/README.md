@@ -11,6 +11,7 @@ Source of truth for AI agent configuration. Cursor consumes via symlinks in `.cu
 | Tier 1 / 2 / 3 attachment modes   | [rules/agents-tier-system.md](rules/agents-tier-system.md)            |
 | Layers tier/pairing deltas        | [skills/writing-agents-config](skills/writing-agents-config/SKILL.md) |
 | Authoring new rules/skills (meta) | [`writing-great-skills`](skills/writing-great-skills/SKILL.md)        |
+| Product north-star (tenets)       | [`product-tenets`](skills/product-tenets/SKILL.md)                    |
 | Past corrections                  | [`lessons.md`](lessons.md)                                            |
 | What exists on disk right now     | `ls .agents/rules` · `ls .agents/skills`                              |
 

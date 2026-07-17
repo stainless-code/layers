@@ -1,0 +1,26 @@
+---
+title: Stability & versioning
+description: Experimental status, semver posture, and adapter parity promise.
+search:
+  tags: ["concept"]
+---
+
+Experimental — the API may change between minor releases. Pin your version. <Badge variant="warning">Experimental</Badge>
+
+While the project is pre-1.0, treat semver as a signal, not a guarantee of zero breaking changes until 1.0.
+
+## What we ship
+
+- A **zero-dep core** (`@stainless-code/layers`) and **six framework adapters** with engine + primitive parity — React, Preact, Solid, Angular, Vue, and Svelte.
+- When the engine gains capability, every adapter moves together.
+- Angular and Svelte diverge by design at the rendering surface (compiler-free builds → imperative / primitive APIs, not shipped outlet components).
+
+## Versioning posture
+
+- Pin your version in production apps rather than floating on `latest`.
+- Breaking changes are expected before 1.0 and ship in minor releases (e.g. `0.1` → `0.2`), not majors.
+- Changelog entries and migration notes will accompany intentional breaks once the public docs site publishes release history.
+
+:::warning[Production use]
+If you depend on Layers today, lock the version in `package.json` and review release notes before upgrading. The site banner links here for the full stability story.
+:::

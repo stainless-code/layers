@@ -1,0 +1,25 @@
+---
+title: Nested confirm + Base UI
+description: Compose Layers with Base UI for a child confirm inside a parent dialog.
+search:
+  tags: ["integration"]
+---
+
+import buSrc from "../../../recipes/nested-confirm/react.baseui.tsx?raw";
+
+Delete inside a parent dialog needs its own confirm — no `Dialog.Trigger` on either surface. `useLayer(parent)` + `useLayerGroup`/`group.open` mounts nested `Dialog.Root`s; `call.end` resolves each. See the [live demo](/examples/nested-confirm).
+
+## Recipe
+
+<CodeBlock code={buSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use `Dialog.Trigger` — one controlled `Dialog.Root` per layer.
+- Nest via the Layers layer group (`useLayerGroup` + `<group.Outlet />`), one `Dialog.Root` per layer — not stacked-in-one-component.
+- **Exit-animation crux** — `onOpenChangeComplete(false)` → `call.end` per dialog; Base UI owns portal/focus/scroll-lock.
+
+## Learn more
+
+- [Nested confirm example](/examples/nested-confirm) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

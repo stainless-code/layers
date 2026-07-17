@@ -1,0 +1,18 @@
+---
+title: Concepts
+description: Engine model — stacks, lifecycle, blockers, and the core/adapter boundary.
+search:
+  tags: ["concept"]
+---
+
+A headless `LayerClient` owns named stacks of layers; adapters subscribe and render — **framework-free** at the core. Read these pages for the mental model before diving into adapter-specific APIs.
+
+- [Overview](/concepts/overview) — core + adapter boundary
+- [When to use](/concepts/when-to-use) — use-case matrix
+- [Lifecycle](/concepts/lifecycle) — phase, transition, actionStatus
+- [Stacks, scope & GC](/concepts/stacks-scope-gc) — named stacks, serial/parallel, gcTime, upsert, update
+- [Identity & types](/concepts/identity-and-types) — keys, instance ids, DataTag inference
+- [Blockers](/concepts/blockers) — engine-level dismissal guards
+- [Notifications](/concepts/notifications) — notifyManager batching
+- [Stability & versioning](/concepts/stability) — experimental status and semver
+- [Glossary](/concepts/glossary) — ubiquitous language

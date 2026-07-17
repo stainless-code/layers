@@ -14,7 +14,7 @@
     "toast",
     "typescript"
   ],
-  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/core#readme",
+  "homepage": "https://stainless-code.com/layers/adapters/core",
   "bugs": {
     "url": "https://github.com/stainless-code/layers/issues"
   },

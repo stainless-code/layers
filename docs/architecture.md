@@ -4,7 +4,7 @@
 
 The design is self-contained: an app-wide client owns named, ordered stacks of layers; each adapter subscribes to a stack's snapshot and renders the active layers in that library or framework's reactivity; a caller opens a layer from anywhere and may `await` its typed result.
 
-For when to reach for this library (and when a plain component is simpler), see the [use-case matrix in the README](../README.md#when-to-use-it).
+For when to reach for this library (and when a plain component is simpler), see [When to use Layers](https://stainless-code.com/layers/concepts/when-to-use).
 
 ## Package boundary
 
@@ -48,7 +48,7 @@ Every adapter exposes the same primitives (client context, `useLayerClient`, wir
 
 ¹ Angular ships `renderStack(vcr)` — a compiler-free imperative outlet (`ViewContainerRef.createComponent` + `setInput`, id-keyed so state changes update inputs without recreating components). ² Angular has no `StackSubscribe`; its `useStack({ select })` signal is the idiomatic equivalent. ³ Angular's `useLayerGroup`/`createStackHook` expose `renderInto(vcr)` instead of an `Outlet` component; `createStackHook` returns `{ provideClient, useAppStack, renderInto }` (no `AppHost`/`AppLayer`). ⁴ Svelte ships no `.svelte` components: render with `{#each useStack().current as s}` + `callFor(s)` (runes) / `{#each $stack}` + `callFor(client, stackId, s)` (store) in your own markup. ⁵ Svelte's `useStack()` already returns the headless pair — `.current` (states) + `callFor`. ⁶ Svelte's `useLayerGroup` exposes the child `stack` (`SvelteStack` / `Readable`) instead of an `Outlet`.
 
-Per-adapter API detail lives in each package README; this matrix is the cross-adapter comparison for choosing and porting between adapters.
+Per-adapter API detail lives on the [Blume adapters pages](https://stainless-code.com/layers/adapters); this matrix is the cross-adapter comparison for choosing and porting between adapters.
 
 ## Layer lifecycle
 

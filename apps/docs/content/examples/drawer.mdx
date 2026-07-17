@@ -1,0 +1,63 @@
+---
+title: Drawer with slide-over panel
+description: Slide in a side panel and await a typed boolean result.
+search:
+  tags: ["example"]
+---
+
+import drawerSrc from "../../recipes/drawer/react.tsx?raw";
+import drawerWiringSrc from "../../recipes/drawer/react.wiring.tsx?raw";
+import drawerPreactSrc from "../../recipes/drawer/preact.tsx?raw";
+import drawerVueLayerSrc from "../../recipes/drawer/vue.vue?raw";
+import drawerVueHostSrc from "../../recipes/drawer/vue-host.vue?raw";
+import drawerSolidSrc from "../../recipes/drawer/solid.tsx?raw";
+import drawerSvelteRunesSrc from "../../recipes/drawer/svelte-runes.svelte?raw";
+import drawerSvelteStoreSrc from "../../recipes/drawer/svelte-store.svelte?raw";
+import drawerAngularSrc from "../../recipes/drawer/angular.ts?raw";
+
+A settings gear opens a slide-over panel. `useLayer(drawer)` + `await drawer.open({ title })` returns save or discard.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below; integrations with React Aria and Base UI
+live under [Integrations](/integrations).
+:::
+
+<DrawerExample />
+
+## Layers wiring
+
+Same contract as confirm — `useLayer(drawer)` + `await drawer.open(payload)` for save vs. cancel, as a slide-over. The recipes below wrap it in a real drawer.
+
+<CodeBlock code={drawerWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={drawerSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={drawerPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={drawerSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={drawerAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={drawerVueLayerSrc} lang="vue" title="Drawer.vue" /><CodeBlock code={drawerVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={drawerSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={drawerSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Integrations
+
+<CardGroup cols={2}>
+  <Card title="Drawer + React Aria" href="/integrations/react-aria/drawer" icon="/icons/react-aria.svg" arrow />
+  <Card title="Drawer + Base UI" href="/integrations/base-ui/drawer" icon="/icons/base-ui.svg" arrow />
+</CardGroup>
+
+## Variations
+
+- **Centered dialog** — same await pattern, different layout; see [Confirm dialog](/examples/confirm-dialog)
+- **First integration** — declare, mount, open; see [Getting started](/guides/getting-started)
+
+## Learn more
+
+- [Getting started](/guides/getting-started) — declare, mount, open, await
+- [Identity and types](/concepts/identity-and-types) — keys, stacks, and typed contracts

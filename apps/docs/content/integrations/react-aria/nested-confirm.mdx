@@ -1,0 +1,26 @@
+---
+title: Nested confirm + React Aria
+description: Compose Layers with React Aria for a child confirm inside a parent dialog.
+search:
+  tags: ["integration"]
+---
+
+import racSrc from "../../../recipes/nested-confirm/react.rac.tsx?raw";
+
+Delete inside a parent dialog needs its own confirm — no `DialogTrigger` on either surface. `useLayer(parent)` + `useLayerGroup`/`group.open` mounts nested RAC `Modal`s; `call.end` resolves each. See the [live demo](/examples/nested-confirm).
+
+## Recipe
+
+<CodeBlock code={racSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use RAC `DialogTrigger` — one controlled `Modal` per layer.
+- Nest via the Layers **layer group** (`useLayerGroup` + `<group.Outlet />`), NOT stacked-in-one-component — one RAC `Modal` per layer.
+- RAC owns portal/focus/scroll-lock per dialog — don't double-apply Layers-side equivalents.
+- Don't drive RAC exit timing via Layers' `transition` axis — defer `call.end` until the lib animation finishes.
+
+## Learn more
+
+- [Nested confirm example](/examples/nested-confirm) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

@@ -1,0 +1,55 @@
+---
+title: Async dialog with loadFn
+description: Load a layer's data before it settles — pending phase, then active with data.
+search:
+  tags: ["example"]
+---
+
+import asyncSrc from "../../recipes/async-loadfn/react.tsx?raw";
+import asyncWiringSrc from "../../recipes/async-loadfn/react.wiring.tsx?raw";
+import asyncPreactSrc from "../../recipes/async-loadfn/preact.tsx?raw";
+import asyncVueLayerSrc from "../../recipes/async-loadfn/vue.vue?raw";
+import asyncVueHostSrc from "../../recipes/async-loadfn/vue-host.vue?raw";
+import asyncSolidSrc from "../../recipes/async-loadfn/solid.tsx?raw";
+import asyncSvelteRunesSrc from "../../recipes/async-loadfn/svelte-runes.svelte?raw";
+import asyncSvelteStoreSrc from "../../recipes/async-loadfn/svelte-store.svelte?raw";
+import asyncAngularSrc from "../../recipes/async-loadfn/angular.ts?raw";
+
+Open a profile dialog that needs remote data first. `loadFn` runs before mount; the component shows a spinner in `"pending"`, then renders `data` in `"active"` — no fetch `useEffect`.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below.
+:::
+
+<AsyncLoadFnExample />
+
+## Layers wiring
+
+`loadFn` resolves the data the layer needs; the engine mounts the component in `phase: "pending"`, then moves to `phase: "active"` with `state.data` when the promise settles. The recipes below wrap it in a real dialog.
+
+<CodeBlock code={asyncWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={asyncSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={asyncPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={asyncSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={asyncAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={asyncVueLayerSrc} lang="vue" title="Profile.vue" /><CodeBlock code={asyncVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={asyncSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={asyncSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Variations
+
+- **Live payload updates** — mutate payload while mounted; see [Progress](/examples/progress)
+- **Awaiting results** — typed promises from handle `open` or `client.open(...)`; see [Awaiting results](/guides/awaiting-results)
+
+## Learn more
+
+- [Awaiting results](/guides/awaiting-results) — `loadFn` and the pending-to-active lifecycle
+- [Overview](/concepts/overview) — phases and the layer lifecycle

@@ -18,8 +18,14 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 
 ## Adapters
 
-- **Lit** + **Angular SSR** + **React Native** bindings if demand materializes.
+- **Qwik** + **Alpine** + **Marko** + **Angular SSR** + **React Native** bindings if demand materializes.
+- **[Lit adapter](./plans/lit-adapter.md)** (`@stainless-code/lit-layers`) — full matrix parity; controllers + `@lit/context` + light-DOM `<stack-outlet>`; grilled, ready to implement.
 - A **`HostAdapter`** contract is deliberately **not** planned — `StackOutlet` renders inline; consumers wrap it in their own `createPortal` if they need a portal target. Keeping the core agnostic means no host/portal abstraction baked in.
+
+## Docs site (`apps/docs/`, Blume)
+
+- **MCP server + Ask AI** — require `deployment.output: "server"` + a deploy adapter + API key + rate limits on `/api/ask`. `llms.txt` / `llms-full.txt` / per-page `.md` mirrors / `agent-readability.json` already cover the static agent surface.
+- **`<Component>`/`examples/` consolidation** — collapse the React (and optionally Vue/Svelte) live-demo slice onto Blume's native `<Component path=…>` (live preview + source tabs from one file); keep Solid/Preact/Angular as `?raw` code tabs. Large restructure; defer until the recipe matrix stabilizes.
 
 ## Out of scope
 

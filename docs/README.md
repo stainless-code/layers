@@ -1,12 +1,14 @@
 # Docs
 
-Repo-wide documentation hub for `@stainless-code/layers`. The package landing page is the root [`README.md`](../README.md) (install, quick start); this folder holds maintainer-facing reference and forward-looking work.
+Repo-wide documentation hub for `@stainless-code/layers`. Public docs live on the [Blume site](https://stainless-code.com/layers) — canonical for concepts, API, guides, examples, and adapter detail; the repo root [`README.md`](../README.md) is the repo landing. This folder holds maintainer-facing reference and forward-looking work.
 
 ## Reference
 
 - [`architecture.md`](./architecture.md) — the headless core + adapter model, entry-point layout, and the layer lifecycle. Brief; the full API contract lives in the JSDoc of each module.
 - [`glossary.md`](./glossary.md) — ubiquitous language for the layer/stack domain (layer, stack, client, phase, transition, call context, scope, gcTime, upsert, settle, blocker, dismissing, observer).
 - [`roadmap.md`](./roadmap.md) — forward-looking work only, not a mirror of `src/`.
+
+Public docs-site voice/tone lives in the [`docs-voice`](../.agents/skills/docs-voice/SKILL.md) skill (authoring guidance, not a `docs/` reference).
 
 ## Lifecycle folders
 

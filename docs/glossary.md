@@ -27,16 +27,16 @@ Ubiquitous language for the `@stainless-code/layers` domain. Keep terms stable a
 - **scope** — per-stack queueing on `StackOptions`: `scope: { strategy: "serial" | "parallel" }` (`parallel` when omitted); `serial` = one active layer at a time, `parallel` = stack freely.
 - **gcTime** — keep dismissed layers in a cache so re-opening the same key restores `data` without re-running `loadFn`. One slot per key (last-dismissed-wins); evicted after `gcTime` with explicit teardown.
 - **loadFn** — optional async load run on `open`; cancelable via `AbortController`; `pending` → `active` with `data` on success, `error` on throw.
-- **Observer / selector** — adapters subscribe to `LayerStack.getSnapshot()` and project via a selector (React `useSyncExternalStore`, Svelte runes, Vue `shallowRef`, Solid `from`, Angular `signal`).
+- **Observer / selector** — adapters subscribe to `LayerStack.getSnapshot()` and project via a selector (React `useSyncExternalStore`, Preact `useSyncExternalStore`, Solid `from`, Angular `signal`, Vue `shallowRef`, Svelte runes).
 - **Options helper** (`layerOptions`) — identity function carrying `<P, R, E, D>` generics so `LayerClient.open` infers the response type end-to-end.
-- **Outlet** — renders the active stack. React, Preact, Vue, and Solid ship `StackOutlet`; Angular exposes `renderStack(vcr)`; Svelte renders from `useStack().current` + `callFor`. See [adapter ergonomics](./architecture.md#adapter-ergonomics).
-- **Stack handles** (`useStackHandles`) — headless `{ states, getCall }` for custom hosts (React/Preact/Vue/Solid/Angular; Svelte's `useStack()` already returns `.current` + `callFor`). `StackOutlet` is the registered-component convenience built on it where shipped.
+- **Outlet** — renders the active stack. React, Preact, and Solid ship `StackOutlet`; Angular exposes `renderStack(vcr)`; Vue ships `StackOutlet`; Svelte renders from `useStack().current` + `callFor`. See [adapter ergonomics](./architecture.md#adapter-ergonomics).
+- **Stack handles** (`useStackHandles`) — headless `{ states, getCall }` for custom hosts (React/Preact/Solid/Angular/Vue; Svelte's `useStack()` already returns `.current` + `callFor`). `StackOutlet` is the registered-component convenience built on it where shipped.
 - **Layer group** — a child stack owned by a parent layer and tied to its lifetime: created via `createLayerGroup` / adapter `useLayerGroup`; when the parent dismisses, the group's stack auto-drains. Same `LayerClient`, no second client.
 - **Child stack** — the stack a layer group opens onto; id derived from the parent's `stackId` + `layerId` via `childStackId` (`` `${parentStackId}~${parentLayerId}~${name}` ``).
 - **Validator** (`validate`) — a Standard Schema or sync `(input) => output` fn that parses/validates a layer's `payload` at `open`; the layer stores the parsed output. Failure rejects `open` with a `PayloadValidationError`.
 - **createLayer** — core factory: `options` + `client` → headless `LayerHandle` / `ValidatedLayerHandle` (layer ops + `stack`/`client`/`options`/`current` escapes; no reactive field).
-- **LayerHandle** — return of plain `createLayer`. `open`/`upsert` take payload only; `dismiss`/`update` take optional `{ id?, force? }`; `cancelQueued` takes `{ id? }` (see **cancelQueued**).
-- **ValidatedLayerHandle** — when `options.validate` is set: `open`/`upsert` = schema **input**; `state`/`update`/`current` = parsed **output**.
+- **LayerHandle** — return of plain `createLayer`. `open`/`upsert` take payload only; `dismiss` takes `{ id?, force? }`; `update` / `cancelQueued` take `{ id? }` (see **cancelQueued**).
+- **ValidatedLayerHandle** — when `options.validate` is set: `open`/`upsert` = schema **input**; `current`/`update` = parsed **output**. Wired adapters also expose reactive `state`/`queued`/`top` as output.
 - **useLayer** — adapter wired handle (`createLayer` + reactive `state`/`queued`/`top`). Svelte: `createLayer`; Angular: `injectLayer`.
 - **useLayerState** / **useLayerQueuedState** / **useQueuedStack** — observe-only (mounted per-key / queued per-key / queued whole-stack); return `LayerState[]` (or framework wrappers). Renamed/added vs the old singular `useLayer(key, …)`.
 - **current** — live-checked bound instance on a handle (`Layer | null`); correlation + explicit `{ id }` — not a hidden control default.

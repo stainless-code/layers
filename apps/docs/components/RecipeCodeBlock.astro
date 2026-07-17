@@ -1,0 +1,26 @@
+---
+// Wraps the built-in <CodeBlock> so long recipe code scrolls in place (vertical
+// max-height on the inner <code>, not the <pre>) — the <pre> stays static so
+// Blume's absolute copy button + header don't drift. Short blocks are unaffected.
+import CodeBlock from "blume/components/content/CodeBlock.astro";
+
+interface Props {
+  code: string;
+  lang?: string;
+  icons?: boolean;
+  title?: string;
+}
+
+const { code, lang, icons, title } = Astro.props;
+---
+
+<div class="recipe-code">
+  <CodeBlock code={code} lang={lang} icons={icons} title={title} />
+</div>
+
+<style is:global>
+  .recipe-code pre.astro-code code {
+    max-height: 28rem;
+    overflow-y: auto;
+  }
+</style>

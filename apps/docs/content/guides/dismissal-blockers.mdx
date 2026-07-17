@@ -1,0 +1,89 @@
+---
+title: Dismissal blockers
+description: Gate user-intent dismissal with addBlocker, dismissing, dismissAll modes, and force.
+search:
+  tags: ["guide"]
+---
+
+Blockers let you ask "discard unsaved changes?" before a layer closes. They gate engine dismissal paths — `call.end`/`call.dismiss` and `stack.dismiss`/`stack.dismissAll`. Backdrop clicks and Esc are not core events; wire them to `call.end`/`call.dismiss` if they should consult blockers. System teardown is never gated.
+
+See [Blockers](/concepts/blockers) for the full model.
+
+## Register blockers
+
+Two scopes, one gate — any veto blocks the attempt:
+
+```ts lineNumbers
+// instance scope — dirty state on this layer
+const dispose = call.addBlocker(() => { // [!code highlight]
+  if (isDirty) return false; // veto
+  return true; // allow
+});
+
+// stack scope — app-wide policy
+const disposeStack = stack.addBlocker((layer) => {
+  return !layer.payload.locked;
+});
+```
+
+Both return a disposer. Predicates may be async; `dismiss` awaits them.
+
+## Return value and force
+
+`call.end` and `call.dismiss` return `Promise<boolean>` — `true` if dismissed, `false` if vetoed:
+
+```tsx
+const didDismiss = await call.dismiss(undefined);
+if (!didDismiss) {
+  // show confirm UI — your own layer, not opened by core
+}
+```
+
+Bypass blockers with `{ force: true }`:
+
+```ts
+await call.end(response, { force: true });
+await call.dismiss(response, { force: true });
+```
+
+While blockers evaluate, `dismissing` is `true` on the layer state — disable close buttons during async confirm:
+
+```tsx lineNumbers
+function Editor({ call, dismissing }: LayerComponentProps<void, void>) {
+  return (
+    <button disabled={dismissing} onClick={() => void call.dismiss()}>
+      Close
+    </button>
+  );
+}
+```
+
+## dismissAll modes
+
+`stack.dismissAll(response, opts?)` is async:
+
+| Mode | Behavior |
+| ---- | -------- |
+| `"skipBlocked"` (default) | Attempt each; close permitted, leave blocked open |
+| `"stopAtBlocked"` | Process in order; halt at first blocked |
+| `"force"` | Bypass all blockers |
+
+```ts
+await stack.dismissAll(undefined, { mode: "stopAtBlocked" });
+```
+
+Default mode is configurable via `StackOptions.dismissAllMode` or `LayerClientOptions.defaultStackOptions`.
+
+## What blockers skip
+
+| Path | Blockers |
+| ---- | -------- |
+| `call.end` / `call.dismiss` | Honored |
+| `stack.dismiss` / `stack.dismissAll` | Honored |
+| `cancelQueued` (serial, never mounted) | Skipped |
+| Component/outlet unmount, route teardown | Skipped (force) |
+| Layer-group cascade on parent dismiss | Skipped (force) — guard the parent |
+
+:::danger
+Predicate throw/reject is treated as a veto (fail-closed). Confirm UI for async blockers is always your responsibility — core never opens UI on your behalf.
+:::

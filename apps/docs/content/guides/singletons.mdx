@@ -1,0 +1,69 @@
+---
+title: Singletons
+description: One live instance per key with upsert and live payload updates via update.
+search:
+  tags: ["guide"]
+---
+
+Toasts, snackbars, and progress indicators share one surface: a single layer instance whose payload changes over time. Use `upsert` to reuse an existing key and `update` to patch the live payload.
+
+## Upsert on open
+
+Pass `upsert: true` when opening (or set it on `layerOptions`) so a second open with the same key merges into the existing layer instead of stacking a duplicate:
+
+```ts lineNumbers
+const toast = layerOptions<{ msg: string }>({
+  stack: "toast",
+  key: ["toast"],
+  component: Toast,
+  upsert: true, // [!code highlight]
+});
+
+void client.open({ ...toast, payload: { msg: "Saved" } });
+void client.open({ ...toast, payload: { msg: "Synced" } }); // same instance, payload merged
+```
+
+## Live updates
+
+Inside the layer, call `call.update(patch)` to patch payload without re-opening:
+
+```tsx lineNumbers
+function Toast({ call, payload }: LayerComponentProps<{ msg: string }>) {
+  return <div>{payload.msg}</div>;
+}
+
+// elsewhere, while the toast is active:
+const stack = client.getStack("toast");
+const layer = stack.find(["toast"]);
+if (layer) {
+  stack.update(layer, { msg: "Uploading… 42%" }); // [!code highlight]
+}
+```
+
+`call.update` is the same operation scoped to the active instance:
+
+```tsx lineNumbers
+function Progress({ call, payload }: LayerComponentProps<{ pct: number }>) {
+  useEffect(() => {
+    const id = setInterval(() => {
+      call.update({ pct: payload.pct + 1 }); // [!code highlight]
+    }, 100);
+    return () => clearInterval(id);
+  }, [call, payload.pct]);
+  return <progress value={payload.pct} max={100} />;
+}
+```
+
+## When to use
+
+| Pattern | API |
+| ------- | --- |
+| Replace content on repeat open | `upsert: true` on `open` |
+| Patch while mounted | `call.update(patch)` or `stack.update(layer, patch)` |
+| Dismiss the singleton | `call.dismiss()` or `stack.dismiss(layer)` |
+
+:::note
+`upsert` re-validates when `validate` is set — invalid input rejects `open` and leaves the existing layer unchanged.
+:::
+
+See [Stacks, scope, and gcTime](/concepts/stacks-scope-gc) for how key identity drives `find` and `upsert`.

@@ -1,0 +1,172 @@
+---
+title: Comparison
+description: Where Layers fits among modal and overlay managers — by product category, not a flat feature scorecard.
+search:
+  tags: ["concept"]
+---
+
+A confirm dialog, a toast, a drawer — lots of libraries ship one. They are not all the same product. This page sorts them by **what they're trying to be**, then compares on the axes Layers targets.
+
+Experimental — the API may change between minor releases. Pin your version. See [Stability](/concepts/stability) for semver posture.
+
+## Four kinds of "modal library"
+
+| Category | Examples | Compare on |
+| --- | --- | --- |
+| Orchestration engine | Layers, react-call, ui-call, overlastic | Engine depth + typing + composability |
+| Registry / reducer manager | nice-modal-react, overlay-kit | React DX + adoption |
+| Batteries-included UI | @mantine/modals, vue-final-modal, react-dialog-flow | Integration depth — different category |
+| DOM primitive | Ark/Zag, @corvu/dialog, ui-primitives | Complementary — pair, don't compete |
+
+## What Layers targets (and what it delegates by design)
+
+Layers owns **state coordination, not UI ownership**. The matrix below scores engine axes only — typed <Tooltip tip="A branded key on layerOptions; open() infers payload and response types via DataTag.">await</Tooltip>, named stacks, serial queues, <Tooltip tip="A consumer predicate that gates dismissal; true allows, falsy or a thrown error vetoes.">blockers</Tooltip>, and the rest. Focus traps, portals, backdrop, and confirm chrome live in your component library.
+
+Two views: this matrix contrasts **one exemplar per category**; the [full spectrum](#across-the-whole-landscape) below scores **every audited library across all six frameworks**. Columns here are the libraries evaluators most often weigh against Layers — the React registry incumbents (`nice-modal`, `overlay-kit`), the closest React DX peer (`react-call`), the highest-adoption batteries-included manager (`@mantine/modals` — the category contrast), and the closest multi-framework peer (`overlastic`). Non-React peers like `kolirt/vue-modal`, `@gwn-sheet-stack`, and `dialog-fn` are in the full-spectrum tables.
+
+| Capability | Layers | react-call | nice-modal | overlay-kit | @mantine/modals | overlastic |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Category** | Orchestration engine | Orchestration engine | Registry / reducer | Registry / reducer | Batteries-included UI | Orchestration engine |
+| Multi-framework | ✅ 6 | ❌ R | ❌ R | ❌ R | ❌ R | ✅ 4 |
+| Zero-dep core | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
+| Typed await | ✅ DataTag | ✅ | 🟡 | 🟡 | ❌ | 🟡 |
+| Named stacks | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Serial queue + cancel | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Async blockers | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| loadFn + abort + gc | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Payload validation | ✅ Std Schema | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Nested groups | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Upsert / live-update | ✅ | ✅ | 🟡 | 🟡 | ✅ | 🟡 |
+| Transition axis | ✅ 3-state+settle | 🟡 exit delay | 🟡 delayVisible | 🟡 close/unmount | 🟡 | ❌ |
+| SSR subscribe-safe | ✅ | ✅ EMPTY_STACK | 🟡 | 🟡 | 🟡 | ❌ |
+
+Legend: ✅ full · 🟡 partial · ❌ none · (R) React-only. Cells are engine axes only — see the next section for what Layers deliberately leaves to your UI stack.
+
+## By design, not missing
+
+Focus containment, ARIA/dialog semantics, portals/top-layer, backdrop/Escape, scroll lock, z-order, a built-in confirm preset — Layers ships none of these in core. Your component library (Radix, React Aria, Base UI, Mantine, …) owns them; Layers orchestrates the state. See [Headless rendering](/guides/headless-rendering) and [Overview](/concepts/overview).
+
+## Across the whole landscape
+
+The matrix above contrasts one exemplar per category. The tables below are the full spectrum — every audited library a real evaluator weighs, across all six frameworks, scored on the engine axes Layers targets. One table per category (orchestration engines split into multi-framework and single-framework so no table is wider than the eye can scan). **Layers is the baseline column in every table — the only column green on every row.** `R/V/S/Solid/Ang` = React/Vue/Svelte/Solid/Angular; `Nfw` = N frameworks.
+
+**Multi-framework orchestration engines**
+
+| Capability | Layers | overlastic | ui-call | dialog-fn | @gwn-sheet-stack |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| Multi-framework | ✅ 6 | ✅ 4 | ✅ 5 | 🟡 3 | 🟡 2 |
+| Zero-dep core | ✅ | ✅ core | ✅ | ✅ | ✅ |
+| Typed await | ✅ DataTag | 🟡 generic | 🟡 generic | 🟡 dismiss=undefined | ✅ `push<R>` |
+| Named stacks | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Serial queue + cancel | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Async blockers | ✅ | ❌ | ❌ | ❌ | ❌ |
+| loadFn + abort + gc | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Payload validation | ✅ Std Schema | ❌ | ❌ | ❌ | ❌ |
+| Nested groups | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Upsert / live-update | ✅ | 🟡 only | 🟡 singleton | 🟡 | 🟡 snapshot |
+
+**Single-framework orchestration engines**
+
+| Capability | Layers | react-call | jenesius-vue-modal | ngx-call | @angular-libs/dialog | @svelte-put/async-stack |
+| --- | :---: | :---: | :---: | :---: | :---: | :---: |
+| Multi-framework | ✅ 6 | ❌ React | ❌ Vue | ❌ Angular | ❌ Angular | ❌ Svelte |
+| Zero-dep core | ✅ | ✅ | — | ✅ | — | ✅ |
+| Typed await | ✅ DataTag | ✅ generic | 🟡 any | ✅ generic | ❌ | ✅ resolution |
+| Named stacks | ✅ | ❌ | ✅ NamespaceStore | ❌ | ❌ global list | ❌ single |
+| Serial queue + cancel | ✅ | ❌ | 🟡 close-guard | ❌ | ❌ | ❌ |
+| Async blockers | ✅ | ❌ | ❌ | ❌ | 🟡 beforeClose+plugin | 🟡 onResolve+cancel |
+| loadFn + abort + gc | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Payload validation | ✅ Std Schema | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Nested groups | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Upsert / live-update | ✅ | ✅ | — | ✅ | — | — |
+
+**Registry / reducer managers**
+
+| Capability | Layers | nice-modal-react | overlay-kit | pushmodal | @ngneat/dialog |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| Multi-framework | ✅ 6 | ❌ React | ❌ React | ❌ React | ❌ Angular |
+| Zero-dep core | ✅ | ✅ | ✅ | — | — |
+| Typed await | ✅ DataTag | 🟡 unknown | 🟡 generic | ❌ void | ✅ afterClosed$ |
+| Named stacks | ✅ | ❌ id-map | ❌ | ✅ LIFO | ❌ |
+| Serial queue + cancel | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Async blockers | ✅ | ❌ | ❌ | ❌ | 🟡 beforeClose |
+| loadFn + abort + gc | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Payload validation | ✅ Std Schema | ❌ | ❌ | ❌ | ❌ |
+| Nested groups | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Upsert / live-update | ✅ | 🟡 | 🟡 | 🟡 replaceWith | — |
+
+**Batteries-included UI** (different product category — ships DOM/a11y)
+
+| Capability | Layers | @mantine/modals | vue-final-modal | svelte-promise-modals | kolirt/vue-modal |
+| --- | :---: | :---: | :---: | :---: | :---: |
+| Multi-framework | ✅ 6 | ❌ React | ❌ Vue | ❌ Svelte | ❌ Vue |
+| Zero-dep core | ✅ | ❌ @mantine/core | ❌ @vueuse+focus-trap | ❌ focus-trap+deepmerge | — |
+| Typed await | ✅ DataTag | ❌ string id | ❌ lifecycle strings | ✅ closeModal prop | ✅ awaitable |
+| Named stacks | ✅ | ❌ | ❌ | ❌ | ✅ grouped |
+| Serial queue + cancel | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Async blockers | ✅ | ❌ | 🟡 beforeClose.stop() | ❌ | ✅ async guards |
+| loadFn + abort + gc | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Payload validation | ✅ Std Schema | ❌ | ❌ | ❌ | ❌ |
+| Nested groups | ✅ | ❌ | ❌ | 🟡 child | ✅ |
+| Upsert / live-update | ✅ | ✅ updateModal | 🟡 patchOptions | ❌ | ✅ replace |
+
+**DOM primitive** (complementary — pair, don't compete)
+
+| Capability | Layers | @corvu/dialog | Ark / Zag |
+| --- | :---: | :---: | :---: |
+| Multi-framework | ✅ 6 | ❌ Solid | ✅ R/V/S/Solid |
+| Zero-dep core | ✅ | ✅ | ✅ |
+| Typed await | ✅ DataTag | ❌ no await | ❌ no await |
+| Named stacks | ✅ | ❌ | ❌ |
+| Serial queue + cancel | ✅ | ❌ | ❌ |
+| Async blockers | ✅ | ❌ | ❌ |
+| loadFn + abort + gc | ✅ | ❌ | ❌ |
+| Payload validation | ✅ Std Schema | ❌ | ❌ |
+| Nested groups | ✅ | ❌ | ❌ |
+
+Legend: ✅ full · 🟡 partial · ❌ none. Cells are engine axes only — focus traps, portals, ARIA, and backdrop are delegated to your UI stack (see [By design, not missing](#by-design-not-missing)). `kolirt/vue-modal` is the closest non-React analog: it matches Layers on grouped stacks, async guards, and nested groups, but ships Reka UI integration (batteries) and lacks the serial queue, `loadFn`/abort/`gc`, and Standard Schema validation. The long tail of dormant/abandoned footnote libraries (svelte-modals, vue-modals, demodal, react-popup-manager, …) is covered in the internal landscape research; omitted here because they add no decision signal.
+
+## Adoption (market snapshot, not capability)
+
+:::note
+Stars and npm downloads measure adoption, not engine depth. Layers is v0.1.0 and pre-launch — adoption lag is not an engine verdict.
+
+Last verified: 2026-07-15
+:::
+
+| Library | Category | Stars | npm dl/mo | Note |
+| --- | --- | --- | --- | --- |
+| nice-modal-react | Registry / reducer | ~2.3k | ~1.1M | Incumbent registry (React) |
+| react-call | Orchestration engine | ~1.3k | ~160k | Closest React DX peer |
+| overlay-kit | Registry / reducer | ~0.7k | ~190k | Toss-backed reducer (React) |
+| react-modal-hook | Registry / reducer | ~0.25k | ~292k | Hook + portal host (React, migration pool) |
+| react-modal-promise | Registry / reducer | ~0.07k | ~187k | Promise primitive (React, migration pool) |
+| pushmodal | Registry / reducer | ~0.2k | ~10k | shadcn LIFO stack (React) |
+| @mantine/modals | Batteries-included UI | (in 31.4k★ monorepo) | — | Batteries-included (React) |
+| vue-final-modal | Batteries-included UI | ~1k | ~275k | Vue batteries-included (stalled since 2024-09) |
+| @corvu/dialog | DOM primitive | ~0.7k | ~38k | Solid DOM primitive (complementary) |
+| jenesius-vue-modal | Orchestration engine | ~160 | ~19k | Vue orchestration engine |
+| svelte-promise-modals | Batteries-included UI | ~34 | — | Svelte batteries-included |
+| Layers | Orchestration engine | ~1 | — | v0.1.0, pre-launch |
+
+Live demos, source, and the changelog are the proof — not a star count.
+
+## Per-framework peers — maintenance & status
+
+Capability for these is in the [table above](#across-the-whole-landscape); this section carries the human context the cells can't — who's still shipping, who stalled, who's gone.
+
+- **Vue** — `jenesius-vue-modal` active (Jun 2026); `kolirt/vue-modal` closest Vue analog (grouped stacks + async guards + nested groups, Reka UI integration); `vue-final-modal` stalled since 2024-09.
+- **Svelte** — `svelte-promise-modals` active (Jul 2026); `@svelte-put/async-stack` engine peer (pause/resume + progress recipe); `svelte-modals` dormant (Mar 2025).
+- **Solid** — `@corvu/dialog` active DOM primitive (pair with Layers, not compete); `solid-modal-manager` declarative registry.
+- **Angular** — `ngx-call` react-call port (low adoption); `@ngneat/dialog` source gone, still ~5.7k dl/wk — a vacuum; `@angular-libs/dialog` native `<dialog>` + plugin lifecycle (created 2026-05).
+- **Multi-framework** — `@gwn-sheet-stack` tier-1 architectural peer (headless core + FSM + router adapters, 2fw, pre-1.0); `overlastic` 4fw partial engine (DOM-mount); `dialog-fn` 3fw cleanest core+adapter split; `ui-call` 5fw, abandoned Feb 2026.
+
+## When not to choose Layers
+
+- **Turnkey modal UX, zero wiring** → `@mantine/modals` or `vue-final-modal` ship the UI and a11y for you.
+- **A single local dialog, no return value, no stacking** → a plain controlled component is simpler. See [When to use Layers](/concepts/when-to-use).
+- **You need a focus-trap / dialog primitive, not orchestration** → Ark/Zag or `@corvu/dialog`.
+
+## Migrating from one of these
+
+See [Migration](/reference/migration) for breaking-change policy; per-library migration recipes (nice-modal, react-call, overlay-kit, @mantine/modals, …) land as the adapter guides grow.

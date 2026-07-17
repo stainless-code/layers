@@ -1,0 +1,38 @@
+---
+title: Notifications
+description: How notifyManager batches rapid stack mutations into a single UI re-render.
+search:
+  tags: ["concept"]
+---
+
+Three opens in one tick should cost one re-render, not three. Stack mutations (`open`, `dismiss`, `update`, `settle`, `cancelQueued`, …) run inside `notifyManager.batch`. `Subscribable` wraps listeners in `batchCalls` — one flush per tick, one re-render.
+
+## How it works
+
+```ts
+// Inside the engine — mutations are batched automatically
+notifyManager.batch(() => {
+  // stack mutations for this tick
+});
+```
+
+The flush is **synchronous** — predictable, UI-agnostic, and requires no per-adapter scheduler. Adapters subscribe to `LayerStack.subscribe`; when the batch flushes, every listener fires once.
+
+## Coalescing your own calls
+
+To coalesce several independent calls in one tick into a single notification across every adapter, wrap them yourself:
+
+```ts
+import { notifyManager } from "@stainless-code/layers";
+
+notifyManager.batch(() => {
+  client.open(a);
+  client.open(b);
+});
+```
+
+Without the wrapper, each `open` would still batch its internal mutations, but two separate top-level `open` calls in the same synchronous block would each trigger a notification unless wrapped.
+
+:::note
+`notifyManager` exports `{ batch, batchCalls }`. `batchCalls` is what `Subscribable` uses at subscribe time to defer listener invocation until the current batch completes.
+:::

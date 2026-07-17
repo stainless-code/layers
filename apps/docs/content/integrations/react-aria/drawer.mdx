@@ -1,0 +1,25 @@
+---
+title: Drawer + React Aria
+description: Compose Layers with React Aria Components for a slide-over drawer.
+search:
+  tags: ["integration"]
+---
+
+import racSrc from "../../../recipes/drawer/react.rac.tsx?raw";
+
+Settings belong in a slide-over — RAC has no Drawer, so style a controlled `Modal` as a sheet. `useLayer(drawer)` + `await drawer.open({ title: "Settings" })`; `call.end` returns the typed boolean. See the [live demo](/examples/drawer).
+
+## Recipe
+
+<CodeBlock code={racSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use RAC's trigger wrappers — controlled overlay while mounted (`isOpen` literal `true`, `onOpenChange(false)` is the dismiss signal).
+- RAC owns focus trap / portal / scroll-lock — don't double-apply Layers-side equivalents.
+- For animated slide-over exit, hold local `exiting` and `call.end(result)` on `onAnimationComplete`. Don't drive RAC exit timing via Layers' `transition` axis.
+
+## Learn more
+
+- [Drawer example](/examples/drawer) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

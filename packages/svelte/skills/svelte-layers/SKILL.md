@@ -14,7 +14,7 @@ metadata:
   library_version: "0.1.0"
   framework: "svelte"
 sources:
-  - https://github.com/stainless-code/layers/blob/main/packages/svelte/README.md
+  - https://stainless-code.com/layers/adapters/svelte/runes
   - https://github.com/stainless-code/layers/blob/main/docs/architecture.md
 ---
 
@@ -35,7 +35,7 @@ Reach for `@stainless-code/svelte-layers` to open overlay UI imperatively from a
 
 Skip it only for a single, always-local overlay with no return, stacking, queue, animation, or guard needs and no wish for a global registry.
 
-Full fit matrix: [README — When to use it](https://github.com/stainless-code/layers#when-to-use-it).
+Full fit matrix: [When to use Layers](https://stainless-code.com/layers/concepts/when-to-use).
 
 ## Install
 

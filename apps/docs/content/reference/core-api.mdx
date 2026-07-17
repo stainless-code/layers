@@ -1,0 +1,238 @@
+---
+title: Core API
+description: Curated reference for LayerClient, LayerStack, layerOptions, typing helpers, and core utilities.
+search:
+  tags: ["reference", "api"]
+---
+
+Symbols below are exported from `@stainless-code/layers` (`packages/core`). React/Preact/Solid/Angular/Vue re-export the full core. Svelte re-exports selectively — core's headless `createLayer` is `createLayerHandle`.
+
+:::note[Curated overview]
+This page is a hand-written tour of the core API — method-purpose tables and type tables pulled live from source via `<AutoTypeTable>`. For the authoritative, exhaustive reference (every export, including internals like `ControlledPromise`, `Subscribable`, and all type aliases), see the [generated API reference](/reference/api/core).
+:::
+
+## LayerClient
+
+App-wide coordinator for named layer stacks.
+
+```ts lineNumbers
+class LayerClient {
+  constructor(opts?: LayerClientOptions);
+  open(options): Promise<R>;
+  getStack(id?: string): LayerStack;
+  ensureStack(id: string, options?: StackOptions): LayerStack;
+  getStackIds(): string[];
+  subscribeStacks(listener: (stackId: string) => void): () => void;
+  dismissAll(stackId?: string, response?: unknown, opts?: DismissAllOptions): Promise<void>;
+}
+```
+
+| Method | Purpose |
+| ------ | ------- |
+| `open` | Opens a layer on a stack; resolves with the dismissal response (or rejects on load/validation failure) |
+| `getStack` | Returns a stack by id, creating the default stack on first access |
+| `ensureStack` | Returns a stack, applying `StackOptions` only when creating it |
+| `getStackIds` | Lists materialized stack ids |
+| `subscribeStacks` | Notifies when a stack is created for the first time |
+| `dismissAll` | Async bulk dismiss on one stack (honors blockers unless `mode: "force"`) |
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerClientOptions" />
+
+## LayerStack
+
+Ordered layers for one surface. Extends `Subscribable` — use `subscribe` for snapshot updates.
+
+```ts lineNumbers
+class LayerStack {
+  readonly id: string;
+  readonly options: StackOptions;
+
+  getSnapshot(): LayerState[];
+  getQueuedSnapshot(): LayerState[];
+  subscribe(listener: () => void): () => void;
+
+  find(key: LayerKey): Layer | undefined; // topmost same-key (findLast)
+  getLayer(id: string): Layer | undefined;
+  dismiss(layer, response?, opts?: DismissOptions): Promise<boolean>;
+  dismissAll(response?, opts?: DismissAllOptions): Promise<void>;
+  addBlocker(fn: StackBlockerFn): () => void;
+  cancelQueued(key: LayerKey, response, opts?: { id?: string }): boolean;
+  settle(layer): void;
+  setRunning(layer, running: boolean): void;
+  update(layer, patch: Partial<P>): void;
+}
+```
+
+| Method | Purpose |
+| ------ | ------- |
+| `getSnapshot` | Stable-ref snapshot of mounted layers (`pending`/`active`/`dismissed`/`error`) |
+| `getQueuedSnapshot` | Serial-scope queue — layers waiting behind an active layer |
+| `subscribe` | Register for snapshot changes (batched via `notifyManager`) |
+| `find` | Topmost mounted layer for a logical key (key signature; `findLast`) |
+| `dismiss` | Resolve one layer; returns whether dismissal succeeded (blockers may veto) |
+| `cancelQueued` | Resolve a serial `queued` layer without mounting; omit `{ id }` → FIFO head for the key, `{ id }` → exact queued instance |
+| `addBlocker` | Stack-scoped dismiss gate; returns a disposer |
+
+## LayerState
+
+Immutable snapshot of one layer, consumed by selectors.
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerState" />
+
+## StackOptions
+
+Per-stack options passed to `ensureStack` or `LayerClientOptions.defaultStackOptions`.
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="StackOptions" />
+
+## layerOptions
+
+Brands a reusable options object's `key` with `DataTag` so `open` infers response and error types without an explicit generic.
+
+```ts
+function layerOptions<P, R = void, E = DefaultLayerError, D = unknown, RootProps = unknown>(
+  options: LayerOptions<P, R, E, D, RootProps> & { key: Key },
+): LayerOptions<P, R, E, D, RootProps> & { key: DataTag<Key, R, E> };
+```
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerOptions" />
+
+:::note[Phantom fields]
+`LayerOptions` carries three `@internal` phantom fields (`_payload`, `_response`, `_error`) that carry generics through inference without runtime values — they appear in the table above for completeness and can be ignored.
+:::
+
+## layerKey and DataTag
+
+`layerKey<R, E>()` tags a key at the call site. `DataTag<Key, R, E>` is the phantom brand type that carries inference through generics.
+
+```ts
+function layerKey<R, E = DefaultLayerError>(): <const Key extends LayerKey>(
+  key: Key,
+) => DataTag<Key, R, E>;
+
+type DataTag<Key extends LayerKey, R, E = DefaultLayerError>;
+type ResponseOf<Key, Fallback = void>;
+type ErrorOf<Key, Fallback = DefaultLayerError>;
+```
+
+## Register and DefaultLayerError
+
+Module augmentation sets the app-wide error default once:
+
+```ts
+interface Register {}
+
+type DefaultLayerError = Register extends { defaultError: infer E } ? E : Error;
+```
+
+```ts
+declare module "@stainless-code/layers" {
+  interface Register {
+    defaultError: AppError;
+  }
+}
+```
+
+## Payload validation errors
+
+Optional `validate` on `open` / `layerOptions` rejects synchronously before mount.
+
+```ts
+class PayloadValidationError extends Error {
+  readonly issues: ReadonlyArray<ValidationIssue>;
+}
+
+function isPayloadValidationError(value: unknown): value is PayloadValidationError;
+```
+
+## createLayer
+
+Wire `layerOptions` + a `LayerClient` into a headless handle. Adapters wrap this in reactive `useLayer` / `injectLayer` / `createLayer`.
+
+```ts
+function createLayer<P, R, …>(
+  options: LayerOptions<P, R, …> & { key: LayerKey },
+  client: LayerClient,
+): LayerHandle<P, R, …>;
+
+function createLayer<V extends Validator<unknown>, R, …>(
+  options: LayerOptions<InferValidatorOutput<V>, R, …> & { key: LayerKey; validate: V },
+  client: LayerClient,
+): ValidatedLayerHandle<V, R, …>;
+```
+
+```ts
+const confirm = createLayer(confirmOptions, client);
+const ok = await confirm.open({ title: "Remove?" });
+confirm.dismiss(false);
+confirm.cancelQueued(undefined, { id: "queued-id" }); // optional exact match
+```
+
+<AutoTypeTable path="../../packages/core/src/createLayer.ts" name="LayerHandle" />
+
+When `options.validate` is set, `ValidatedLayerHandle` narrows `open`/`upsert` to schema **input** and `current`/`update` to parsed **output**.
+
+## createCallContext
+
+Builds the imperative `call` object passed to layer components. Adapters call this when rendering.
+
+```ts
+function createCallContext<P, R, RootProps = unknown>(
+  stack: LayerStack,
+  layer: Layer,
+  state: LayerState,
+  rootProps?: RootProps,
+): LayerCallContext<P, R, RootProps>;
+```
+
+`LayerCallContext` exposes `end`, `dismiss`, `addBlocker`, `update`, `setRunning`, `settle`, plus read-only `ended`, `index`, `stackSize`, `root`, `stackId`, and `layerId`.
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerCallContext" />
+
+## LayerComponentProps
+
+Props passed to layer components by adapters when rendering a mounted layer.
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerComponentProps" />
+
+## createLayerGroup
+
+Child stack scoped to a parent layer's lifetime on the same client.
+
+```ts
+function childStackId(
+  parent: Pick<LayerCallContext, "stackId" | "layerId">,
+  name?: string,
+): string;
+
+function createLayerGroup(
+  client: LayerClient,
+  parent: Pick<LayerCallContext, "stackId" | "layerId">,
+  options?: LayerGroupOptions,
+): LayerGroupHandle;
+```
+
+`LayerGroupHandle` provides `stackId`, `open`, `dismissAll`, and `dispose`.
+
+## notifyManager
+
+Coalesces subscriber notifications within a synchronous batch.
+
+```ts
+const notifyManager = {
+  batch<T>(fn: () => T): T;
+  batchCalls(listener: () => void): () => void;
+};
+```
+
+Wrap independent mutations that should produce one UI update: `notifyManager.batch(() => { client.open(a); client.open(b); })`.
+
+## Dismiss options
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="DismissAllOptions" />
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="DismissOptions" />
+
+:::note
+For lifecycle, blockers, transitions, and stack scope, see [Concepts](/concepts). For per-framework bindings, see [Adapter hooks](/reference/adapter-hooks).
+:::

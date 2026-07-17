@@ -1,0 +1,85 @@
+---
+title: Examples
+description: Live, runnable recipes using the real Layers library in your browser.
+search:
+  tags: ["example"]
+---
+
+:::note[Frameworks]
+The live demo on each page uses the React adapter. Each example has a **Recipes** tab group with all framework adapters. React Aria and Base UI compositions live under [Integrations](/integrations). See [Adapters](/adapters) for the per-framework API.
+:::
+
+Each demo runs the real library in your browser. Pick a recipe:
+
+<CardGroup cols={2}>
+  <Card
+    title="Confirm dialog with a typed result"
+    description="Open a confirm dialog from anywhere and await a typed boolean result."
+    icon="help-circle"
+    href="/examples/confirm-dialog"
+    arrow
+  />
+  <Card
+    title="Toast with auto-dismiss"
+    description="Fire a toast notification without awaiting a response."
+    icon="bell"
+    href="/examples/toast"
+    arrow
+  />
+  <Card
+    title="Progress with live updates"
+    description="Open a layer and live-update its payload while it stays mounted."
+    icon="loader"
+    href="/examples/progress"
+    arrow
+  />
+  <Card
+    title="Dialog with data loaded on open"
+    description="Declare a `loadFn` on layer options; the component reads `phase` and `data` — no fetch `useEffect` wiring."
+    icon="cloud-download"
+    href="/examples/async-loadfn"
+    arrow
+  />
+  <Card
+    title="Drawer with slide-over panel"
+    description="Slide in a side panel and await a typed boolean result."
+    icon="panel-right"
+    href="/examples/drawer"
+    arrow
+  />
+  <Card
+    title="Nested confirm via layer groups"
+    description="Open a child confirm inside a parent dialog via useLayerGroup."
+    icon="layers"
+    href="/examples/nested-confirm"
+    arrow
+  />
+  <Card
+    title="Unsaved changes that block dismissal"
+    description="Veto close with `call.addBlocker`; confirm discard via a child layer, or bypass with `{ force: true }`."
+    icon="shield-alert"
+    href="/examples/blockers-force"
+    arrow
+  />
+  <Card
+    title="Serial onboarding queue"
+    description="Queue onboarding steps one at a time with serial scope and getQueuedSnapshot."
+    icon="list-ordered"
+    href="/examples/serial-onboarding"
+    arrow
+  />
+  <Card
+    title="Route guard open from non-UI code"
+    description="Open a layer from non-UI code with a module-level LayerClient."
+    icon="shield"
+    href="/examples/route-guard-open"
+    arrow
+  />
+  <Card
+    title={"Animated enter/exit with `settle()`"}
+    description="Drive enter and exit CSS with the transition axis and call.settle."
+    icon="sparkles"
+    href="/examples/animated-enter-exit"
+    arrow
+  />
+</CardGroup>

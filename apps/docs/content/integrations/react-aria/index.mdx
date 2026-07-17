@@ -1,0 +1,52 @@
+---
+title: React Aria
+description: Compose Layers with React Aria Components — controlled overlays, seam notes, and recipes.
+sidebar:
+  label: Overview
+search:
+  tags: ["integration"]
+---
+
+Skip RAC's `DialogTrigger` — mount controlled `ModalOverlay`, `Dialog`, drawer, and toast primitives from the layer component while the call runs. Each page ships a recipe and seam notes; live behavior is on the matching [example](/examples) page.
+
+<CardGroup cols={2}>
+  <Card
+    title="Toast with auto-dismiss"
+    description="`void toast.open(...)` + RAC `UNSTABLE_Toast*` while mounted."
+    href="/integrations/react-aria/toast"
+    icon="bell"
+    arrow
+  />
+  <Card
+    title="Confirm dialog with a typed result"
+    description="`await confirm.open(...)` → `Modal` + `Dialog`; `call.end` resolves."
+    href="/integrations/react-aria/confirm-dialog"
+    icon="help-circle"
+    arrow
+  />
+  <Card
+    title="Drawer with slide-over panel"
+    description="Slide-over via a styled RAC Modal (no Drawer primitive); typed boolean on dismiss."
+    href="/integrations/react-aria/drawer"
+    icon="panel-right"
+    arrow
+  />
+  <Card
+    title="Nested confirm inside a parent dialog"
+    description="Child stack via `useLayerGroup`; drains when the parent dismisses."
+    href="/integrations/react-aria/nested-confirm"
+    icon="layers"
+    arrow
+  />
+  <Card
+    title={"Animated enter/exit with `settle()`"}
+    description="Hold `call.end` until RAC's exit animation completes."
+    href="/integrations/react-aria/animated-enter-exit"
+    icon="sparkles"
+    arrow
+  />
+</CardGroup>
+
+:::note
+Non-React adopters: per-framework recipes live on each [example](/examples) page. Integrations are React-only seams.
+:::

@@ -1,0 +1,99 @@
+---
+title: Identity & types
+description: Key vs instance id, DataTag response inference, layerKey, Register, and DefaultLayerError.
+search:
+  tags: ["concept"]
+---
+
+Two opens with the same `key` share **logical identity**; each still gets a unique instance id (**physical identity**). `DataTag` branding carries the response type through `await client.open(...)`, so no explicit generic is needed.
+
+## Key vs instance id
+
+| Concept | Role |
+| ------- | ---- |
+| **Key** | Logical identity. `find`, `upsert`, and `gcTime` operate on `keySignature(key)`. Multiple live layers may share a key in a `parallel` stack. |
+| **Instance id** (`LayerState.id`) | Physical, unique id of one `Layer` instance (`` `${hashKey(key)}#n` ``). Used for rendering keys and instance lookup/removal (`getLayer`, `#remove`). |
+
+:::note[`find` returns the topmost match]
+`LayerStack.find(key)` walks the stack and returns the **last** layer with that key signature — the topmost instance when several share a key in a `parallel` stack. Wired handles route `dismiss`/`update` without `{ id }` through this same lookup.
+:::
+
+## Wired handle path
+
+Besides `client.open({ …layerOptions, payload })`, bind a declaration with `createLayer(options, client)` (headless) or `useLayer(options)` (adapter). Payload-only `open`/`upsert` infer `R` from the same `DataTag` on `options.key`:
+
+```tsx
+import { useLayer } from "@stainless-code/react-layers";
+
+const confirmLayer = useLayer(confirm);
+const ok = await confirmLayer.open({ title: "Remove?" });
+//    ^? boolean
+```
+
+Pass `{ id: state.id }` on `dismiss`/`update`/`cancelQueued` when targeting a specific instance — `current` on the handle is the caller's last `open`, not an implicit default for stack ops.
+
+## DataTag — typed `await open`
+
+`layerOptions` brands its `key` with a `DataTag`, so `LayerClient.open` infers the response type with no explicit generic:
+
+```ts
+import { LayerClient, layerOptions } from "@stainless-code/layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+const client = new LayerClient();
+
+const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+});
+
+const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+//    ^? boolean
+```
+
+Brand a key alone when you don't need a full options object:
+
+```ts
+import { layerKey } from "@stainless-code/layers";
+
+const removeKey = layerKey<ConfirmResponse>()(["confirm", "remove"]);
+```
+
+Type helpers exported from core: `DataTag`, `InferDataTagResponse`, `InferDataTagError`, `ResponseOf`, `ErrorOf`.
+
+:::note
+There is **no** global key→response registry. Colocated `layerOptions` / `layerKey` is the single source of truth for each layer's contract.
+:::
+
+## Payload and response are optional
+
+The response type `R` defaults to `void` (fire-and-forget), and `payload` is omittable when the layer needs no input:
+
+```ts
+const about = layerOptions({
+  stack: "modal",
+  key: ["about"],
+});
+
+void client.open(about); // fire-and-forget
+```
+
+## Register and DefaultLayerError
+
+Augment `Register` once to set the app-wide error type:
+
+```ts
+declare module "@stainless-code/layers" {
+  interface Register {
+    defaultError: AppError;
+  }
+}
+```
+
+`DefaultLayerError` defaults to `Error` unless augmented. `open` returns `Promise<R>` — rejections are not typed on the promise (a TypeScript limitation); narrow at runtime with guards like `isPayloadValidationError`.
+
+## Payload validation
+
+Optional `validate` on `layerOptions` or `open` — a `StandardSchemaV1` schema or sync `Validator` fn (`(input) => output`, throws on invalid). Parsed synchronously at `open`; failure rejects with `PayloadValidationError` and mounts nothing. Input/output inference: `InferValidatorInput`, `InferValidatorOutput`.

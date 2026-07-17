@@ -1,0 +1,61 @@
+---
+title: Blockers
+description: Engine blocker model — instance and stack scope, dismissing, dismissAll modes, and force bypass.
+search:
+  tags: ["concept"]
+---
+
+**Blockers** are consumer predicates that gate **user-intent** engine dismissal — `end`/`dismiss` and stack `dismiss`/`dismissAll` — while never stranding teardown. Backdrop/Esc are UI wiring: they consult blockers only when you route them through those APIs. Invariant: **a blocker can delay a user closing a layer, never prevent the system from tearing it down.**
+
+## Registration
+
+Two scopes, one gate (`any` veto → blocked). Each returns a disposer; multiple blockers per scope (`Set`):
+
+```ts
+call.addBlocker(fn: () => boolean | Promise<boolean>): () => void;           // instance
+stack.addBlocker(fn: (layer: LayerState) => boolean | Promise<boolean>): () => void; // stack policy
+```
+
+`true` = allow; falsy = veto. Instance scope matches the instance-id model (dirty state lives on `call`). Stack scope covers app policy (selective by `layer`).
+
+## Async dismissal
+
+Predicates may be async; `dismiss` awaits them. A veto **rejects** the attempt (layer stays open; caller re-issues after confirming) rather than deferring the caller's `Promise<R>`. Confirm UI is the consumer's own layer — core never opens UI.
+
+```ts
+call.end(response, opts?: { force?: boolean }): Promise<boolean>;   // return = "did it dismiss?"
+call.dismiss(response, opts?: { force?: boolean }): Promise<boolean>;
+```
+
+Return value = "did it dismiss?". `{ force: true }` bypasses blockers. Repeat `end`/`dismiss` while `dismissing` dedupes to the in-flight promise; `force` wins immediately. Predicate throw/reject = veto (fail-closed; dev warning).
+
+## dismissing flag
+
+`LayerState.dismissing` is `true` while blockers are evaluated for a user-intent dismiss; back to `false` on veto or removal. Generic UI can disable the close button during async confirm. Veto is transient (via `Promise<boolean>`), not a persisted flag.
+
+Gate runs **before** exit transition: allowed → resolve promise, `phase: "dismissed"`, `transition: "exiting"`; vetoed → layer stays `active`.
+
+## dismissAll modes
+
+`stack.dismissAll(response, opts?: { mode? })` is async:
+
+| mode                      | behavior                                          |
+| ------------------------- | ------------------------------------------------- |
+| `"skipBlocked"` (default) | attempt each; close permitted, leave blocked open |
+| `"stopAtBlocked"`         | process in order; halt at first blocked           |
+| `"force"`                 | bypass all blockers                               |
+
+Default configurable via `StackOptions.dismissAllMode` / `LayerClientOptions.defaultStackOptions`. Precedence: per-call `mode` > stack default > `"skipBlocked"`.
+
+## What honors vs skips blockers
+
+| Path | Blockers |
+| ---- | -------- |
+| `end` / `dismiss` (user intent) | Honor |
+| `cancelQueued` (serial, never mounted) | Skip |
+| Component / group-hook unmount | Honor |
+| Layer-group cascade (`onLayerDismiss` → drain child stacks) | Force children — guard the parent instead |
+
+:::tip
+For adapter-level patterns — dirty-form guards, confirm dialogs, backdrop handling — see [Dismissal & blockers](/guides/dismissal-blockers).
+:::

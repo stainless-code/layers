@@ -1,0 +1,56 @@
+---
+title: Serial onboarding queue
+description: Queue onboarding steps one at a time with serial scope and getQueuedSnapshot.
+search:
+  tags: ["example"]
+---
+
+import serialSrc from "../../recipes/serial-onboarding/react.tsx?raw";
+import serialWiringSrc from "../../recipes/serial-onboarding/react.wiring.tsx?raw";
+import serialPreactSrc from "../../recipes/serial-onboarding/preact.tsx?raw";
+import serialVueLayerSrc from "../../recipes/serial-onboarding/vue.vue?raw";
+import serialVueHostSrc from "../../recipes/serial-onboarding/vue-host.vue?raw";
+import serialSolidSrc from "../../recipes/serial-onboarding/solid.tsx?raw";
+import serialSvelteRunesSrc from "../../recipes/serial-onboarding/svelte-runes.svelte?raw";
+import serialSvelteStoreSrc from "../../recipes/serial-onboarding/svelte-store.svelte?raw";
+import serialAngularSrc from "../../recipes/serial-onboarding/angular.ts?raw";
+
+Three onboarding modals fired back-to-back — serial scope shows one, queues the rest. No orchestration code.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below.
+:::
+
+<SerialOnboardingExample />
+
+## Layers wiring
+
+A serial queue — configure a stack with `scope: { strategy: "serial" }`, then open several layers with distinct keys; they play one at a time. The recipes below wrap it in real onboarding steps.
+
+<CodeBlock code={serialWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={serialSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={serialPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={serialSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={serialAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={serialVueLayerSrc} lang="vue" title="OnboardingStep.vue" /><CodeBlock code={serialVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={serialSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={serialSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Variations
+
+- **Queued confirms** — show position in a confirm queue; see [Serial queues](/guides/serial-queues)
+- **Parallel stack** — default behavior mounts every open at once; see [Stacks, scope, and GC](/concepts/stacks-scope-gc)
+- **Fire-and-forget steps** — toast notifications instead of awaited steps; see Toast example
+
+## Learn more
+
+- [Serial queues](/guides/serial-queues) — `scope: { strategy: "serial" }` and `getQueuedSnapshot()`
+- [Stacks, scope, and GC](/concepts/stacks-scope-gc) — per-stack configuration and lifecycle

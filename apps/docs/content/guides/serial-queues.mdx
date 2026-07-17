@@ -1,0 +1,104 @@
+---
+title: Serial queues
+description: One active layer at a time with scope serial, getQueuedSnapshot, and queued-confirm flows.
+search:
+  tags: ["guide"]
+---
+
+Onboarding steps, queued confirms, wizards — some surfaces must show one layer at a time. Set `scope: { strategy: "serial" }` on the stack so later opens wait as `queued` instead of mounting in parallel.
+
+## Configure serial scope
+
+Per-stack at client creation or per-open via stack defaults:
+
+```ts
+const client = new LayerClient({
+  defaultStackOptions: {
+    confirm: { scope: { strategy: "serial" } },
+  },
+});
+```
+
+Or inline when ensuring a stack:
+
+```ts
+client.ensureStack("onboarding", { scope: { strategy: "serial" } });
+```
+
+## Observe the queue
+
+Active layers appear in `getSnapshot()`. Waiting layers are `phase: "queued"` and visible only via `getQueuedSnapshot()`:
+
+```ts lineNumbers
+const stack = client.getStack("confirm");
+
+stack.subscribe(() => {
+  const active = stack.getSnapshot();
+  const queued = stack.getQueuedSnapshot(); // [!code highlight]
+  console.log({ active: active.length, queued: queued.length });
+});
+```
+
+Queued layers are not mounted — their components do not render until the active layer dismisses.
+
+## Onboarding flow
+
+```ts lineNumbers
+const steps = [
+  layerOptions({ stack: "onboarding", key: ["onboarding", 1], component: Step1 }),
+  layerOptions({ stack: "onboarding", key: ["onboarding", 2], component: Step2 }),
+  layerOptions({ stack: "onboarding", key: ["onboarding", 3], component: Step3 }),
+];
+
+for (const step of steps) {
+  void client.open(step); // [!code highlight]
+  // only one active; rest queue
+}
+```
+
+Each step's component calls `call.end()` when done; the next queued layer activates automatically.
+
+## Queued confirm
+
+Show queue position in UI by subscribing to both snapshots:
+
+```tsx lineNumbers
+function QueueIndicator() {
+  const client = useLayerClient();
+  const stack = client.getStack("confirm");
+  const [queued, setQueued] = useState(0);
+
+  useEffect(() => {
+    return stack.subscribe(() => {
+      setQueued(stack.getQueuedSnapshot().length); // [!code highlight]
+    });
+  }, [stack]);
+
+  if (queued === 0) return null;
+  return <span>{queued} waiting</span>;
+}
+```
+
+In adapters, observe queued layers with `useLayerQueuedState({ key, stack })` (per-key) or `useQueuedStack({ stack })` (whole stack) — both return `LayerState[]` for `phase: "queued"` rows. Svelte names these `createLayerQueuedState` / `createQueuedStack`. Wired handles expose the same slice as `.queued` (`useLayer` / `injectLayer` / `createLayer`).
+
+## Cancel a queued layer
+
+`cancelQueued` resolves and removes a `queued` layer without mounting — blockers do not apply. Omit `{ id }` to drop the FIFO head for that key; pass `{ id: state.id }` to target one queued instance:
+
+```ts lineNumbers
+const stack = client.getStack("confirm");
+
+// FIFO head for this key
+stack.cancelQueued(["confirm", "remove"], false);
+
+// exact queued row
+stack.cancelQueued(["confirm", "remove"], false, { id: queuedState.id }); // [!code highlight]
+```
+
+On a wired handle, `confirmLayer.cancelQueued(false)` is FIFO for the bound key; `confirmLayer.cancelQueued(false, { id })` targets one row.
+
+## Edge cases
+
+- **`dismissAll`** drains the queue — queued callers resolve without mounting.
+- **`cancelQueued`** — see above; also on `LayerHandle` / `useLayer(options)`.
+- Default scope is `"parallel"` — layers stack freely. See [Stacks, scope, and gcTime](/concepts/stacks-scope-gc).

@@ -14,7 +14,7 @@
     "tanstack-intent",
     "typescript"
   ],
-  "homepage": "https://github.com/stainless-code/layers/tree/main/packages/react#readme",
+  "homepage": "https://stainless-code.com/layers/adapters/react",
   "bugs": {
     "url": "https://github.com/stainless-code/layers/issues"
   },

@@ -14,7 +14,7 @@ metadata:
   library_version: "0.1.0"
   framework: "framework-agnostic"
 sources:
-  - https://github.com/stainless-code/layers/blob/main/packages/core/README.md
+  - https://stainless-code.com/layers/adapters/core
   - https://github.com/stainless-code/layers/blob/main/docs/architecture.md
 ---
 
@@ -32,7 +32,7 @@ Use it to open layers imperatively from anywhere and manage ordered, named stack
 
 Skip the core directly when an app only needs overlay UI and an adapter exists—install the adapter. Skip the whole library for a single, always-local overlay with no return, stacking, queue, animation, or guard needs.
 
-Full fit matrix: [README — When to use it](https://github.com/stainless-code/layers#when-to-use-it).
+Full fit matrix: [When to use Layers](https://stainless-code.com/layers/concepts/when-to-use).
 
 ## Install
 

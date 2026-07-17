@@ -1,0 +1,85 @@
+---
+title: Migration
+description: Breaking-change policy and migration notes for semver releases.
+search:
+  tags: ["reference", "migration"]
+---
+
+Layers is **pre-1.0**. Breaking API changes are expected and ship in minor releases (e.g. `0.1` → `0.2`), not majors. Treat semver as a signal, not a guarantee of zero breaks until 1.0 — see [Stability & versioning](/concepts/stability).
+
+## How breaks are announced
+
+- Each intentional break gets a [Changelog](/changelog) entry tied to a GitHub Release.
+- Step-by-step upgrade guidance lives on this page when a release requires consumer action.
+
+## 0.x — wired handles and observe reshape
+
+Three coordinated 0.x changes: wired handles (`createLayer` / `useLayer`), observe hooks return arrays, and stack lookup semantics tightened.
+
+### Observe: `useLayer(key, …)` → `useLayerState({ key, … })`
+
+The old `useLayer` was observe-only and returned a single `LayerState | null`. It is now **`useLayerState`** and returns **`LayerState[]`** — empty when nothing matches.
+
+<Diff
+  lang="tsx"
+  old={`const layer = useLayer("confirm");
+if (layer) { /* render */ }`}
+  new={`const layers = useLayerState({ key: "confirm" });
+// layers.length === 0 when closed`}
+/>
+
+Per-key queued observation is **`useLayerQueuedState({ key, … })`**. Whole-stack queued observation is **`useQueuedStack({ stack?, select?, compare? })`**.
+
+### Stack hooks: positional args → options bag
+
+<Diff
+  lang="tsx"
+  old={`const states = useStack("confirm", (s) => s.filter(…));`}
+  new={`const states = useStack({
+  stack: "confirm",
+  select: (s) => s.filter(…),
+});`}
+/>
+
+Optional trailing `client?: LayerClient` is unchanged.
+
+### Wire: `useLayer(options).open(payload)`
+
+`client.open({ …layerOptions, payload })` remains valid. Wired handles bind identity and expose payload-only ops:
+
+<Diff
+  lang="tsx"
+  old={`await client.open({ ...confirmOptions, payload: { title: "Remove?" } });`}
+  new={`const confirm = useLayer(confirmOptions);
+await confirm.open({ title: "Remove?" });`}
+/>
+
+Headless (no adapter): `createLayer(options, client)` from `@stainless-code/layers`. On Svelte adapters, import that factory as `createLayerHandle` — `createLayer` is the wired handle.
+
+### Core: `LayerStack.find` is topmost same-key
+
+`find(key)` now returns the **topmost** mounted layer with that key signature (`findLast`), not the first. Matters in `parallel` stacks with duplicate keys.
+
+### Core: `cancelQueued` optional `{ id }`
+
+<Diff
+  lang="ts"
+  old={`stack.cancelQueued(key, response); // FIFO head only`}
+  new={`handle.cancelQueued(response);           // FIFO head for this key
+handle.cancelQueued(response, { id: "…" }); // exact queued instance`}
+/>
+
+On `LayerStack`: `cancelQueued(key, response, opts?: { id? })`. Omit `id` → first-queued (FIFO) for the key; pass `id` → exact queued match.
+
+### Adapter entry names
+
+| Role | React / Preact / Solid / Vue | Angular | Svelte |
+| ---- | ---------------------------- | ------- | ------ |
+| Wired | `useLayer` | `injectLayer` (`useLayer` alias) | `createLayer` |
+| Mounted per-key | `useLayerState` | `injectLayerState` | `createLayerState` |
+| Queued stack | `useQueuedStack` | `injectQueuedStack` | `createQueuedStack` |
+| Queued per-key | `useLayerQueuedState` | `injectLayerQueuedState` | `createLayerQueuedState` |
+
+:::note[Pin in production]
+Lock `@stainless-code/layers` and your adapter package in `package.json`. Review the changelog before upgrading.
+:::

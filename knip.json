@@ -60,6 +60,7 @@
       "project": ["src/**/*.ts", "tests-dom/**/*.ts"]
     }
   },
+  "ignoreWorkspaces": ["apps/docs"],
   "ignoreDependencies": ["@stainless-code/codemap", "@angular/core"],
   "ignoreBinaries": ["lychee"],
   "ignoreIssues": {

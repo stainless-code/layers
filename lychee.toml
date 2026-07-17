@@ -6,7 +6,8 @@
 offline = true
 include_fragments = "anchor-only"
 # `.cursor/` holds symlinks to `.agents/`; scanning both double-checks and the
-# relative links inside resolve against the wrong base. `docs/api` is generated.
+# relative links inside resolve against the wrong base.
 # `docs/research/` is a staged, DO-NOT-COMMIT artifact whose agent-transcript
 # citations (`[label](<uuid>)`) are chat links, not files.
-exclude_path = ["node_modules", "dist", "docs/api", ".cursor", "docs/research"]
+# `apps/docs` — Blume MDX + site routes; gated by `docs:validate`, not lychee.
+exclude_path = ["node_modules", "dist", ".cursor", "docs/research", "apps/docs"]

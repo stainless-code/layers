@@ -1,0 +1,61 @@
+---
+title: Stacks, scope & GC
+description: Named stacks, serial/parallel scope, gcTime, upsert, update, and queued snapshots.
+search:
+  tags: ["concept"]
+---
+
+A **named stack** (`LayerStack`) is an ordered collection of active layers for one surface — `"confirm"`, `"drawer"`, `"toast"`, and so on. `LayerClient.getStack(id)` returns an isolated stack; `open({ stack })` picks one.
+
+## Serial vs parallel scope
+
+Per-stack queueing is configured on `StackOptions`:
+
+```ts
+scope: { strategy: "serial" | "parallel" } // parallel when omitted
+```
+
+| Strategy | Behavior |
+| -------- | -------- |
+| `parallel` (default) | Layers stack freely; multiple `pending`/`active` layers at once. |
+| `serial` | Only one `pending`/`active` layer at a time; later opens queue as `phase: "queued"` (not in `getSnapshot()`). |
+
+Queued layers are visible via `getQueuedSnapshot()`. When the active layer dismisses, the next queued layer activates. `dismissAll` drains the queue, resolving queued callers without mounting them.
+
+:::tip
+Use serial scope for one-at-a-time flows — onboarding steps, queued confirms, or any surface that must not show two layers simultaneously.
+:::
+
+## upsert and update
+
+**`upsert`** — with `upsert: true` on `layerOptions` (or via handle `.upsert(payload)`), reusing an active key updates its payload instead of stacking. Ideal for singleton toasts, snackbars, or progress indicators.
+
+**`update`** — patch a mounted layer's payload (`stack.update(layer, patch)` or `call.update(patch)`). The stack API takes a **layer instance**; a handle's `.update(patch, { id? })` finds by key when `id` is omitted.
+
+## gcTime — dismissed-layer cache
+
+`gcTime` caches a dismissed layer only when it had `data !== undefined`, so re-opening the same key can restore `data` without re-running `loadFn`. No `data` → not cached.
+
+- **One slot per key signature** — last-dismissed-wins; a displaced cache entry is dropped (no extra teardown — the layer already dismissed).
+- A cached layer is off-`getSnapshot()` and unobserved; the timer runs while cached.
+- Re-open cancels the eviction timer.
+
+Configure per stack via `StackOptions.gcTime` or defaults on `LayerClientOptions.defaultStackOptions`.
+
+```ts
+const client = new LayerClient({
+  defaultStackOptions: {
+    confirm: { scope: { strategy: "serial" }, gcTime: 5_000 },
+  },
+});
+```
+
+## Observing stacks
+
+| Method | Returns |
+| ------ | ------- |
+| `getSnapshot()` | Mountable layers (`pending`/`active`/`dismissed`/`error` — not `queued`, not cached). |
+| `getQueuedSnapshot()` | Serial-waiting layers (`phase: "queued"`). |
+| `subscribe()` | Notifies on any stack mutation (batched via `notifyManager`). |
+
+Adapters bind `subscribe` + `getSnapshot` to UI reactivity. For custom hosts, `createCallContext(stack, layer, state)` builds the imperative `call` handle for each layer in the snapshot.

@@ -1,0 +1,26 @@
+---
+title: Confirm dialog + Base UI
+description: Compose Layers with Base UI for a typed confirm result.
+search:
+  tags: ["integration"]
+---
+
+import buSrc from "../../../recipes/confirm-dialog/react.baseui.tsx?raw";
+
+Delete needs a typed yes/no without Base UI's `Dialog.Trigger`. `useLayer(confirm)` + `await confirm.open(payload)` mounts a controlled `Dialog`; `call.end` resolves the boolean. See the [live demo](/examples/confirm-dialog).
+
+## Recipe
+
+<CodeBlock code={buSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use Base UI's `Dialog.Trigger` — controlled `open` starts `true`.
+- **Exit-animation crux (Base UI):** on dismiss intent set pending result + `setOpen(false)`; resolve `call.end(result)` in `onOpenChangeComplete(false)` (fires AFTER Base UI's exit animation) so exit anim is never cut off.
+- Blockers: use Base UI's dismiss-disable (`disablePointerDismissal` / `eventDetails.cancel()`).
+- Lib owns portal/focus/scroll-lock — don't double-apply Layers-side equivalents.
+
+## Learn more
+
+- [Confirm dialog example](/examples/confirm-dialog) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

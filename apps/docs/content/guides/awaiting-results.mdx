@@ -1,0 +1,211 @@
+---
+title: Awaiting results
+description: Await typed responses from client.open, infer types via DataTag, or fire-and-forget with void.
+search:
+  tags: ["guide"]
+---
+
+Need a boolean back from a confirm? `await client.open(...)` returns `Promise<R>`, and the response type flows from your layer definition with no explicit generic. Awaiting is optional — fire-and-forget is equally first-class.
+
+## Typed await
+
+Brand the contract once with `layerOptions<P, R>()`. The `key` carries a `DataTag`, so `await client.open({ ...confirm, payload })` infers `R`:
+
+```tsx lineNumbers
+const confirm = layerOptions<ConfirmPayload, boolean>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+
+const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+//    ^? boolean
+```
+
+You can also brand a key alone with `layerKey<R>()(key)` when options are inlined at the call site. See [Identity and types](/concepts/identity-and-types) for how `DataTag` inference works.
+
+## Open from your framework
+
+`client.open({ …layerOptions, payload })` works everywhere. Adapters also ship a **wired handle** — `useLayer(options)` (Svelte: `createLayer`; Angular: `injectLayer`) — for payload-only `open` plus reactive `state`/`queued`/`top`:
+
+<Tabs>
+<Tab title="React" icon="/icons/react.svg">
+
+```tsx lineNumbers
+import { useLayer } from "@stainless-code/react-layers";
+
+function RemoveButton() {
+  const confirmLayer = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
+      /* … */
+    }
+  }
+
+  return (
+    <button type="button" onClick={() => void handleRemove()}>
+      Remove
+    </button>
+  );
+}
+```
+
+</Tab>
+<Tab title="Preact" icon="/icons/preact.svg">
+
+```tsx lineNumbers
+import { useLayer } from "@stainless-code/preact-layers";
+
+function RemoveButton() {
+  const confirmLayer = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
+      /* … */
+    }
+  }
+
+  return (
+    <button type="button" onClick={() => void handleRemove()}>
+      Remove
+    </button>
+  );
+}
+```
+
+</Tab>
+<Tab title="Solid" icon="/icons/solid.svg">
+
+```tsx lineNumbers
+import { useLayer } from "@stainless-code/solid-layers";
+
+function RemoveButton() {
+  const confirmLayer = useLayer(confirm);
+
+  async function handleRemove() {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
+      /* … */
+    }
+  }
+
+  return (
+    <button type="button" onClick={() => void handleRemove()}>
+      Remove
+    </button>
+  );
+}
+```
+
+</Tab>
+<Tab title="Angular" icon="/icons/angular.svg">
+
+```ts lineNumbers
+import { Component } from "@angular/core";
+import { injectLayer } from "@stainless-code/angular-layers";
+
+@Component({ /* … */ })
+class RemoveButton {
+  private confirmLayer = injectLayer(confirm);
+
+  async remove() {
+    const ok = await this.confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
+      /* … */
+    }
+  }
+}
+```
+
+</Tab>
+<Tab title="Vue" icon="/icons/vue.svg">
+
+```vue lineNumbers
+<script setup lang="ts">
+import { useLayer } from "@stainless-code/vue-layers";
+
+const confirmLayer = useLayer(confirm);
+
+async function remove() {
+  const ok = await confirmLayer.open({ title: "Remove?" });
+  //    ^? boolean
+  if (ok) {
+    /* … */
+  }
+}
+</script>
+```
+
+</Tab>
+<Tab title="Svelte (runes)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { createLayer } from "@stainless-code/svelte-layers";
+
+  const confirmLayer = createLayer(confirm);
+
+  async function remove() {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
+      /* … */
+    }
+  }
+</script>
+```
+
+</Tab>
+<Tab title="Svelte (store)" icon="/icons/svelte.svg">
+
+```svelte lineNumbers
+<script lang="ts">
+  import { createLayer } from "@stainless-code/svelte-layers/store";
+
+  const confirmLayer = createLayer(confirm);
+
+  async function remove() {
+    const ok = await confirmLayer.open({ title: "Remove?" });
+    //    ^? boolean
+    if (ok) {
+      /* … */
+    }
+  }
+</script>
+```
+
+</Tab>
+</Tabs>
+
+## Fire-and-forget
+
+When a layer needs no return value, omit the response generic (defaults to `void`) and skip `await`:
+
+```tsx
+const about = layerOptions({
+  stack: "modal",
+  key: ["about"],
+  component: About,
+});
+
+void client.open(about);
+```
+
+The layer dismisses itself — typically via `call.dismiss()` inside the component. Use `void` to signal intentional fire-and-forget when your linter flags floating promises.
+
+:::tip
+Both payload and response are optional. A layer with `R = void` and no payload is a complete fire-and-forget surface.
+:::
+
+## Edge cases
+
+- **`loadFn` errors** reject the promise — see [Error handling](/guides/error-handling).
+- **Validation failures** reject with `PayloadValidationError` before mount — see [Payload validation](/guides/payload-validation).
+- **Serial stacks** queue later opens; the promise resolves only when the layer activates and ends — see [Serial queues](/guides/serial-queues).

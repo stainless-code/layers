@@ -9,7 +9,7 @@ Repo-wide Tier B surface (cross-cutting reference + lifecycle substrate). This i
 
 ## Quick rules
 
-Full blueprint: [LIFECYCLE.md](./LIFECYCLE.md) — the shared spine (§1–6: lifecycle types → cross-reference preservation) + Closing states (plans / audits / research). This is a small library — no per-feature `docs/` subtrees, no ownership tables.
+Full blueprint: [LIFECYCLE.md](./LIFECYCLE.md) — the shared spine (§1–6: lifecycle types → cross-reference preservation), README surfaces (the `apps/docs` docs site is canonical; package + root READMEs are npm landings only), + Closing states (plans / audits / research). This is a small library — no per-feature `docs/` subtrees, no ownership tables.
 
 ## Reference
 

@@ -1,0 +1,105 @@
+---
+import Card from "blume/components/content/Card.astro";
+import CardGroup from "blume/components/content/CardGroup.astro";
+import { contentHref } from "blume/components/content/base-href.ts";
+---
+
+<section>
+  <div class="mx-auto max-w-2xl text-center">
+    <h2 class="font-medium text-3xl tracking-tight sm:text-4xl">
+      Batteries included.
+    </h2>
+    <p class="mx-auto mt-4 max-w-lg text-balance text-muted-foreground">
+      Handle the overlay cases that stop being local: ordered stacks,
+      one-at-a-time flows, nested dialogs, guarded closes, and validated input.
+      Adopt only the pieces your UI needs.
+    </p>
+  </div>
+
+  <div class="mt-10">
+    <CardGroup cols={3}>
+      <Card
+        arrow
+        href={contentHref("/concepts/overview")}
+        icon="layers"
+        title="Partition overlays into ordered stacks"
+      >
+        Partition overlays by purpose — confirm, toast, drawer — each an ordered
+        stack with its own z-order and lifecycle.
+      </Card>
+      <Card
+        arrow
+        href={contentHref("/concepts/lifecycle")}
+        icon="zap"
+        title="Open and update from anywhere"
+      >
+        Push, replace singletons, patch live payloads, and dismiss from anywhere
+        — no lifted <code>isOpen</code> state.
+      </Card>
+      <Card
+        arrow
+        href={contentHref("/guides/awaiting-results")}
+        icon="tag"
+        title="Await a result — no call-site generics"
+      >
+        <code>await client.open(...)</code> infers the response type end-to-end —
+        no explicit generic on the call site.
+      </Card>
+      <Card
+        arrow
+        href={contentHref("/guides/serial-queues")}
+        icon="list-ordered"
+        title="Run flows one at a time"
+      >
+        One-at-a-time flows with{" "}
+        <code>scope: {"{ strategy: 'serial' }"}</code> and a snapshot of what's
+        waiting.
+      </Card>
+      <Card
+        arrow
+        href={contentHref("/guides/nested-overlays")}
+        icon="git-branch"
+        title="Nest overlays without prop-drilling"
+      >
+        Nested stacks for drawer → sub-dialog flows via
+        <code>useLayerGroup</code> / <code>createLayerGroup</code>.
+      </Card>
+      <Card
+        arrow
+        href={contentHref("/guides/animations")}
+        icon="sparkles"
+        title="Animate enter and exit"
+      >
+        Enter/exit phases with delay timers and <code>call.settle()</code> for
+        animated overlays.
+      </Card>
+      <Card
+        arrow
+        href={contentHref("/guides/dismissal-blockers")}
+        icon="shield"
+        title="Guard against accidental close"
+      >
+        Gate user-intent dismissal with <code>addBlocker</code>,
+        <code>dismissing</code>, and <code>dismissAll</code> modes.
+      </Card>
+      <Card
+        arrow
+        href={contentHref("/guides/payload-validation")}
+        icon="check-circle"
+        title="Validate payloads at open"
+      >
+        Parse untrusted payloads at <code>open</code> with Standard Schema or a
+        sync function — rejects with <code>PayloadValidationError</code>.
+      </Card>
+      <Card
+        arrow
+        href={contentHref("/adapters/core")}
+        icon="box"
+        title="No framework in the core"
+      >
+        UI-agnostic <code>LayerClient</code> engine — framework adapters subscribe
+        via their native reactivity primitives.
+      </Card>
+    </CardGroup>
+  </div>
+</section>

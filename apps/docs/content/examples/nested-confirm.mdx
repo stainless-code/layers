@@ -1,0 +1,65 @@
+---
+title: Nested confirm via layer groups
+description: Open a child confirm inside a parent dialog via useLayerGroup.
+search:
+  tags: ["example"]
+---
+
+import nestedSrc from "../../recipes/nested-confirm/react.tsx?raw";
+import nestedWiringSrc from "../../recipes/nested-confirm/react.wiring.tsx?raw";
+import nestedPreactSrc from "../../recipes/nested-confirm/preact.tsx?raw";
+import nestedVueSrc from "../../recipes/nested-confirm/vue.vue?raw";
+import nestedVueHostSrc from "../../recipes/nested-confirm/vue-host.vue?raw";
+import nestedVueChildSrc from "../../recipes/nested-confirm/vue-child.vue?raw";
+import nestedSolidSrc from "../../recipes/nested-confirm/solid.tsx?raw";
+import nestedSvelteRunesSrc from "../../recipes/nested-confirm/svelte-runes.svelte?raw";
+import nestedSvelteStoreSrc from "../../recipes/nested-confirm/svelte-store.svelte?raw";
+import nestedAngularSrc from "../../recipes/nested-confirm/angular.ts?raw";
+
+Delete inside an open parent dialog. `useLayer(parent)` opens the parent; `group.open` scopes the confirm to that stack and auto-drains when the parent dismisses.
+
+:::note[Live]
+This demo runs the real `@stainless-code/react-layers` in your browser (React).
+Other frameworks are code-complete below; integrations with React Aria and Base UI
+live under [Integrations](/integrations).
+:::
+
+<NestedConfirmExample />
+
+## Layers wiring
+
+Open the parent with a wired handle; scope the child to the parent's lifetime via `useLayerGroup` and `group.open`. Render `<group.Outlet />` where the child should appear. The recipes below wrap it in real nested dialogs.
+
+<CodeBlock code={nestedWiringSrc} lang="tsx" />
+
+## Recipes
+
+One complete recipe per framework adapter (live demo above is React).
+
+<Tabs dropdown sync={false} hash={false}>
+  <Tab title="React"><CodeBlock code={nestedSrc} lang="tsx" /></Tab>
+  <Tab title="Preact"><CodeBlock code={nestedPreactSrc} lang="tsx" /></Tab>
+  <Tab title="Solid"><CodeBlock code={nestedSolidSrc} lang="tsx" /></Tab>
+  <Tab title="Angular"><CodeBlock code={nestedAngularSrc} lang="ts" /></Tab>
+  <Tab title="Vue"><CodeBlock code={nestedVueSrc} lang="vue" title="ParentDialog.vue" /><CodeBlock code={nestedVueChildSrc} lang="vue" title="ChildConfirm.vue" /><CodeBlock code={nestedVueHostSrc} lang="vue" title="App.vue" /></Tab>
+  <Tab title="Svelte (runes)"><CodeBlock code={nestedSvelteRunesSrc} lang="svelte" /></Tab>
+  <Tab title="Svelte (store)"><CodeBlock code={nestedSvelteStoreSrc} lang="svelte" /></Tab>
+</Tabs>
+
+## Integrations
+
+<CardGroup cols={2}>
+  <Card title="Nested confirm + React Aria" href="/integrations/react-aria/nested-confirm" icon="/icons/react-aria.svg" arrow />
+  <Card title="Nested confirm + Base UI" href="/integrations/base-ui/nested-confirm" icon="/icons/base-ui.svg" arrow />
+</CardGroup>
+
+## Variations
+
+- **Standalone confirm** — no parent layer; see [Confirm dialog](/examples/confirm-dialog)
+- **Dismissal blockers** — guard closing a parent with open children; see [Dismissal blockers](/guides/dismissal-blockers)
+- **Slide-over parent** — same `useLayerGroup` pattern with a drawer as the parent layer
+
+## Learn more
+
+- [Nested overlays](/guides/nested-overlays) — child stacks, `Outlet`, and auto-drain
+- [Confirm dialog](/examples/confirm-dialog) — typed `await confirm.open(...)` basics

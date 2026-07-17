@@ -1,0 +1,25 @@
+---
+title: Confirm dialog + React Aria
+description: Compose Layers with React Aria Components for a typed confirm result.
+search:
+  tags: ["integration"]
+---
+
+import racSrc from "../../../recipes/confirm-dialog/react.rac.tsx?raw";
+
+Delete needs a typed yes/no without RAC's `DialogTrigger`. `useLayer(confirm)` + `await confirm.open(payload)` mounts a controlled `ModalOverlay`/`Dialog`; `call.end` resolves the boolean. See the [live demo](/examples/confirm-dialog).
+
+## Recipe
+
+<CodeBlock code={racSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use RAC's `DialogTrigger` — render the controlled overlay directly (`isOpen` literal `true`; `onOpenChange(false)` is the dismiss signal).
+- Blockers: for Layers blockers that must prevent dismissal, use RAC's `isKeyboardDismissDisabled` + `isDismissable={false}` — don't also apply Layers-side focus/scroll-lock (RAC owns portal/focus/scroll-lock).
+- Exit animation: instant-dismiss can `call.end` on `onOpenChange`; animated exit should hold local `exiting` + `onAnimationComplete` → `call.end` (see animated-enter-exit). Don't drive RAC exit timing via Layers' `transition` axis.
+
+## Learn more
+
+- [Confirm dialog example](/examples/confirm-dialog) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal

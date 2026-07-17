@@ -1,0 +1,26 @@
+---
+title: Toast + Base UI
+description: Compose Layers with Base UI for fire-and-forget toasts.
+search:
+  tags: ["integration"]
+---
+
+import buSrc from "../../../recipes/toast/react.baseui.tsx?raw";
+
+Save feedback shouldn't block the UI. `useLayer(toast)` + `void toast.open({ message: "Saved" })` mounts Base UI toast primitives for the call lifetime — no trigger wrappers. See the [live demo](/examples/toast).
+
+## Recipe
+
+<CodeBlock code={buSrc} lang="tsx" />
+
+## Seam notes
+
+- Don't use Base UI's trigger wrappers — render the controlled overlay directly while mounted.
+- `Toast.createToastManager()` owns the queue/viewport — lib owns queue; Layers is the typed `open` entry. Don't dual-queue.
+- Toast is instant-dismiss (no exit-animation crux) — `call.dismiss()` after the timeout is fine; the `transition`/`call.settle()` axis is irrelevant here (it matters for animated-enter-exit, not toast).
+- Layers coordinates open/dismiss only — leave the toast region to Base UI; don't add modal-style focus traps or scroll-lock.
+
+## Learn more
+
+- [Toast example](/examples/toast) — live demo and per-framework recipes
+- [Lifecycle](/concepts/lifecycle) — phases, transitions, and dismissal
