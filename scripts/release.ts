@@ -4,7 +4,8 @@ import { join } from "node:path";
 
 // Bun cannot perform npm OIDC publishing. Pack with Bun to resolve `workspace:*`,
 // then publish the tarball with npm for OIDC authentication and provenance.
-// `New tag: <name>@<version>` is consumed by changesets/action.
+// Create an annotated git tag, then print `New tag: <name>@<version>` so
+// changesets/action can push the tag and open a GitHub Release.
 // Existing registry versions are skipped so partial releases can be retried.
 import { $ } from "bun";
 
@@ -17,6 +18,14 @@ async function isAlreadyPublished(
   const spec = `${name}@${version}`;
   const res = await $`npm view ${spec}`.quiet().nothrow();
   return res.exitCode === 0;
+}
+
+async function ensureReleaseTag(tag: string): Promise<void> {
+  const exists = await $`git rev-parse -q --verify ${`refs/tags/${tag}`}`
+    .quiet()
+    .nothrow();
+  if (exists.exitCode === 0) return;
+  await $`git tag -a ${tag} -m ${tag}`;
 }
 
 let published = 0;
@@ -48,7 +57,9 @@ for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
   }
 
   await $`npm publish ${tarball} --provenance --access public`.cwd(dir);
-  console.log(`New tag: ${pkg.name}@${pkg.version}`);
+  const tag = `${pkg.name}@${pkg.version}`;
+  await ensureReleaseTag(tag);
+  console.log(`New tag: ${tag}`);
   published++;
 }
 
