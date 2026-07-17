@@ -11,7 +11,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/react-layers"
-  library_version: "0.2.0"
+  library_version: "0.2.1"
   framework: "react"
 sources:
   - https://stainless-code.com/layers/adapters/react
