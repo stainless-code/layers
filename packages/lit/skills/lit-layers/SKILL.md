@@ -12,7 +12,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/lit-layers"
-  library_version: "0.1.0"
+  library_version: "0.2.0"
   framework: "lit"
 sources:
   - https://stainless-code.com/layers/adapters/lit
