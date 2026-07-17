@@ -203,7 +203,7 @@ import { StackSubscribe } from "@stainless-code/react-layers";
 
 `StackOutlet` is the default host. It maps each state to its registered `component` with full props (`call`, `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, `dismissing`). A missing component renders nothing and warns in development.
 
-`StackOutlet` renders inline. Wrap it in your own `createPortal` if you need a specific portal target; sidecar and nested-portal hosting are consumer concerns, not built into the adapter.
+`StackOutlet` renders inline. Wrap it in your own `createPortal` (web) or root sibling / single host `Modal` / navigator overlay (React Native — same package, no `react-dom` peer) if you need a different target; sidecar and nested-portal hosting are consumer concerns, not built into the adapter.
 
 ### Headless: useStackHandles
 
