@@ -1,6 +1,6 @@
 # Lit adapter (`@stainless-code/lit-layers`)
 
-> Plan owner: open. Status: **Ready to implement** (grilled). Linked from [`docs/roadmap.md`](../roadmap.md) § Adapters.
+> Plan owner: open. Status: **Implementation complete** on `feat/lit-adapter` — full matrix + tests + docs landed; pending PR merge. Open questions cleared. Linked from [`docs/roadmap.md`](../roadmap.md) § Adapters. Delete + lift into [`architecture.md`](../architecture.md) only after the PR ships.
 
 Seventh framework adapter at **full matrix parity**. Lit research clone: `/Users/sutusebastian/Developer/OSS/lit/lit` ([lit/lit](https://github.com/lit/lit), [`lit@3.3.3`](https://lit.dev/)).
 
@@ -162,6 +162,19 @@ Greenfield.
 5. Remaining matrix: wired `useLayer`, `StackSubscribe`, `useMutationFlow`, `useLayerGroup` (`outlet()`), `useStackHandles`, `createStackHook` + DOM/type tests.
 6. Docs: `adapters/lit.mdx`, matrix rows, `adapter-hooks.mdx`, skill, recipes (`lit.ts` `?raw`) + `typecheck:recipes`.
 7. Changeset on publish PR. Lift grill locks into [`architecture.md`](../architecture.md) when the package ships (close plan).
+
+## Post-merge closeout
+
+After the Lit PR merges (not before — don't advertise unreleased adapters):
+
+1. **GitHub repo About** (Settings → General → Edit, or sidebar ✎):
+   - **Description** (docs-voice adapter order: react → preact → solid → angular → vue → lit → svelte):
+
+     > Headless manager for modal/dialog/drawer/popover/toast UI — open any layer from anywhere, manage it as an ordered named stack, and optionally await a typed result. UI-agnostic core + React/Preact/Solid/Angular/Vue/Lit/Svelte adapters.
+
+   - **Website:** keep `https://stainless-code.com/layers`
+   - **Topics:** add `lit` (keep existing: `react`, `preact`, `solid`, `angular`, `vue`, `svelte`, `typescript`, `state-management`, `stack`, `drawer`, `popover`, `headless`, `overlay`, `modal`, `dialog`, `toast`, `monorepo`).
+2. Delete this plan; finish any remaining lift into [`architecture.md`](../architecture.md); drop Lit from “pending” in [`docs/roadmap.md`](../roadmap.md) (public roadmap already says shipping).
 
 ## Testing Strategy
 

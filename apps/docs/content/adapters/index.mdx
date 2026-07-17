@@ -12,19 +12,19 @@ Pick a framework binding — same engine, native reactivity. The [core](/adapter
 
 ## Adapter ergonomics
 
-Same primitives on every adapter: client context, `useStack`, **drive** handles, **observe** hooks. Engine parity; wrappers (`StackOutlet`, `createStackHook`, …) are sugar and diverge by design. React/Preact/Solid/Angular/Vue re-export the full core; Svelte re-exports selectively. Angular and Svelte ship compiler-free — imperative / primitive render, no shipped host components.
+Same primitives on every adapter: client context, `useStack`, **drive** handles, **observe** hooks. Engine parity; wrappers (`StackOutlet`, `createStackHook`, …) are sugar and diverge by design. React/Preact/Solid/Angular/Vue/Lit re-export the full core; Svelte re-exports selectively. Angular and Svelte ship compiler-free — imperative / primitive render, no shipped host components.
 
-| Capability                                             | React | Preact | Solid | Angular | Vue | Svelte (runes) | Svelte (store) |
-| ------------------------------------------------------ | :---: | :----: | :---: | :-----: | :-: | :------------: | :------------: |
-| Primitives + core re-export                            |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       ✅       |       ✅       |
-| Drive: `useLayer` / `injectLayer` / `createLayer`      |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       ✅       |       ✅       |
-| Observe: `useLayerState` / `injectLayerState` / `createLayerState` |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       ✅       |       ✅       |
-| `StackOutlet` (built-in host)                          |  ✅   |   ✅   |  ✅   |   ✅¹   | ✅  |       —⁴       |       —⁴       |
-| `StackSubscribe` (render-prop / scoped slot)           |  ✅   |   ✅   |  ✅   |   —²    | ✅  |       —⁴       |       —⁴       |
-| `useStackHandles` (headless `{ states, getCall }`)     |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       —⁵       |       —⁵       |
-| `useMutationFlow` (async-action helper)                |  ✅   |   ✅   |  ✅   |   ✅    | ✅  |       ✅       |       ✅       |
-| `useLayerGroup` (nested-stack hook)                    |  ✅   |   ✅   |  ✅   |   ✅³   | ✅  |      ✅⁶       |      ✅⁶       |
-| `createStackHook` (`useAppStack`/`AppHost`/`AppLayer`) |  ✅   |   ✅   |  ✅   |   ✅³   | ✅  |       —⁴       |       —⁴       |
+| Capability                                             | React | Preact | Solid | Angular | Vue | Lit | Svelte (runes) | Svelte (store) |
+| ------------------------------------------------------ | :---: | :----: | :---: | :-----: | :-: | :-: | :------------: | :------------: |
+| Primitives + core re-export                            |  ✅   |   ✅   |  ✅   |   ✅    | ✅  | ✅  |       ✅       |       ✅       |
+| Drive: `useLayer` / `injectLayer` / `createLayer`      |  ✅   |   ✅   |  ✅   |   ✅    | ✅  | ✅  |       ✅       |       ✅       |
+| Observe: `useLayerState` / `injectLayerState` / `createLayerState` |  ✅   |   ✅   |  ✅   |   ✅    | ✅  | ✅  |       ✅       |       ✅       |
+| `StackOutlet` (built-in host)                          |  ✅   |   ✅   |  ✅   |   ✅¹   | ✅  | ✅  |       —⁴       |       —⁴       |
+| `StackSubscribe` (render-prop / scoped slot)           |  ✅   |   ✅   |  ✅   |   —²    | ✅  | ✅  |       —⁴       |       —⁴       |
+| `useStackHandles` (headless `{ states, getCall }`)     |  ✅   |   ✅   |  ✅   |   ✅    | ✅  | ✅  |       —⁵       |       —⁵       |
+| `useMutationFlow` (async-action helper)                |  ✅   |   ✅   |  ✅   |   ✅    | ✅  | ✅  |       ✅       |       ✅       |
+| `useLayerGroup` (nested-stack hook)                    |  ✅   |   ✅   |  ✅   |   ✅³   | ✅  | ✅  |      ✅⁶       |      ✅⁶       |
+| `createStackHook` (`useAppStack`/`AppHost`/`AppLayer`) |  ✅   |   ✅   |  ✅   |   ✅³   | ✅  | ✅  |       —⁴       |       —⁴       |
 
 ¹ Angular ships `renderStack(vcr)` — a compiler-free imperative outlet (`ViewContainerRef.createComponent` + `setInput`, id-keyed so state changes update inputs without recreating components). ² Angular has no `StackSubscribe`; `useStack({ stack, select })` as a signal is the idiomatic equivalent. ³ Angular's `useLayerGroup`/`createStackHook` expose `renderInto(vcr)` instead of an `Outlet` component; `createStackHook` returns `{ provideClient, useAppStack, renderInto }` (no `AppHost`/`AppLayer`). ⁴ Svelte ships no `.svelte` components: render with `{#each useStack({ stack }).current as s}` + `callFor(s)` (runes) / `{#each $stack}` + `callFor(client, stackId, s)` (store) in your own markup. ⁵ Svelte's `useStack({ stack })` already returns the headless pair — `.current` (states) + `callFor`. ⁶ Svelte's `useLayerGroup` exposes the child `stack` (`SvelteStack` / `Readable`) instead of an `Outlet`.
 
@@ -73,6 +73,13 @@ Name map: Angular `injectLayer` (`useLayer` alias); Svelte `createLayer` / `crea
     icon="/icons/vue.svg"
     href="/adapters/vue"
     description="@stainless-code/vue-layers"
+    arrow
+  />
+  <Card
+    title="Lit"
+    icon="/icons/lit.svg"
+    href="/adapters/lit"
+    description="@stainless-code/lit-layers"
     arrow
   />
   <Card

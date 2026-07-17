@@ -1,0 +1,128 @@
+---
+title: Lit
+description: Lit adapter — provideLayerClient, Reactive Controllers, StackOutlet, custom elements.
+search:
+  tags: ["adapter", "lit"]
+sidebar:
+  icon: /icons/lit.svg
+---
+
+Stop threading `isOpen` props and `onConfirm` callbacks through your element tree — open a confirm, drawer, or toast from any controller and `await` its typed result. `@stainless-code/lit-layers` binds stacks into Lit via Reactive Controllers + `requestUpdate`, with light-DOM custom elements for provider/outlet/subscribe. The core is re-exported.
+
+## Install
+
+```package-install
+npm i @stainless-code/lit-layers
+```
+
+**Peers:** `lit` (>=3.2.0), `@lit/context` (>=1.1.0)
+
+## Client
+
+Call `provideLayerClient(host, client?)` on a host element (a new `LayerClient` is created when omitted), or mount `<stack-provider .client=${client}>` high in the tree. Descendants resolve it by omitting `client`, or with `useLayerClient(host).current`:
+
+```ts
+import { LitElement, html } from "lit";
+import { customElement } from "lit/decorators.js";
+import { defineStackElements, provideLayerClient } from "@stainless-code/lit-layers";
+
+defineStackElements();
+
+@customElement("my-shell")
+class MyShell extends LitElement {
+  connectedCallback() {
+    super.connectedCallback();
+    provideLayerClient(this);
+  }
+  render() {
+    return html`<slot></slot><stack-outlet stack="confirm"></stack-outlet>`;
+  }
+}
+```
+
+:::note
+Controllers subscribe in `hostConnected` and tear down in `hostDisconnected` — create them as class fields on a `LitElement` (`useStack(this, …)`). Omit `client` on any hook to resolve it from a `provideLayerClient()` / `<stack-provider>` ancestor via `@lit/context` (the wired handle builds after the host connects); pass it explicitly for synchronous access at construction.
+:::
+
+## Render a stack
+
+`<stack-outlet stack="…">` renders registered `component` entries in **light DOM** (`createRenderRoot() { return this }`) so overlays stack inline where mounted. A `component` is a `LitElement` constructor or a `(props) => TemplateResult` render function — no tag strings in v1. Id-keyed `repeat` keeps element instances stable across updates. For headless rendering, use `useStackHandles(this, stack, rootProps)`.
+
+`<stack-subscribe .selector .renderer>` renders a selected stack value through `.renderer(value)` (a `(value) => TemplateResult`).
+
+## Confirm dialog
+
+```ts
+import { LitElement, html } from "lit";
+import { customElement } from "lit/decorators.js";
+import {
+  layerOptions,
+  type LayerCallContext,
+  type LayerComponentProps,
+} from "@stainless-code/lit-layers";
+
+type ConfirmPayload = { title: string };
+type ConfirmResponse = boolean;
+
+@customElement("confirm-dialog")
+class ConfirmDialog extends LitElement {
+  createRenderRoot() {
+    return this;
+  }
+  declare call: LayerCallContext<ConfirmPayload, ConfirmResponse>;
+  declare payload: ConfirmPayload;
+  render() {
+    return html`<div role="dialog">
+      <h2>${this.payload.title}</h2>
+      <button @click=${() => void this.call.end(true)}>Yes</button>
+      <button @click=${() => void this.call.end(false)}>No</button>
+    </div>`;
+  }
+}
+
+export const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+```
+
+```ts
+import { createLayer, LayerClient } from "@stainless-code/lit-layers";
+import { confirm } from "./confirm-dialog";
+
+const client = new LayerClient();
+const c = createLayer(confirm, client);
+async function remove() {
+  await c.open({ title: "Remove item?" });
+}
+```
+
+## Primitives
+
+Options bag plus optional trailing `LayerClient`. **Drive** with `useLayer(this, options, client?)`; **observe** with `useLayerState(this, { key, … })`.
+
+| Export | Role |
+| ------ | ---- |
+| `useStack(host, { stack?, select?, compare? }, client?)` | `StackController<T>` — `.current` of the selected stack slice |
+| `useQueuedStack(host, { ... }, client?)` | `StackController<T>` over the queued snapshot |
+| `useLayer(host, options, client?)` | **Drive** — wired handle + reactive `state` / `queued` / `top` |
+| `useLayerState(host, { key, stack?, select?, compare? }, client?)` | **Observe** — mounted same-key layers |
+| `useLayerQueuedState(host, { key, ... }, client?)` | **Observe** — queued same-key layers |
+
+## Ergonomic APIs
+
+| Export | Role |
+| ------ | ---- |
+| `useStackHandles(host, stack?, rootProps?, client?)` | `{ states, getCall }` for headless rendering |
+| `StackSubscribe` | `<stack-subscribe .selector .renderer>` (`renderer(value)` → `TemplateResult`) |
+| `useMutationFlow(host, call)` | `pending: boolean`; `run(fn).orEnd(response)` |
+| `useLayerGroup(host, call, options?, client?)` | Child stack with `outlet(): TemplateResult` + `stackId` |
+| `createStackHook(config?)` | `StackProvider`, `useAppStack(host)`, `AppHost` CE, `AppLayer` controller |
+
+`defineStackElements()` idempotently registers `stack-provider`, `stack-outlet`, `stack-subscribe`, and `app-host`; not auto-invoked on import.
+
+## Learn more
+
+- [Lifecycle](/concepts/lifecycle) · [Identity & types](/concepts/identity-and-types)
+- [Adapter parity](/adapters)
