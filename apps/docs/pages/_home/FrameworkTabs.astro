@@ -28,6 +28,7 @@ const adapters = [
   { name: "Solid", icon: "/icons/solid.svg" },
   { name: "Angular", icon: "/icons/angular.svg" },
   { name: "Vue", icon: "/icons/vue.svg" },
+  { name: "Lit", icon: "/icons/lit.svg" },
   { name: "Svelte (runes)", icon: "/icons/svelte.svg" },
   { name: "Svelte (store)", icon: "/icons/svelte.svg" },
 ];
@@ -35,23 +36,23 @@ const adapters = [
 const rows = [
   {
     feature: "Primitives + core re-export",
-    values: [true, true, true, true, true, true, true],
+    values: [true, true, true, true, true, true, true, true],
   },
   {
     feature: "StackOutlet (built-in host)",
-    values: [true, true, true, false, true, false, false],
+    values: [true, true, true, false, true, true, false, false],
   },
   {
     feature: "useLayerGroup",
-    values: [true, true, true, true, true, true, true],
+    values: [true, true, true, true, true, true, true, true],
   },
   {
     feature: "useMutationFlow",
-    values: [true, true, true, true, true, true, true],
+    values: [true, true, true, true, true, true, true, true],
   },
   {
     feature: "createStackHook",
-    values: [true, true, true, true, true, false, false],
+    values: [true, true, true, true, true, true, false, false],
   },
 ];
 
@@ -65,7 +66,7 @@ const featureClass =
 <section>
   <div class="mx-auto max-w-2xl text-center">
     <h2 class="font-medium text-3xl tracking-tight sm:text-4xl">
-      One core, six adapters.
+      One core, seven adapters.
     </h2>
     <p class="mx-auto mt-4 max-w-lg text-balance text-muted-foreground">
       Declare a layer once, then open and <code
@@ -99,14 +100,14 @@ const featureClass =
         Every adapter, the same API.
       </h3>
       <p class="mx-auto mt-4 max-w-lg text-balance text-muted-foreground">
-        Every adapter exposes the same primitives and re-exports the full core.
-        Angular and Svelte diverge by design — imperative render instead of
-        shipped outlet components.
+        React, Preact, Solid, Angular, Vue, and Lit re-export the full core;
+        Svelte re-exports selectively. Angular and Svelte diverge by design —
+        imperative render instead of shipped outlet components.
       </p>
     </div>
 
     <div class="mt-10 overflow-x-auto rounded-blume border border-border">
-      <table class="w-full min-w-[720px] border-collapse">
+      <table class="w-full min-w-[820px] border-collapse">
         <thead>
           <tr class="bg-muted/50">
             <th class={thClass}>Capability</th>

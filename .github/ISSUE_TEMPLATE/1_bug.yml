@@ -49,7 +49,7 @@ body:
         - Node.js
         - Bun
         - Browser (React)
-        - Browser (Svelte / Vue / Solid / Preact / Angular)
+        - Browser (Svelte / Vue / Solid / Preact / Angular / Lit)
         - Both / not sure
     validations:
       required: true

@@ -27,7 +27,7 @@ Two views: this matrix contrasts **one exemplar per category**; the [full spectr
 | Capability | Layers | react-call | nice-modal | overlay-kit | @mantine/modals | overlastic |
 | --- | :---: | :---: | :---: | :---: | :---: | :---: |
 | **Category** | Orchestration engine | Orchestration engine | Registry / reducer | Registry / reducer | Batteries-included UI | Orchestration engine |
-| Multi-framework | ✅ 6 | ❌ R | ❌ R | ❌ R | ❌ R | ✅ 4 |
+| Multi-framework | ✅ 7 | ❌ R | ❌ R | ❌ R | ❌ R | ✅ 4 |
 | Zero-dep core | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ |
 | Typed await | ✅ DataTag | ✅ | 🟡 | 🟡 | ❌ | 🟡 |
 | Named stacks | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ |
@@ -48,13 +48,13 @@ Focus containment, ARIA/dialog semantics, portals/top-layer, backdrop/Escape, sc
 
 ## Across the whole landscape
 
-The matrix above contrasts one exemplar per category. The tables below are the full spectrum — every audited library a real evaluator weighs, across all six frameworks, scored on the engine axes Layers targets. One table per category (orchestration engines split into multi-framework and single-framework so no table is wider than the eye can scan). **Layers is the baseline column in every table — the only column green on every row.** `R/V/S/Solid/Ang` = React/Vue/Svelte/Solid/Angular; `Nfw` = N frameworks.
+The matrix above contrasts one exemplar per category. The tables below are the full spectrum — every audited library a real evaluator weighs, across all six frameworks, scored on the engine axes Layers targets. One table per category (orchestration engines split into multi-framework and single-framework so no table is wider than the eye can scan). **Layers is the baseline column in every table — the only column green on every row.** `R/V/S/Solid/Ang/Lit` = React/Vue/Svelte/Solid/Angular/Lit; `Nfw` = N frameworks.
 
 **Multi-framework orchestration engines**
 
 | Capability | Layers | overlastic | ui-call | dialog-fn | @gwn-sheet-stack |
 | --- | :---: | :---: | :---: | :---: | :---: |
-| Multi-framework | ✅ 6 | ✅ 4 | ✅ 5 | 🟡 3 | 🟡 2 |
+| Multi-framework | ✅ 7 | ✅ 4 | ✅ 5 | 🟡 3 | 🟡 2 |
 | Zero-dep core | ✅ | ✅ core | ✅ | ✅ | ✅ |
 | Typed await | ✅ DataTag | 🟡 generic | 🟡 generic | 🟡 dismiss=undefined | ✅ `push<R>` |
 | Named stacks | ✅ | ❌ | ❌ | ❌ | ❌ |
@@ -69,7 +69,7 @@ The matrix above contrasts one exemplar per category. The tables below are the f
 
 | Capability | Layers | react-call | jenesius-vue-modal | ngx-call | @angular-libs/dialog | @svelte-put/async-stack |
 | --- | :---: | :---: | :---: | :---: | :---: | :---: |
-| Multi-framework | ✅ 6 | ❌ React | ❌ Vue | ❌ Angular | ❌ Angular | ❌ Svelte |
+| Multi-framework | ✅ 7 | ❌ React | ❌ Vue | ❌ Angular | ❌ Angular | ❌ Svelte |
 | Zero-dep core | ✅ | ✅ | — | ✅ | — | ✅ |
 | Typed await | ✅ DataTag | ✅ generic | 🟡 any | ✅ generic | ❌ | ✅ resolution |
 | Named stacks | ✅ | ❌ | ✅ NamespaceStore | ❌ | ❌ global list | ❌ single |
@@ -84,7 +84,7 @@ The matrix above contrasts one exemplar per category. The tables below are the f
 
 | Capability | Layers | nice-modal-react | overlay-kit | pushmodal | @ngneat/dialog |
 | --- | :---: | :---: | :---: | :---: | :---: |
-| Multi-framework | ✅ 6 | ❌ React | ❌ React | ❌ React | ❌ Angular |
+| Multi-framework | ✅ 7 | ❌ React | ❌ React | ❌ React | ❌ Angular |
 | Zero-dep core | ✅ | ✅ | ✅ | — | — |
 | Typed await | ✅ DataTag | 🟡 unknown | 🟡 generic | ❌ void | ✅ afterClosed$ |
 | Named stacks | ✅ | ❌ id-map | ❌ | ✅ LIFO | ❌ |
@@ -99,7 +99,7 @@ The matrix above contrasts one exemplar per category. The tables below are the f
 
 | Capability | Layers | @mantine/modals | vue-final-modal | svelte-promise-modals | kolirt/vue-modal |
 | --- | :---: | :---: | :---: | :---: | :---: |
-| Multi-framework | ✅ 6 | ❌ React | ❌ Vue | ❌ Svelte | ❌ Vue |
+| Multi-framework | ✅ 7 | ❌ React | ❌ Vue | ❌ Svelte | ❌ Vue |
 | Zero-dep core | ✅ | ❌ @mantine/core | ❌ @vueuse+focus-trap | ❌ focus-trap+deepmerge | — |
 | Typed await | ✅ DataTag | ❌ string id | ❌ lifecycle strings | ✅ closeModal prop | ✅ awaitable |
 | Named stacks | ✅ | ❌ | ❌ | ❌ | ✅ grouped |
@@ -114,7 +114,7 @@ The matrix above contrasts one exemplar per category. The tables below are the f
 
 | Capability | Layers | @corvu/dialog | Ark / Zag |
 | --- | :---: | :---: | :---: |
-| Multi-framework | ✅ 6 | ❌ Solid | ✅ R/V/S/Solid |
+| Multi-framework | ✅ 7 | ❌ Solid | ✅ R/V/S/Solid |
 | Zero-dep core | ✅ | ✅ | ✅ |
 | Typed await | ✅ DataTag | ❌ no await | ❌ no await |
 | Named stacks | ✅ | ❌ | ❌ |

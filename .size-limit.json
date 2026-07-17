@@ -46,6 +46,13 @@
     "gzip": true
   },
   {
+    "name": "@stainless-code/lit-layers",
+    "path": "packages/lit/dist/index.mjs",
+    "ignore": ["@stainless-code/layers", "lit", "@lit/context"],
+    "limit": "4.5 KB",
+    "gzip": true
+  },
+  {
     "name": "@stainless-code/solid-layers",
     "path": "packages/solid/dist/index.mjs",
     "ignore": ["@stainless-code/layers", "solid-js"],

@@ -7,7 +7,7 @@
 
 Modals are just async functions you forgot to `await`.
 
-Headless layer/stack manager — modals, dialogs, drawers, popovers, toasts are **layers in named stacks**. Open any layer from anywhere and `await` a typed result. A zero-dependency core plus React, Preact, Solid, Angular, Vue, and Svelte adapters. State coordination, not UI ownership: Layers owns ordering, keys, transitions, blockers, and the `await client.open(...)` contract; you own rendering, focus, portals, and a11y.
+Headless layer/stack manager — modals, dialogs, drawers, popovers, toasts are **layers in named stacks**. Open any layer from anywhere and `await` a typed result. A zero-dependency core plus React, Preact, Solid, Angular, Vue, Lit, and Svelte adapters. State coordination, not UI ownership: Layers owns ordering, keys, transitions, blockers, and the `await client.open(...)` contract; you own rendering, focus, portals, and a11y.
 
 > Experimental — the API may change between minor releases. Pin your version. ([Stability & versioning](https://stainless-code.com/layers/concepts/stability))
 
@@ -15,15 +15,16 @@ Full docs: [stainless-code.com/layers](https://stainless-code.com/layers).
 
 ## Packages
 
-| Package                                              | Peer            | Install                                  |
-| ---------------------------------------------------- | --------------- | ---------------------------------------- |
-| [`@stainless-code/layers`](packages/core)            | —               | `bun add @stainless-code/layers`         |
-| [`@stainless-code/react-layers`](packages/react)     | `react`         | `bun add @stainless-code/react-layers`   |
-| [`@stainless-code/preact-layers`](packages/preact)   | `preact`        | `bun add @stainless-code/preact-layers`  |
-| [`@stainless-code/solid-layers`](packages/solid)     | `solid-js`      | `bun add @stainless-code/solid-layers`   |
-| [`@stainless-code/angular-layers`](packages/angular) | `@angular/core` | `bun add @stainless-code/angular-layers` |
-| [`@stainless-code/vue-layers`](packages/vue)         | `vue`           | `bun add @stainless-code/vue-layers`     |
-| [`@stainless-code/svelte-layers`](packages/svelte)   | `svelte`        | `bun add @stainless-code/svelte-layers`  |
+| Package                                              | Peer                  | Install                                  |
+| ---------------------------------------------------- | --------------------- | ---------------------------------------- |
+| [`@stainless-code/layers`](packages/core)            | —                     | `bun add @stainless-code/layers`         |
+| [`@stainless-code/react-layers`](packages/react)     | `react`               | `bun add @stainless-code/react-layers`   |
+| [`@stainless-code/preact-layers`](packages/preact)   | `preact`              | `bun add @stainless-code/preact-layers`  |
+| [`@stainless-code/solid-layers`](packages/solid)     | `solid-js`            | `bun add @stainless-code/solid-layers`   |
+| [`@stainless-code/angular-layers`](packages/angular) | `@angular/core`       | `bun add @stainless-code/angular-layers` |
+| [`@stainless-code/vue-layers`](packages/vue)         | `vue`                 | `bun add @stainless-code/vue-layers`     |
+| [`@stainless-code/lit-layers`](packages/lit)         | `lit`, `@lit/context` | `bun add @stainless-code/lit-layers`     |
+| [`@stainless-code/svelte-layers`](packages/svelte)   | `svelte`              | `bun add @stainless-code/svelte-layers`  |
 
 Install only the adapter for your framework — it pulls the core in transitively and re-exports it, so adapter APIs (`StackProvider`, `useStack`, …) and core APIs (`LayerClient`, `layerOptions`, …) both come from the one package. Each adapter lists its framework as a required peer. Svelte ships two entries: `@stainless-code/svelte-layers` (runes, 5.7+) and `@stainless-code/svelte-layers/store` (stores, 3+).
 

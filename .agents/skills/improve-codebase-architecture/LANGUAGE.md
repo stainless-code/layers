@@ -31,7 +31,7 @@ _Examples in this repo_: the package seam in `docs/architecture.md` — **core v
 
 **Adapter**
 A concrete thing that satisfies an interface at a seam. Describes _role_ (what slot it fills), not substance (what's inside).
-_Examples in this repo_: each framework binding (`react`, `svelte`, `vue`, `solid`, `preact`, `angular`) is an adapter at the core/adapter seam. Six adapters across the seam = a real seam (the engine is genuinely framework-agnostic); a single adapter would be hypothetical.
+_Examples in this repo_: each framework binding (`react`, `preact`, `solid`, `angular`, `vue`, `lit`, `svelte`) is an adapter at the core/adapter seam. Seven adapters across the seam = a real seam (the engine is genuinely framework-agnostic); a single adapter would be hypothetical.
 
 **Leverage**
 What callers get from depth. More capability per unit of interface they have to learn. One implementation pays back across N call sites and M tests.
@@ -51,7 +51,7 @@ _Example_: the `notifyManager.batch` wrapping lives in one place in `packages/co
 
 - **The interface is the test surface.** Callers and tests cross the same seam. If you want to test _past_ the interface, the module is probably the wrong shape. Example: the zero-dep core invariant (`packages/core` has no dependencies and imports no framework peer) belongs at the package seam, enforced by package manifests plus dependency/import tooling rather than tests that mock internals.
 
-- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it. Example: a core/adapter seam with only a React adapter is hypothetical; add Svelte, Vue, Solid, Preact, and Angular and it's a real seam (each framework's reactivity is genuinely different). The seam is justified because the engine is the same across all six — don't introduce a per-adapter core fork before a second adapter genuinely needs it.
+- **One adapter means a hypothetical seam. Two adapters means a real one.** Don't introduce a seam unless something actually varies across it. Example: a core/adapter seam with only a React adapter is hypothetical; add Preact, Solid, Angular, Vue, Lit, and Svelte and it's a real seam (each framework's reactivity is genuinely different). The seam is justified because the engine is the same across all seven — don't introduce a per-adapter core fork before a second adapter genuinely needs it.
 
 ## Relationships
 

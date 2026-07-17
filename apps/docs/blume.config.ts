@@ -3,7 +3,7 @@ import { defineConfig } from "blume";
 export default defineConfig({
   title: "Layers",
   description:
-    "Headless modal/dialog/drawer/popover/toast manager — open any layer from anywhere. Zero-dep core + React, Preact, Solid, Angular, Vue, and Svelte adapters.",
+    "Headless modal/dialog/drawer/popover/toast manager — open any layer from anywhere. Zero-dep core + React, Preact, Solid, Angular, Vue, Lit, and Svelte adapters.",
 
   logo: { image: "/logo.svg", text: "Layers" },
 

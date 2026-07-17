@@ -219,6 +219,53 @@ async function remove() {
 </template>`,
   },
   {
+    framework: "lit",
+    icon: "/icons/lit.svg",
+    label: "Lit",
+    installCommand: "bun add @stainless-code/lit-layers",
+    lang: "ts",
+    code: `import {
+  createLayer,
+  defineStackElements,
+  layerOptions,
+  provideLayerClient,
+  useLayer,
+} from "@stainless-code/lit-layers";
+import { LitElement, html } from "lit";
+import { customElement } from "lit/decorators.js";
+
+defineStackElements();
+
+const confirm = layerOptions({
+  stack: "confirm",
+  key: ["confirm", "remove"],
+  component: ConfirmDialog,
+});
+
+@customElement("app-shell")
+class AppShell extends LitElement {
+  // Field order: provide before useLayer (same-host context is not the path).
+  #client = provideLayerClient(this);
+  #confirm = useLayer(this, confirm, this.#client);
+
+  createRenderRoot() {
+    return this;
+  }
+
+  render() {
+    return html\`
+      <button
+        type="button"
+        @click=\${() => void this.#confirm.open({ title: "Remove?" })}
+      >
+        Remove
+      </button>
+      <stack-outlet stack="confirm"></stack-outlet>
+    \`;
+  }
+}`,
+  },
+  {
     framework: "svelte",
     icon: "/icons/svelte.svg",
     label: "Svelte",

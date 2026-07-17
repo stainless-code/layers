@@ -3,7 +3,7 @@
 `@stainless-code/layers` is a small, freshly extracted library. Before large PRs, please open an issue so we can align on:
 
 - **Public surface** — anything exported from a package entry point (`src/index.ts` / React's `src/index.tsx`, plus Svelte's `src/store.ts`) is the public API and must carry JSDoc that reads well in hovers and published typings. See [`docs/architecture.md`](../docs/architecture.md) for the core + adapter model.
-- **Runtimes** — **Node** `^20.19.0 || >=22.12.0` and **Bun** `>=1.0.0` (`package.json` **engines**). The core is zero-dep by design; each adapter package declares its required peer (`react`, `preact`, `svelte`, `vue`, `solid-js`, `@angular/core`).
+- **Runtimes** — **Node** `^20.19.0 || >=22.12.0` and **Bun** `>=1.0.0` (`package.json` **engines**). The core is zero-dep by design; each adapter package declares its required peer (`react`, `preact`, `solid-js`, `@angular/core`, `vue`, `lit` + `@lit/context`, `svelte`).
 
 ## Dev workflow
 

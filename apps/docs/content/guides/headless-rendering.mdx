@@ -7,7 +7,7 @@ search:
 
 `StackOutlet` maps a stack snapshot to registered components — the convenience path. When you need custom portals, per-layer switches, or non-component renderers, use the headless primitives.
 
-## useStackHandles
+## Map stacks with useStackHandles
 
 Returns `{ states, getCall }` — everything `StackOutlet` uses internally:
 
@@ -137,6 +137,32 @@ const { states, getCall } = useStackHandles("modal");
 ```
 
 </Tab>
+<Tab title="Lit" icon="/icons/lit.svg">
+
+```ts lineNumbers
+import { LitElement, html } from "lit";
+import { useStackHandles } from "@stainless-code/lit-layers";
+
+class CustomHost extends LitElement {
+  #handles = useStackHandles(this, "modal");
+
+  createRenderRoot() {
+    return this;
+  }
+
+  render() {
+    return html`${this.#handles.states.current.map(
+      (s) => html`<my-modal
+        .call=${this.#handles.getCall(s)}
+        .payload=${s.payload}
+        .transition=${s.transition}
+      ></my-modal>`,
+    )}`;
+  }
+}
+```
+
+</Tab>
 <Tab title="Svelte (runes)" icon="/icons/svelte.svg">
 
 ```svelte lineNumbers
@@ -179,7 +205,7 @@ Store entry subscribes via `$stack` + standalone `callFor(client, stackId, state
 
 `StackOutlet` deliberately has **no** `render` prop — headless is the escape hatch.
 
-## StackSubscribe
+## Subscribe with StackSubscribe
 
 Isolate a selector in JSX/template without pulling the full snapshot into your component:
 
@@ -263,6 +289,30 @@ import { StackSubscribe } from "@stainless-code/vue-layers";
 ```
 
 </Tab>
+<Tab title="Lit" icon="/icons/lit.svg">
+
+```ts lineNumbers
+import { LitElement, html } from "lit";
+import { defineStackElements } from "@stainless-code/lit-layers";
+
+defineStackElements();
+
+class OpenCount extends LitElement {
+  createRenderRoot() {
+    return this;
+  }
+
+  render() {
+    return html`<stack-subscribe
+      .stack=${"modal"}
+      .selector=${(s) => s.length}
+      .renderer=${(count) => html`<span>${count} open</span>`}
+    ></stack-subscribe>`;
+  }
+}
+```
+
+</Tab>
 <Tab title="Svelte (runes)" icon="/icons/svelte.svg">
 
 ```svelte lineNumbers
@@ -302,8 +352,10 @@ For fully-typed selector output in Vue, prefer `useStack({ stack, select })` in 
 | Adapter        | Headless path                                | Built-in outlet           |
 | -------------- | -------------------------------------------- | ------------------------- |
 | React / Preact | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
-| Solid / Vue    | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
+| Solid          | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
 | Angular        | `useStackHandles`, `renderStack(vcr)`        | `renderStack`             |
+| Vue            | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
+| Lit            | `useStackHandles`, `<stack-subscribe>`       | `<stack-outlet>`          |
 | Svelte (runes) | `useStack().current` + `callFor`             | — (render in your markup) |
 | Svelte (store) | `$stack` + `callFor(client, stackId, state)` | —                         |
 
