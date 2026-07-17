@@ -58,7 +58,7 @@
   "dependencies": {
     "@stainless-code/layers": "workspace:*",
     "@tanstack/devtools-event-client": "0.5.0",
-    "@tanstack/devtools-ui": "0.5.2",
+    "@tanstack/devtools-ui": "0.6.0",
     "@tanstack/devtools-utils": "0.5.1",
     "solid-js": "1.9.14"
   },
