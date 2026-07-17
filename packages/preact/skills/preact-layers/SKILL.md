@@ -11,7 +11,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/preact-layers"
-  library_version: "0.1.0"
+  library_version: "0.2.0"
   framework: "preact"
 sources:
   - https://stainless-code.com/layers/adapters/preact
