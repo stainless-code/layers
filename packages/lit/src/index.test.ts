@@ -226,6 +226,38 @@ describe("useLayer (lit)", () => {
       useLayer(host, toastOptions, undefined as unknown as LayerClient),
     ).toThrow("[layers/lit]");
   });
+
+  it("validated handle stores parsed output in state", async () => {
+    const idSchema = {
+      "~standard": {
+        version: 1 as const,
+        vendor: "test",
+        validate: (v: unknown) => ({
+          value: { id: Number((v as { id: string }).id) },
+        }),
+        types: undefined as unknown as {
+          input: { id: string };
+          output: { id: number };
+        },
+      },
+    };
+    const client = new LayerClient();
+    const { host } = createHost();
+    const handle = useLayer(
+      host,
+      {
+        stack: "default",
+        key: ["v"],
+        validate: idSchema,
+        component: undefined,
+        exitingDelay: 0,
+      },
+      client,
+    );
+    void handle.open({ id: "42" });
+    expect(handle.state.current[0]?.payload).toEqual({ id: 42 });
+    await handle.dismiss(undefined as void);
+  });
 });
 
 function makeCall(

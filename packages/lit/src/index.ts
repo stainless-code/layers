@@ -1153,15 +1153,23 @@ export class StackOutlet extends LitElement {
   }
 
   #init(client: LayerClient): void {
-    if (this.#stack !== null) return;
+    if (this.#states === null) {
+      this.#clientRef = client;
+      this.#stack = client.getStack(this.stack);
+      this.#states = new StackController(
+        this,
+        { stack: this.stack, client },
+        undefined,
+        false,
+      );
+      this.requestUpdate();
+      return;
+    }
+    // Context provider may push a new client via setValue — rebind.
+    if (client === this.#clientRef) return;
     this.#clientRef = client;
+    this.#states.reconfigure({ stack: this.stack }, client);
     this.#stack = client.getStack(this.stack);
-    this.#states = new StackController(
-      this,
-      { stack: this.stack, client },
-      undefined,
-      false,
-    );
     this.requestUpdate();
   }
 
