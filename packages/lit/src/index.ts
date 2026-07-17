@@ -42,7 +42,11 @@ import { repeat } from "lit/directives/repeat.js";
 
 export * from "@stainless-code/layers";
 
-/** @lit/context key carrying the nearest {@link LayerClient}. */
+/**
+ * `@lit/context` key for the nearest {@link LayerClient}.
+ * Exported for advanced `ContextProvider` wiring; prefer
+ * {@link provideLayerClient} / {@link useLayerClient}.
+ */
 export const layerClientContext: Context<string, LayerClient> = createContext<
   LayerClient,
   string

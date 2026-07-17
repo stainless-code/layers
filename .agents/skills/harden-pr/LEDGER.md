@@ -14,7 +14,7 @@ By-design or false-positive findings — do not re-raise.
 - **[correctness]** `packages/core/src/layerStack.ts` — snapshot cached + rebuilt inside `notifyManager.batch`: by-design — `useSyncExternalStore` needs a referentially-stable snapshot between mutations or it infinite-loops.
 -->
 
-- **[public-api]** `packages/lit/src/index.ts` `layerClientContext` export — intentional (Solid exports `LayerClientContext`; advanced ContextProvider wiring).
+- **[public-api]** `packages/lit/src/index.ts` `layerClientContext` export — by-design; rationale on the const JSDoc.
 - **[public-api]** `packages/lit/src/index.ts` `StackController` `queued`/`deferClient`/`bindClient` — by-design; rationale on the class/ctor JSDoc (factories are the supported path).
 
 ## Deferred
