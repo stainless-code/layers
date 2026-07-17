@@ -11,6 +11,7 @@ import type { ReactiveController, ReactiveControllerHost } from "lit";
 import {
   defineStackElements,
   MutationFlowController,
+  StackController,
   useLayer,
   useLayerGroup,
   useLayerQueuedState,
@@ -92,6 +93,39 @@ describe("useStack (lit)", () => {
   it("throws when no client is provided", () => {
     const { host } = createHost();
     expect(() => useStack(host, { stack: "confirm" })).toThrow("[layers/lit]");
+  });
+});
+
+describe("StackController bindClient (lit)", () => {
+  it("with deferClient stays empty until bindClient, then mirrors the stack", () => {
+    const client = new LayerClient();
+    const { host } = createHost();
+    const stack = new StackController(
+      host,
+      { stack: "confirm" },
+      undefined,
+      false,
+      true,
+    );
+    expect(stack.current).toHaveLength(0);
+    stack.bindClient(client);
+    client.open({ key: ["a"], payload: 1, stack: "confirm" });
+    expect(stack.current).toHaveLength(1);
+  });
+
+  it("bindClient after connect subscribes without a separate context resolve", () => {
+    const client = new LayerClient();
+    const { host } = createHost();
+    const stack = new StackController(
+      host,
+      { stack: "confirm", select: (s) => s.length },
+      undefined,
+      false,
+      true,
+    );
+    stack.bindClient(client);
+    client.open({ key: ["a"], payload: 1, stack: "confirm" });
+    expect(stack.current).toBe(1);
   });
 });
 

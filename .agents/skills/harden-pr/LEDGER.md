@@ -15,7 +15,6 @@ By-design or false-positive findings — do not re-raise.
 -->
 
 - **[public-api]** `packages/lit/src/index.ts` `layerClientContext` export — intentional (Solid exports `LayerClientContext`; advanced ContextProvider wiring).
-- **[correctness]** `packages/lit` triple `ContextConsumer` on `useLayer` — accepted overhead; not a functional defect.
 - **[correctness]** `LayerGroupController.outlet` empty until `#states` context update — indirect but tested; not a functional defect.
 
 ## Deferred

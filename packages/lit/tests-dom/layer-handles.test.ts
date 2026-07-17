@@ -1,8 +1,10 @@
+import { ContextEvent } from "@lit/context";
 import { LitElement, html } from "lit";
 import { describe, expect, it } from "vitest";
 
 import {
   defineStackElements,
+  layerClientContext,
   layerOptions,
   LayerClient,
   StackProvider,
@@ -84,6 +86,29 @@ async function mountProviderHost(client: LayerClient) {
 }
 
 describe("Lit adapter — useLayer lazy client", () => {
+  it("dispatches one layer-client context-request on the useLayer host", async () => {
+    const client = new LayerClient();
+    const host = document.createElement("test-layer-host") as HTMLElement & {
+      updateComplete: Promise<unknown>;
+    };
+    let layerClientRequests = 0;
+    host.addEventListener("context-request", (e) => {
+      const ev = e as InstanceType<typeof ContextEvent>;
+      if (ev.context === layerClientContext) layerClientRequests += 1;
+    });
+
+    const provider = document.createElement("stack-provider") as StackProvider &
+      HTMLElement;
+    provider.client = client;
+    provider.appendChild(host);
+    document.body.appendChild(provider);
+    await host.updateComplete;
+
+    expect(layerClientRequests).toBe(1);
+
+    document.body.removeChild(provider);
+  });
+
   it("resolves the client from context and opens/dismisses without an explicit client", async () => {
     const client = new LayerClient();
     const { outlet, host, provider } = await mountProviderHost(client);

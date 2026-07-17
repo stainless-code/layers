@@ -297,6 +297,7 @@ export class StackController<T = LayerState[]> implements ReactiveController {
     options: UseStackOptions<T> = {},
     client?: LayerClient,
     queued = false,
+    deferClient = false,
   ) {
     this.#host = host;
     this.#queued = queued;
@@ -309,13 +310,31 @@ export class StackController<T = LayerState[]> implements ReactiveController {
     this.#initial = this.#select([]);
 
     this.#stackId = options.stack ?? "default";
-    resolveClientLazy(host, client ?? options.client, (c) => {
-      if (this.#stack === null) {
-        this.#initStack(c, this.#stackId);
-        if (this.#connected) this.#setup();
-      }
-    });
+    if (!deferClient) {
+      resolveClientLazy(host, client ?? options.client, (c) => {
+        if (this.#stack === null) {
+          this.#initStack(c, this.#stackId);
+          if (this.#connected) this.#setup();
+        }
+      });
+    }
     host.addController(this);
+  }
+
+  /**
+   * Bind a {@link LayerClient} when constructed with `deferClient` (internal:
+   * {@link LayerController} shares one lazy context resolve across its stacks).
+   */
+  bindClient(client: LayerClient): void {
+    if (this.#stack !== null) {
+      if (this.#client === client) return;
+      this.reconfigure({}, client);
+      return;
+    }
+    this.#initStack(client, this.#stackId);
+    if (this.#connected) {
+      this.#setup();
+    }
   }
 
   /**
@@ -535,22 +554,28 @@ export class LayerController<
         E,
         D
       >[];
+    const deferClient = !client;
     this.#state = new StackController<LayerState<P, R, E, D>[]>(
       host,
       { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
       client,
       false,
+      deferClient,
     );
     this.#queued = new StackController<LayerState<P, R, E, D>[]>(
       host,
       { stack: stackId, select: selectByKey, compare: shallowArrayEqual },
       client,
       true,
+      deferClient,
     );
     // `createLayer` needs a client synchronously; defer it until the client is
     // resolved (explicit, or from context after the host connects). The handle
     // is built lazily on first method access or in `hostConnected`.
-    this.#client = resolveClientLazy(host, client);
+    this.#client = resolveClientLazy(host, client, (c) => {
+      this.#state.bindClient(c);
+      this.#queued.bindClient(c);
+    });
     host.addController(this);
   }
 
