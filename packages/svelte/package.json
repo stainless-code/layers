@@ -1,6 +1,6 @@
 {
   "name": "@stainless-code/svelte-layers",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Svelte adapter for @stainless-code/layers — call a layer like an async function and await its response.",
   "keywords": [
     "dialog",

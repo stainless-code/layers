@@ -1,5 +1,12 @@
 # @stainless-code/vue-layers
 
+## 0.2.1
+
+### Patch Changes
+
+- Updated dependencies [[`a595180`](https://github.com/stainless-code/layers/commit/a5951806a6a4dbd3cc79a93f08af967721055498)]:
+  - @stainless-code/layers@0.2.1
+
 ## 0.2.0
 
 ### Minor Changes
