@@ -81,7 +81,8 @@
     "typescript": "6.0.3"
   },
   "overrides": {
-    "path-to-regexp": "6.3.0"
+    "path-to-regexp": "6.3.0",
+    "yuku-parser": "0.6.5"
   },
   "engines": {
     "bun": ">=1.0.0",
