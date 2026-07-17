@@ -18,7 +18,8 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 
 ## Adapters
 
-- **Qwik** + **Alpine** + **Lit** + **Marko** + **Angular SSR** + **React Native** bindings if demand materializes.
+- **Qwik** + **Alpine** + **Marko** + **Angular SSR** + **React Native** bindings if demand materializes.
+- **[Lit adapter](./plans/lit-adapter.md)** (`@stainless-code/lit-layers`) — full matrix parity; controllers + `@lit/context` + light-DOM `<stack-outlet>`; grilled, ready to implement.
 - A **`HostAdapter`** contract is deliberately **not** planned — `StackOutlet` renders inline; consumers wrap it in their own `createPortal` if they need a portal target. Keeping the core agnostic means no host/portal abstraction baked in.
 
 ## Docs site (`apps/docs/`, Blume)
