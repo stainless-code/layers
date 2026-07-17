@@ -30,10 +30,11 @@ defineStackElements();
 
 @customElement("my-shell")
 class MyShell extends LitElement {
-  connectedCallback() {
-    super.connectedCallback();
+  constructor() {
+    super();
     provideLayerClient(this);
   }
+
   render() {
     return html`<slot></slot><stack-outlet stack="confirm"></stack-outlet>`;
   }
@@ -56,7 +57,7 @@ Create controllers as class fields (`useStack(this, …)`). They subscribe in `h
 
 ```ts
 import { LitElement, html } from "lit";
-import { customElement } from "lit/decorators.js";
+import { customElement, property } from "lit/decorators.js";
 import {
   layerOptions,
   type LayerCallContext,
@@ -67,16 +68,27 @@ type ConfirmResponse = boolean;
 
 @customElement("confirm-dialog")
 class ConfirmDialog extends LitElement {
+  // Light DOM (Lit: return `this` from createRenderRoot).
   createRenderRoot() {
     return this;
   }
+
+  // Declared reactive — StackOutlet assigns these via LayerElementDirective.
+  @property({ attribute: false })
   declare call: LayerCallContext<ConfirmPayload, ConfirmResponse>;
+
+  @property({ attribute: false })
   declare payload: ConfirmPayload;
+
   render() {
     return html`<div role="dialog">
       <h2>${this.payload.title}</h2>
-      <button @click=${() => void this.call.end(true)}>Yes</button>
-      <button @click=${() => void this.call.end(false)}>No</button>
+      <button type="button" @click=${() => void this.call.end(true)}>
+        Yes
+      </button>
+      <button type="button" @click=${() => void this.call.end(false)}>
+        No
+      </button>
     </div>`;
   }
 }
@@ -89,13 +101,42 @@ export const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
 ```
 
 ```ts
-import { createLayer, LayerClient } from "@stainless-code/lit-layers";
+import { LitElement, html } from "lit";
+import { customElement } from "lit/decorators.js";
+import {
+  defineStackElements,
+  provideLayerClient,
+  useLayer,
+} from "@stainless-code/lit-layers";
 import { confirm } from "./confirm-dialog";
 
-const client = new LayerClient();
-const c = createLayer(confirm, client);
-async function remove() {
-  await c.open({ title: "Remove item?" });
+defineStackElements();
+
+@customElement("remove-button")
+class RemoveButton extends LitElement {
+  #confirm = useLayer(this, confirm);
+
+  render() {
+    return html`<button
+      type="button"
+      @click=${() => void this.#confirm.open({ title: "Remove item?" })}
+    >
+      Remove
+    </button>`;
+  }
+}
+
+@customElement("app-shell")
+class AppShell extends LitElement {
+  constructor() {
+    super();
+    provideLayerClient(this);
+  }
+
+  render() {
+    return html`<remove-button></remove-button>
+      <stack-outlet stack="confirm"></stack-outlet>`;
+  }
 }
 ```
 

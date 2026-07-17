@@ -244,6 +244,7 @@ const confirm = layerOptions({
 
 @customElement("app-shell")
 class AppShell extends LitElement {
+  // Field order: provide before useLayer (same-host context is not the path).
   #client = provideLayerClient(this);
   #confirm = useLayer(this, confirm, this.#client);
 
@@ -254,6 +255,7 @@ class AppShell extends LitElement {
   render() {
     return html\`
       <button
+        type="button"
         @click=\${() => void this.#confirm.open({ title: "Remove?" })}
       >
         Remove

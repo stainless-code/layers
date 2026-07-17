@@ -128,20 +128,22 @@ const group = useLayerGroup(call);</script>
 
 ```ts lineNumbers
 import { LitElement, html, type PropertyValues } from "lit";
+import { property } from "lit/decorators.js";
 import { useLayerGroup } from "@stainless-code/lit-layers";
 import type { LayerComponentProps } from "@stainless-code/lit-layers";
 
 class Drawer extends LitElement {
-  static properties = { call: { attribute: false } };
+  @property({ attribute: false })
   declare call: LayerComponentProps<void, void>["call"];
+
   #group?: ReturnType<typeof useLayerGroup>;
 
   createRenderRoot() {
-    return this;
+    return this; // light DOM — overlays stack where mounted
   }
 
   willUpdate(changed: PropertyValues<this>) {
-    // `call` arrives as a layer prop — bind the group once it is set.
+    // `call` is set by StackOutlet after construct — bind once it arrives.
     if (changed.has("call") && this.call && !this.#group) {
       this.#group = useLayerGroup(this, this.call);
     }
