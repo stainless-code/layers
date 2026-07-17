@@ -205,6 +205,9 @@ jobs:
           fetch-depth: 0
       - name: Setup
         uses: ./.github/actions/setup
+      # Islands import published package entrypoints (`dist/`); build before Blume.
+      - name: Build packages
+        run: bun run build
       - name: Generate API reference (Markdown)
         run: bun run docs:api
       # Site content graph (lychee excludes apps/docs). No --external (offline).
