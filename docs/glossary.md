@@ -5,6 +5,9 @@ Ubiquitous language for the `@stainless-code/layers` domain. Keep terms stable a
 - **Layer** — one frame in a stack; a modal, dialog, drawer, popover, toast, etc. Owned by a `LayerStack`; carries a `key`, `payload`, optional `data` (from `loadFn`), a `phase`, and a caller-facing `promise`.
 - **Stack** (`LayerStack`) — ordered collection of active layers for one surface (`"confirm"`, `"drawer"`, `"toast"`). Identified by `id`; subscribed via `subscribe`/`getSnapshot` (mountable layers) and `getQueuedSnapshot` (serial-waiting layers).
 - **Client** (`LayerClient`) — app-wide orchestrator owning named stacks; `open()` returns a typed `Promise<Response>`.
+- **`#dispatch`** — internal `LayerStack` choke point: every snapshot-changing mutation is labeled, applied, then `#flush`’d. Not a public API; unlocks an honest notify stream.
+- **StackNotifyEvent** — typed, JSON-safe record of one observable stack transition (`action` + `active`/`queued` views + optional projected `payload`). Owned and emitted by core; Devtools bridges it to TanStack `EventClient`.
+- **subscribeNotify** — `LayerClient` method: `(listener) => unsubscribe`; fans out `StackNotifyEvent`s. Escape hatch for headless tooling; zero cost when no listeners. Distinct from `subscribe` / `subscribeStacks` (snapshot / stack-created).
 - **Key** — the **logical** identity of a layer (`find`/`upsert`/`gcTime` operate on `keySignature(key)`); multiple live layers may share a key in a `parallel` stack.
 - **Instance id** (`LayerState.id`) — the **physical**, unique id of one `Layer` instance (`` `${hashKey(key)}#n` ``); used for rendering keys and instance lookup/removal (`getLayer`, `#remove`).
 - **Phase** — resolution lifecycle axis: `pending` → `active` → `dismissed`; or `queued` (serial-waiting, not mounted); or `error`. Does **not** include `exiting` — animation is on `transition`. Distinct from `actionStatus` and `transition`.

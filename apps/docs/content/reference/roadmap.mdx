@@ -11,8 +11,7 @@ Shipped features live in [Overview](/concepts/overview) + [Glossary](/concepts/g
 
 ## Robustness
 
-- **Devtools** — `@stainless-code/layers-devtools` stack inspector; also owns the public `StackNotifyEvent` event bus. Design-first, once the public API is stable (co-design the event schema against the inspector's real needs); fires the architecture-priming rule (new subpath entry + core/UI split).
-- **`#dispatch` reducer** — route every `LayerStack` mutation through one internal transition choke point; unlocks the devtools event stream. Do alongside Devtools.
+- **Devtools + `#dispatch`** — thin `#dispatch` + `StackNotifyEvent` in core; Solid inspector + TanStack React doorbell packages. Maintainer plan (Ready): `docs/plans/devtools-dispatch.md`.
 
 ## Backlog (grill before building)
 
