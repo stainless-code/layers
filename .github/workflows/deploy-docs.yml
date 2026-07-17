@@ -45,8 +45,6 @@ jobs:
         run: bun run build
 
       - name: Generate API reference (Markdown)
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: bun run docs:api
 
       - name: Build docs site
