@@ -273,9 +273,9 @@ export class ConfirmOutletComponent {
 }
 ```
 
-### Angular vs React rendering
+### Rendering surface
 
-The adapter ships **no** `StackOutlet`, `Outlet`, `AppHost`, `AppLayer`, or `StackProvider` components — the package is compiler-free. React mounts `<StackOutlet />`; Angular calls `renderStack(vcr, stack)` or `group.renderInto(vcr)` / `stackHook.renderInto(vcr)`. There is no `StackSubscribe`; use `useStack({ select })` instead.
+The package is compiler-free — no shipped Angular components. Call `renderStack(vcr, stack)` or `group.renderInto(vcr)` / `stackHook.renderInto(vcr)` for outlets; use `useStack({ select })` when you need a projected signal instead of a host.
 
 ## Nested layers
 
@@ -405,7 +405,7 @@ export class OpenerComponent {
 }
 ```
 
-Returns `{ provideClient, useAppStack, renderInto }` — register `provideClient()` in app config, then call `renderInto(vcr)` from a host component to mount the bound stack (no component-style host; see § Angular vs React rendering).
+Returns `{ provideClient, useAppStack, renderInto }` — register `provideClient()` in app config, then call `renderInto(vcr)` from a host component to mount the bound stack (see § Rendering surface).
 
 ## Adapter API
 

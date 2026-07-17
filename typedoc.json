@@ -9,7 +9,9 @@
     "packages/vue/src/index.ts",
     "packages/solid/src/index.ts",
     "packages/preact/src/index.ts",
-    "packages/angular/src/index.ts"
+    "packages/angular/src/index.ts",
+    "packages/lit/src/index.ts",
+    "packages/alpine/src/index.ts"
   ],
   "tsconfig": "tsconfig.docs.json",
   "cleanOutputDir": false,
@@ -51,6 +53,19 @@
   },
   "excludePrivate": true,
   "excludeInternal": true,
+  "excludeCategories": ["styles"],
+  "externalSymbolLinkMappings": {
+    "@lit/context": {
+      "ContextProvider": "https://lit.dev/docs/data/context/"
+    },
+    "@lit/reactive-element": {
+      "PropertyDeclaration": "https://lit.dev/docs/api/ReactiveElement/#PropertyDeclaration",
+      "css": "https://lit.dev/docs/api/styles/#css"
+    },
+    "lit": {
+      "css": "https://lit.dev/docs/api/styles/#css"
+    }
+  },
   "frontmatterGlobals": {
     "search": {
       "tags": ["api", "reference"]

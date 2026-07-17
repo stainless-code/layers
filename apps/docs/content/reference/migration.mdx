@@ -73,12 +73,12 @@ On `LayerStack`: `cancelQueued(key, response, opts?: { id? })`. Omit `id` → fi
 
 ### Adapter entry names
 
-| Role | React / Preact / Solid / Vue / Lit | Angular | Svelte |
-| ---- | ---------------------------------- | ------- | ------ |
-| Wired | `useLayer` | `injectLayer` (`useLayer` alias) | `createLayer` |
-| Mounted per-key | `useLayerState` | `injectLayerState` | `createLayerState` |
-| Queued stack | `useQueuedStack` | `injectQueuedStack` | `createQueuedStack` |
-| Queued per-key | `useLayerQueuedState` | `injectLayerQueuedState` | `createLayerQueuedState` |
+| Role            | React / Preact / Solid / Vue / Lit | Angular                          | Alpine                   | Svelte                   |
+| --------------- | ---------------------------------- | -------------------------------- | ------------------------ | ------------------------ |
+| Wired           | `useLayer`                         | `injectLayer` (`useLayer` alias) | `createLayer`            | `createLayer`            |
+| Mounted per-key | `useLayerState`                    | `injectLayerState`               | `createLayerState`       | `createLayerState`       |
+| Queued stack    | `useQueuedStack`                   | `injectQueuedStack`              | `useQueuedStack`         | `createQueuedStack`      |
+| Queued per-key  | `useLayerQueuedState`              | `injectLayerQueuedState`         | `createLayerQueuedState` | `createLayerQueuedState` |
 
 :::note[Pin in production]
 Lock `@stainless-code/layers` and your adapter package in `package.json`. Review the changelog before upgrading.

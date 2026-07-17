@@ -3,5 +3,15 @@ import { defineMeta } from "blume";
 export default defineMeta({
   title: "Adapters",
   icon: "plug",
-  pages: ["core", "react", "preact", "solid", "angular", "vue", "lit", "svelte"],
+  pages: [
+    "core",
+    "react",
+    "preact",
+    "solid",
+    "angular",
+    "vue",
+    "lit",
+    "alpine",
+    "svelte",
+  ],
 });

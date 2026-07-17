@@ -41,7 +41,7 @@ Import client/stack APIs from **one** entry only. Mixing this package with `@sta
 
 ## Render a stack
 
-`useStack({ stack })` returns a `SvelteStack` with `.current` (the selected snapshot) and `.callFor(state)` (the call context). No `StackOutlet` — iterate in your markup:
+`useStack({ stack })` returns a `SvelteStack` with `.current` (the selected snapshot) and `.callFor(state)` (the call context). Iterate in your markup:
 
 ```svelte
 <script>
@@ -122,7 +122,7 @@ Options bag plus optional trailing `LayerClient`. **Drive** with `createLayer(op
 | `useMutationFlow(call)` | `pending` getter (reactive via `createSubscriber`); `run(fn).orEnd(response)` |
 | `useLayerGroup(call, options?)` | Child stack — render `{#each group.stack.current}` + `group.stack.callFor(s)` |
 
-No `StackOutlet`, `StackSubscribe`, `useStackHandles`, or `createStackHook` — by design.
+No shipped outlet or subscribe components — render with `useStack().current` + `callFor` in your markup.
 
 ## Learn more
 

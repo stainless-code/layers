@@ -50,6 +50,14 @@
       ],
       "project": ["src/**/*.ts", "tests-dom/**/*.ts"]
     },
+    "packages/alpine": {
+      "entry": [
+        "src/**/*.test.ts",
+        "tests-dom/**/*.test.ts",
+        "tests-dom/**/*.test-d.ts"
+      ],
+      "project": ["src/**/*.ts", "tests-dom/**/*.ts"]
+    },
     "packages/solid": {
       "entry": [
         "src/**/*.test.ts",

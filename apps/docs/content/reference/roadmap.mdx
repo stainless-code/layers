@@ -22,9 +22,9 @@ Shipped features live in [Overview](/concepts/overview) + [Glossary](/concepts/g
 
 ## Adapters
 
-- **Qwik** + **Alpine** + **Marko** + **Angular SSR** + **React Native** bindings if demand materializes.
+- **Qwik** + **Marko** + **Angular SSR** bindings if demand materializes.
 
 ## Out of scope
 
-- **No `HostAdapter` / portal abstraction** — `StackOutlet` renders inline; wrap it in your own `createPortal` when you need a portal target. Keeping the core agnostic means no host/portal layer is baked in.
+- **No `HostAdapter` / portal abstraction** — `StackOutlet` renders inline; wrap it in your own `createPortal` or RN `Modal` when you need a different target.
 - Sidecar / nested-portal hosting, route masking, and z-order management — consumer concerns, not core. Re-evaluate only if a real consumer needs them and the agnostic contract can express it without leaking library- or framework-specific details.

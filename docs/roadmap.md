@@ -18,8 +18,8 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 
 ## Adapters
 
-- **Qwik** + **Alpine** + **Marko** + **Angular SSR** + **React Native** bindings if demand materializes.
-- A **`HostAdapter`** contract is deliberately **not** planned — `StackOutlet` renders inline; consumers wrap it in their own `createPortal` if they need a portal target. Keeping the core agnostic means no host/portal abstraction baked in.
+- **Qwik** + **Marko** + **Angular SSR** bindings if demand materializes.
+- A **`HostAdapter`** contract is deliberately **not** planned — `StackOutlet` renders inline; consumers wrap it in their own `createPortal` / RN `Modal` / root host if they need a different target. Keeping the core agnostic means no host/portal abstraction baked in. React Native uses `@stainless-code/react-layers` (no separate package); mount patterns are on the React adapter docs.
 
 ## Docs site (`apps/docs/`, Blume)
 

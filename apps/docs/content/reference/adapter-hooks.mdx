@@ -1,11 +1,11 @@
 ---
 title: Adapter hooks
-description: Hook and provider signatures across React, Preact, Solid, Angular, Vue, Lit, and Svelte adapters.
+description: Hook and provider signatures across React, Preact, Solid, Angular, Vue, Lit, Alpine, and Svelte adapters.
 search:
   tags: ["reference", "adapters"]
 ---
 
-**Wire** a definition to imperative ops, or **observe** stack snapshots for rendering — same options bags on every adapter, framework-native wrappers only. React/Preact/Solid/Angular/Vue/Lit re-export the full core. Svelte re-exports selectively — core's headless `createLayer` is `createLayerHandle`.
+**Wire** a definition to imperative ops, or **observe** stack snapshots for rendering — same options bags on every adapter, framework-native wrappers only. React/Preact/Solid/Angular/Vue/Lit/Alpine re-export the full core. Svelte re-exports selectively — core's headless `createLayer` is `createLayerHandle`.
 
 :::note[Svelte entries]
 `@stainless-code/svelte-layers` (runes, 5.7+) and `@stainless-code/svelte-layers/store` (readable stores, 3+) share client helpers but differ in stack reactivity and rendering.
@@ -13,11 +13,11 @@ search:
 
 ## Wired vs observe
 
-| Role | Hooks | Default return |
-| ---- | ----- | -------------- |
-| **Wire** — `createLayer` + reactive fields | `useLayer` (React / Preact / Solid / Vue / Lit); `injectLayer` (Angular); `createLayer` (Svelte) | `WiredLayerHandle` — ops + `state` / `queued` / `top` |
-| **Observe mounted** — whole stack or per-key filter | `useStack`, `useLayerState` | `LayerState[]` (or selected `T`) |
-| **Observe queued** — serial-waiting layers | `useQueuedStack`, `useLayerQueuedState` | `LayerState[]` (or selected `T`) |
+| Role                                                | Hooks                                                                                                     | Default return                                        |
+| --------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| **Wire** — `createLayer` + reactive fields          | `useLayer` (React / Preact / Solid / Vue / Lit); `injectLayer` (Angular); `createLayer` (Alpine / Svelte) | `WiredLayerHandle` — ops + `state` / `queued` / `top` |
+| **Observe mounted** — whole stack or per-key filter | `useStack`, `useLayerState`                                                                               | `LayerState[]` (or selected `T`)                      |
+| **Observe queued** — serial-waiting layers          | `useQueuedStack`, `useLayerQueuedState`                                                                   | `LayerState[]` (or selected `T`)                      |
 
 Wired handles take a full `layerOptions` bag (including `key`) and expose payload-only `open` / `upsert`:
 
@@ -39,7 +39,7 @@ Lit: pass the element host first (`useLayer(this, options)`, `useLayerState(this
 
 ## Options bags
 
-Shared across React, Preact, Solid, Angular, Vue, and Lit:
+Shared across React, Preact, Solid, Angular, Vue, Lit, and Alpine:
 
 ```ts
 interface UseStackOptions<T = LayerState[]> {
@@ -62,49 +62,53 @@ Svelte runes/store use the same option shapes; runes entries return `SvelteStack
 
 ## Provider / client acquisition
 
-| Adapter | Provider / setup | Client hook |
-| ------- | ---------------- | ----------- |
-| React | `StackProvider({ client?, children })` | `useLayerClient(): LayerClient` |
-| Preact | `StackProvider({ client?, children })` | `useLayerClient(): LayerClient` |
-| Solid | `<LayerClientContext.Provider value={client}>` | `useLayerClient(): LayerClient` |
-| Angular | `provideLayerClient(client?): FactoryProvider` + `LAYER_CLIENT` token | `useLayerClient(): LayerClient` (injection context) |
-| Vue | `provideLayerClient(client?): LayerClient` | `useLayerClient(): LayerClient` |
-| Lit | `provideLayerClient(host, client?): LayerClient` / `<stack-provider .client>` | `useLayerClient(host).current: LayerClient` |
-| Svelte (runes) | `setLayerClient(client?): LayerClient` | `useLayerClient(): LayerClient` |
-| Svelte (store) | `setLayerClient(client?): LayerClient` | `useLayerClient(): LayerClient` |
+| Adapter        | Provider / setup                                                                         | Client hook                                         |
+| -------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------- |
+| React          | `StackProvider({ client?, children })`                                                   | `useLayerClient(): LayerClient`                     |
+| Preact         | `StackProvider({ client?, children })`                                                   | `useLayerClient(): LayerClient`                     |
+| Solid          | `<LayerClientContext.Provider value={client}>`                                           | `useLayerClient(): LayerClient`                     |
+| Angular        | `provideLayerClient(client?): FactoryProvider` + `LAYER_CLIENT` token                    | `useLayerClient(): LayerClient` (injection context) |
+| Vue            | `provideLayerClient(client?): LayerClient`                                               | `useLayerClient(): LayerClient`                     |
+| Lit            | `provideLayerClient(host, client?): LayerClient` / `<stack-provider .client>`            | `useLayerClient(host).current: LayerClient`         |
+| Alpine         | `setLayerClient(client?)` (optional pin before first use; `getLayerClient()` lazy-inits) | `getLayerClient(): LayerClient`                     |
+| Svelte (runes) | `setLayerClient(client?): LayerClient`                                                   | `useLayerClient(): LayerClient`                     |
+| Svelte (store) | `setLayerClient(client?): LayerClient`                                                   | `useLayerClient(): LayerClient`                     |
 
 ## Hook matrix
 
-| Hook | React / Preact / Solid | Angular | Vue | Lit | Svelte (runes) | Svelte (store) |
-| ---- | ---------------------- | ------- | --- | --- | -------------- | -------------- |
-| Wired handle | `useLayer(options, client?)` | `injectLayer` (`useLayer` alias) | `useLayer(options, client?)` | `useLayer(host, options, client?)` | `createLayer` | `createLayer` |
-| Mounted stack | `useStack(opts?, client?)` | `useStack` / `injectStack` | `useStack(opts?, client?)` | `useStack(host, opts?, client?)` | `useStack` | `useStack` |
-| Queued stack | `useQueuedStack(opts?, client?)` | `useQueuedStack` / `injectQueuedStack` | `useQueuedStack(opts?, client?)` | `useQueuedStack(host, opts?, client?)` | `createQueuedStack` | `createQueuedStack` |
-| Mounted per-key | `useLayerState(opts, client?)` | `useLayerState` / `injectLayerState` | `useLayerState(opts, client?)` | `useLayerState(host, opts, client?)` | `createLayerState` | `createLayerState` |
-| Queued per-key | `useLayerQueuedState(opts, client?)` | `useLayerQueuedState` / `injectLayerQueuedState` | `useLayerQueuedState(opts, client?)` | `useLayerQueuedState(host, opts, client?)` | `createLayerQueuedState` | `createLayerQueuedState` |
-| Client | `useLayerClient()` | `useLayerClient()` | `useLayerClient()` | `useLayerClient(host)` → `.current` | `useLayerClient()` | `useLayerClient()` |
+| Hook            | React / Preact / Solid               | Angular                                          | Vue                                  | Lit                                        | Alpine                   | Svelte (runes)           | Svelte (store)           |
+| --------------- | ------------------------------------ | ------------------------------------------------ | ------------------------------------ | ------------------------------------------ | ------------------------ | ------------------------ | ------------------------ |
+| Wired handle    | `useLayer(options, client?)`         | `injectLayer` (`useLayer` alias)                 | `useLayer(options, client?)`         | `useLayer(host, options, client?)`         | `createLayer`            | `createLayer`            | `createLayer`            |
+| Mounted stack   | `useStack(opts?, client?)`           | `useStack` / `injectStack`                       | `useStack(opts?, client?)`           | `useStack(host, opts?, client?)`           | `useStack`               | `useStack`               | `useStack`               |
+| Queued stack    | `useQueuedStack(opts?, client?)`     | `useQueuedStack` / `injectQueuedStack`           | `useQueuedStack(opts?, client?)`     | `useQueuedStack(host, opts?, client?)`     | `useQueuedStack`         | `createQueuedStack`      | `createQueuedStack`      |
+| Mounted per-key | `useLayerState(opts, client?)`       | `useLayerState` / `injectLayerState`             | `useLayerState(opts, client?)`       | `useLayerState(host, opts, client?)`       | `createLayerState`       | `createLayerState`       | `createLayerState`       |
+| Queued per-key  | `useLayerQueuedState(opts, client?)` | `useLayerQueuedState` / `injectLayerQueuedState` | `useLayerQueuedState(opts, client?)` | `useLayerQueuedState(host, opts, client?)` | `createLayerQueuedState` | `createLayerQueuedState` | `createLayerQueuedState` |
+| Client          | `useLayerClient()`                   | `useLayerClient()`                               | `useLayerClient()`                   | `useLayerClient(host)` → `.current`        | `getLayerClient()`       | `useLayerClient()`       | `useLayerClient()`       |
 
 ### Return shapes
 
-| Hook kind | React / Preact | Solid | Angular | Vue | Lit | Svelte (runes) | Svelte (store) |
-| --------- | -------------- | ----- | ------- | --- | --- | -------------- | -------------- |
-| Wired handle | `WiredLayerHandle` | same | same + `state`/`queued`/`top` as `Signal` | same + refs on fields | same + `StackController` fields | `WiredLayerHandle` + runes getters | `WiredLayerStoreHandle` (`Readable` fields) |
-| `useStack` / `useQueuedStack` | `T` | `Accessor<T>` | `Signal<T>` | `Readonly<Ref<T>>` | `StackController<T>` (`.current`) | `SvelteStack<T>` | `Readable<T>` |
-| `useLayerState` / `useLayerQueuedState` | `U` (default `LayerState[]`) | `Accessor<U>` | `Signal<U>` | `Readonly<Ref<U>>` | `StackController<U>` (`.current`) | `SvelteStack<U>` | `Readable<U>` |
+| Hook kind                               | React / Preact               | Solid         | Angular                                   | Vue                   | Lit                               | Alpine                                    | Svelte (runes)                     | Svelte (store)                              |
+| --------------------------------------- | ---------------------------- | ------------- | ----------------------------------------- | --------------------- | --------------------------------- | ----------------------------------------- | ---------------------------------- | ------------------------------------------- |
+| Wired handle                            | `WiredLayerHandle`           | same          | same + `state`/`queued`/`top` as `Signal` | same + refs on fields | same + `StackController` fields   | same + Alpine `reactive` fields           | `WiredLayerHandle` + runes getters | `WiredLayerStoreHandle` (`Readable` fields) |
+| `useStack` / `useQueuedStack`           | `T`                          | `Accessor<T>` | `Signal<T>`                               | `Readonly<Ref<T>>`    | `StackController<T>` (`.current`) | `AlpineStack<T>` (`.current` + `callFor`) | `SvelteStack<T>`                   | `Readable<T>`                               |
+| `useLayerState` / `useLayerQueuedState` | `U` (default `LayerState[]`) | `Accessor<U>` | `Signal<U>`                               | `Readonly<Ref<U>>`    | `StackController<U>` (`.current`) | `AlpineStack<U>`                          | `SvelteStack<U>`                   | `Readable<U>`                               |
 
-<AutoTypeTable path="../../packages/core/src/createLayer.ts" name="LayerHandle" />
+<AutoTypeTable
+  path="../../packages/core/src/createLayer.ts"
+  name="LayerHandle"
+/>
 
 Wired adapters extend `LayerHandle` with reactive `state`, `queued`, and `top` (`top` = last entry in `state`, the topmost same-key mounted layer).
 
 ### Ergonomic wrappers
 
-| Wrapper | React / Preact / Solid | Angular | Vue | Lit | Svelte |
-| ------- | ---------------------- | ------- | --- | --- | ------ |
-| Stack render | `StackOutlet` | `renderStack(vcr)` | `StackOutlet` | `<stack-outlet>` (`defineStackElements()`) | `{#each …current}` + `callFor` |
-| Headless render | `useStackHandles` | `useStackHandles` | `useStackHandles` | `useStackHandles(host, …)` | — |
-| Nested stack | `useLayerGroup` → `Outlet` | `useLayerGroup` → `renderInto(vcr)` | `useLayerGroup` → `Outlet` | `useLayerGroup(host, call)` → `outlet()` | `useLayerGroup` → `stack` |
-| Async actions | `useMutationFlow` | same | same | `useMutationFlow(host, call)` | same |
-| App factory | `createStackHook` | `createStackHook` → `renderInto` | `createStackHook` | `createStackHook` → CEs | not shipped |
+| Wrapper         | React / Preact / Solid     | Angular                             | Vue                        | Lit                                        | Alpine                                           | Svelte                         |
+| --------------- | -------------------------- | ----------------------------------- | -------------------------- | ------------------------------------------ | ------------------------------------------------ | ------------------------------ |
+| Stack render    | `StackOutlet`              | `renderStack(vcr)`                  | `StackOutlet`              | `<stack-outlet>` (`defineStackElements()`) | `x-layer-outlet`                                 | `{#each …current}` + `callFor` |
+| Headless render | `useStackHandles`          | `useStackHandles`                   | `useStackHandles`          | `useStackHandles(host, …)`                 | Rank-2 `layerStack` + `callFor`                  | —                              |
+| Nested stack    | `useLayerGroup` → `Outlet` | `useLayerGroup` → `renderInto(vcr)` | `useLayerGroup` → `Outlet` | `useLayerGroup(host, call)` → `outlet()`   | `useLayerGroup` → nest `x-layer-outlet`          | `useLayerGroup` → `stack`      |
+| Async actions   | `useMutationFlow`          | same                                | same                       | `useMutationFlow(host, call)`              | same                                             | same                           |
+| App factory     | `createStackHook`          | `createStackHook` → `renderInto`    | `createStackHook`          | `createStackHook` → CEs                    | `createStackHook` → `{ setClient, useAppStack }` | not shipped                    |
 
 ## Stack rendering divergences
 
@@ -128,6 +132,8 @@ function renderStack(
 
 Store entry: `{#each $stack as state}` with `callFor(client, stackId, state)`.
 
+**Alpine** — `x-layer-outlet="'stackId'"` on `<template>` (quote the id — bare names hit `window`); Rank-2 `Alpine.data('layerStack')` + `x-for` + `callFor`. No `component` on `layerOptions`.
+
 :::tip[Cross-adapter porting]
-Wired/observe parity means anything one adapter can do is reachable in another. Angular and Svelte diverge at the **rendering surface** by design (compiler-free builds). Lit is host-first controllers + custom elements (`defineStackElements()`).
+Wired/observe parity means anything one adapter can do is reachable in another. Angular, Alpine, and Svelte diverge at the **rendering surface** by design (compiler-free builds). Lit is host-first controllers + custom elements (`defineStackElements()`).
 :::

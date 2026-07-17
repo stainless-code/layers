@@ -5,7 +5,7 @@ search:
   tags: ["reference", "api"]
 ---
 
-Symbols below are exported from `@stainless-code/layers` (`packages/core`). React/Preact/Solid/Angular/Vue/Lit re-export the full core. Svelte re-exports selectively — core's headless `createLayer` is `createLayerHandle`.
+Symbols below are exported from `@stainless-code/layers` (`packages/core`). React/Preact/Solid/Angular/Vue/Lit/Alpine re-export the full core. Svelte re-exports selectively — core's headless `createLayer` is `createLayerHandle`.
 
 :::note[Curated overview]
 This page is a hand-written tour of the core API — method-purpose tables and type tables pulled live from source via `<AutoTypeTable>`. For the authoritative, exhaustive reference (every export, including internals like `ControlledPromise`, `Subscribable`, and all type aliases), see the [generated API reference](/reference/api/core).
@@ -23,20 +23,27 @@ class LayerClient {
   ensureStack(id: string, options?: StackOptions): LayerStack;
   getStackIds(): string[];
   subscribeStacks(listener: (stackId: string) => void): () => void;
-  dismissAll(stackId?: string, response?: unknown, opts?: DismissAllOptions): Promise<void>;
+  dismissAll(
+    stackId?: string,
+    response?: unknown,
+    opts?: DismissAllOptions,
+  ): Promise<void>;
 }
 ```
 
-| Method | Purpose |
-| ------ | ------- |
-| `open` | Opens a layer on a stack; resolves with the dismissal response (or rejects on load/validation failure) |
-| `getStack` | Returns a stack by id, creating the default stack on first access |
-| `ensureStack` | Returns a stack, applying `StackOptions` only when creating it |
-| `getStackIds` | Lists materialized stack ids |
-| `subscribeStacks` | Notifies when a stack is created for the first time |
-| `dismissAll` | Async bulk dismiss on one stack (honors blockers unless `mode: "force"`) |
+| Method            | Purpose                                                                                                |
+| ----------------- | ------------------------------------------------------------------------------------------------------ |
+| `open`            | Opens a layer on a stack; resolves with the dismissal response (or rejects on load/validation failure) |
+| `getStack`        | Returns a stack by id, creating the default stack on first access                                      |
+| `ensureStack`     | Returns a stack, applying `StackOptions` only when creating it                                         |
+| `getStackIds`     | Lists materialized stack ids                                                                           |
+| `subscribeStacks` | Notifies when a stack is created for the first time                                                    |
+| `dismissAll`      | Async bulk dismiss on one stack (honors blockers unless `mode: "force"`)                               |
 
-<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerClientOptions" />
+<AutoTypeTable
+  path="../../packages/core/src/types.ts"
+  name="LayerClientOptions"
+/>
 
 ## LayerStack
 
@@ -63,15 +70,15 @@ class LayerStack {
 }
 ```
 
-| Method | Purpose |
-| ------ | ------- |
-| `getSnapshot` | Stable-ref snapshot of mounted layers (`pending`/`active`/`dismissed`/`error`) |
-| `getQueuedSnapshot` | Serial-scope queue — layers waiting behind an active layer |
-| `subscribe` | Register for snapshot changes (batched via `notifyManager`) |
-| `find` | Topmost mounted layer for a logical key (key signature; `findLast`) |
-| `dismiss` | Resolve one layer; returns whether dismissal succeeded (blockers may veto) |
-| `cancelQueued` | Resolve a serial `queued` layer without mounting; omit `{ id }` → FIFO head for the key, `{ id }` → exact queued instance |
-| `addBlocker` | Stack-scoped dismiss gate; returns a disposer |
+| Method              | Purpose                                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `getSnapshot`       | Stable-ref snapshot of mounted layers (`pending`/`active`/`dismissed`/`error`)                                            |
+| `getQueuedSnapshot` | Serial-scope queue — layers waiting behind an active layer                                                                |
+| `subscribe`         | Register for snapshot changes (batched via `notifyManager`)                                                               |
+| `find`              | Topmost mounted layer for a logical key (key signature; `findLast`)                                                       |
+| `dismiss`           | Resolve one layer; returns whether dismissal succeeded (blockers may veto)                                                |
+| `cancelQueued`      | Resolve a serial `queued` layer without mounting; omit `{ id }` → FIFO head for the key, `{ id }` → exact queued instance |
+| `addBlocker`        | Stack-scoped dismiss gate; returns a disposer                                                                             |
 
 ## LayerState
 
@@ -90,7 +97,13 @@ Per-stack options passed to `ensureStack` or `LayerClientOptions.defaultStackOpt
 Brands a reusable options object's `key` with `DataTag` so `open` infers response and error types without an explicit generic.
 
 ```ts
-function layerOptions<P, R = void, E = DefaultLayerError, D = unknown, RootProps = unknown>(
+function layerOptions<
+  P,
+  R = void,
+  E = DefaultLayerError,
+  D = unknown,
+  RootProps = unknown,
+>(
   options: LayerOptions<P, R, E, D, RootProps> & { key: Key },
 ): LayerOptions<P, R, E, D, RootProps> & { key: DataTag<Key, R, E> };
 ```
@@ -142,7 +155,9 @@ class PayloadValidationError extends Error {
   readonly issues: ReadonlyArray<ValidationIssue>;
 }
 
-function isPayloadValidationError(value: unknown): value is PayloadValidationError;
+function isPayloadValidationError(
+  value: unknown,
+): value is PayloadValidationError;
 ```
 
 ## createLayer
@@ -168,7 +183,10 @@ confirm.dismiss(false);
 confirm.cancelQueued(undefined, { id: "queued-id" }); // optional exact match
 ```
 
-<AutoTypeTable path="../../packages/core/src/createLayer.ts" name="LayerHandle" />
+<AutoTypeTable
+  path="../../packages/core/src/createLayer.ts"
+  name="LayerHandle"
+/>
 
 When `options.validate` is set, `ValidatedLayerHandle` narrows `open`/`upsert` to schema **input** and `current`/`update` to parsed **output**.
 
@@ -187,13 +205,19 @@ function createCallContext<P, R, RootProps = unknown>(
 
 `LayerCallContext` exposes `end`, `dismiss`, `addBlocker`, `update`, `setRunning`, `settle`, plus read-only `ended`, `index`, `stackSize`, `root`, `stackId`, and `layerId`.
 
-<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerCallContext" />
+<AutoTypeTable
+  path="../../packages/core/src/types.ts"
+  name="LayerCallContext"
+/>
 
 ## LayerComponentProps
 
 Props passed to layer components by adapters when rendering a mounted layer.
 
-<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerComponentProps" />
+<AutoTypeTable
+  path="../../packages/core/src/types.ts"
+  name="LayerComponentProps"
+/>
 
 ## createLayerGroup
 
@@ -229,7 +253,10 @@ Wrap independent mutations that should produce one UI update: `notifyManager.bat
 
 ## Dismiss options
 
-<AutoTypeTable path="../../packages/core/src/types.ts" name="DismissAllOptions" />
+<AutoTypeTable
+  path="../../packages/core/src/types.ts"
+  name="DismissAllOptions"
+/>
 
 <AutoTypeTable path="../../packages/core/src/types.ts" name="DismissOptions" />
 

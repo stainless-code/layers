@@ -15,14 +15,15 @@ A drawer that opens a sub-dialog needs its own stack — but tied to the parent 
 import { createLayerGroup } from "@stainless-code/layers";
 
 // headless / custom adapter
-const group = createLayerGroup(client, call);void group.open({ ...nestedConfirm, payload });
+const group = createLayerGroup(client, call);
+void group.open({ ...nestedConfirm, payload });
 group.dismissAll();
 group.dispose(); // usually automatic via adapter lifecycle
 ```
 
 ## Render the child stack inline
 
-Render the child stack inside the parent layer's DOM. React, Preact, Solid, Angular, Vue, Lit, and Svelte each expose a child render path — `Outlet`, `renderInto`, `outlet()`, or the child `stack` (tabs below):
+Render the child stack inside the parent layer's DOM. React, Preact, Solid, Angular, Vue, Lit, Alpine, and Svelte each expose a child render path — `Outlet`, `renderInto`, `outlet()`, nested `x-layer-outlet`, or the child `stack` (tabs below):
 
 <Tabs>
 <Tab title="React" icon="/icons/react.svg">
@@ -62,7 +63,6 @@ function Drawer({ call }: LayerComponentProps<void, void>) {
 }
 ```
 
-
 </Tab>
 <Tab title="Solid" icon="/icons/solid.svg">
 
@@ -88,7 +88,7 @@ function Drawer(props: LayerComponentProps<void, void>) {
 ```ts lineNumbers
 import { useLayerGroup } from "@stainless-code/angular-layers";
 
-@Component({ /* … */ })
+@Component({/* … */})
 class Drawer {
   group = useLayerGroup(this.call);
   openNested() {
@@ -111,7 +111,8 @@ import { useLayerGroup } from "@stainless-code/vue-layers";
 import type { LayerComponentProps } from "@stainless-code/vue-layers";
 
 const { call } = defineProps<LayerComponentProps<void, void>>();
-const group = useLayerGroup(call);</script>
+const group = useLayerGroup(call);
+</script>
 
 <template>
   <div role="dialog">
@@ -164,6 +165,55 @@ class Drawer extends LitElement {
 ```
 
 </Tab>
+<Tab title="Alpine" icon="/icons/alpine.svg">
+
+```html
+<div role="dialog" x-data="drawer($layer.call)">
+  <button type="button" @click="openNested()">Edit details</button>
+  <template x-layer-outlet="stackId">
+    <div role="dialog">
+      <p x-text="$layer.payload.title"></p>
+      <button type="button" @click="$layer.call.end(true)">Done</button>
+    </div>
+  </template>
+</div>
+```
+
+```ts
+import Alpine from "alpinejs";
+import layers, {
+  layerOptions,
+  setLayerClient,
+  useLayerGroup,
+} from "@stainless-code/alpine-layers";
+
+Alpine.plugin(layers);
+setLayerClient();
+
+const nestedConfirm = layerOptions<{ title: string }, boolean>({
+  key: ["confirm", "nested"],
+});
+
+Alpine.data("drawer", (call) => {
+  const group = useLayerGroup(call);
+  return {
+    stackId: group.stackId,
+    openNested() {
+      void group.open({
+        ...nestedConfirm,
+        payload: { title: "Nested" },
+      });
+    },
+    destroy() {
+      group.dispose();
+    },
+  };
+});
+```
+
+Nest `x-layer-outlet` on `group.stackId` inside a parent outlet row (`x-data="drawer($layer.call)"`). Alpine auto-calls `destroy()` on teardown; call `dispose()` yourself only when tearing down outside that lifecycle.
+
+</Tab>
 <Tab title="Svelte (runes)" icon="/icons/svelte.svg">
 
 ```svelte lineNumbers
@@ -214,13 +264,13 @@ Store entry renders via `$childStack` + standalone `callFor` — same `group.ope
 
 ## Inspect the group handle
 
-| Member | Role |
-| ------ | ---- |
-| `open` | Opens on the child stack (stack id pre-bound) |
-| `dismissAll` | Closes all child layers |
-| `states` / `stack` | Reactive snapshot of child layers |
-| `Outlet` / `outlet()` / `renderInto` / `stack` | Render surface (adapter-specific) |
-| `stackId` | Derived id — `` `${parentStackId}~${parentLayerId}~${name}` `` |
+| Member                                                            | Role                                                           |
+| ----------------------------------------------------------------- | -------------------------------------------------------------- |
+| `open`                                                            | Opens on the child stack (stack id pre-bound)                  |
+| `dismissAll`                                                      | Closes all child layers                                        |
+| `states` / `stack`                                                | Reactive snapshot of child layers                              |
+| `Outlet` / `outlet()` / `renderInto` / `x-layer-outlet` / `stack` | Render surface (adapter-specific)                              |
+| `stackId`                                                         | Derived id — `` `${parentStackId}~${parentLayerId}~${name}` `` |
 
 :::warning[Heads up]
 Child stacks cascade on parent dismiss — blockers on the parent are the right place to guard "close drawer with open sub-dialog?". Children are force-drained; see [Dismissal blockers](/guides/dismissal-blockers).

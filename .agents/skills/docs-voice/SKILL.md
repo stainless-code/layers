@@ -34,7 +34,7 @@ was rejected) and the "when **not** to use it" anti-sell — keep both.
   `meta.ts` icons and tab icons stay. Nested brand groups (e.g. Svelte): icon
   on the group only — don't repeat the same SVG on indented children.
 - **Adapter list order:** core/vanilla → react → preact → solid → angular →
-  vue → lit → svelte (runes → store). Every multi-adapter listing.
+  vue → lit → alpine → svelte (runes → store). Every multi-adapter listing.
 
 ## Don't
 

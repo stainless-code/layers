@@ -15,6 +15,7 @@ import confirmSvelteRunesSrc from "../../recipes/confirm-dialog/svelte-runes.sve
 import confirmSvelteStoreSrc from "../../recipes/confirm-dialog/svelte-store.svelte?raw";
 import confirmAngularSrc from "../../recipes/confirm-dialog/angular.ts?raw";
 import confirmLitSrc from "../../recipes/confirm-dialog/lit.ts?raw";
+import confirmAlpineSrc from "../../recipes/confirm-dialog/alpine.html?raw";
 
 A delete button in a sidebar needs a yes/no. `useLayer(confirm)` + `await confirm.open({ title })` returns the typed boolean.
 
@@ -37,21 +38,51 @@ Declare a typed layer, bind it with `useLayer(confirm)` (or `createLayer` headle
 One complete recipe per framework adapter (live demo above is React).
 
 <Tabs dropdown sync={false} hash={false}>
-  <Tab title="React"><CodeBlock code={confirmSrc} lang="tsx" /></Tab>
-  <Tab title="Preact"><CodeBlock code={confirmPreactSrc} lang="tsx" /></Tab>
-  <Tab title="Solid"><CodeBlock code={confirmSolidSrc} lang="tsx" /></Tab>
-  <Tab title="Angular"><CodeBlock code={confirmAngularSrc} lang="ts" /></Tab>
-  <Tab title="Vue"><CodeBlock code={confirmVueLayerSrc} lang="vue" title="ConfirmDialog.vue" /><CodeBlock code={confirmVueHostSrc} lang="vue" title="App.vue" /></Tab>
-  <Tab title="Lit"><CodeBlock code={confirmLitSrc} lang="ts" /></Tab>
-  <Tab title="Svelte (runes)"><CodeBlock code={confirmSvelteRunesSrc} lang="svelte" /></Tab>
-  <Tab title="Svelte (store)"><CodeBlock code={confirmSvelteStoreSrc} lang="svelte" /></Tab>
+  <Tab title="React">
+    <CodeBlock code={confirmSrc} lang="tsx" />
+  </Tab>
+  <Tab title="Preact">
+    <CodeBlock code={confirmPreactSrc} lang="tsx" />
+  </Tab>
+  <Tab title="Solid">
+    <CodeBlock code={confirmSolidSrc} lang="tsx" />
+  </Tab>
+  <Tab title="Angular">
+    <CodeBlock code={confirmAngularSrc} lang="ts" />
+  </Tab>
+  <Tab title="Vue">
+    <CodeBlock code={confirmVueLayerSrc} lang="vue" title="ConfirmDialog.vue" />
+    <CodeBlock code={confirmVueHostSrc} lang="vue" title="App.vue" />
+  </Tab>
+  <Tab title="Lit">
+    <CodeBlock code={confirmLitSrc} lang="ts" />
+  </Tab>
+  <Tab title="Alpine">
+    <CodeBlock code={confirmAlpineSrc} lang="html" />
+  </Tab>
+  <Tab title="Svelte (runes)">
+    <CodeBlock code={confirmSvelteRunesSrc} lang="svelte" />
+  </Tab>
+  <Tab title="Svelte (store)">
+    <CodeBlock code={confirmSvelteStoreSrc} lang="svelte" />
+  </Tab>
 </Tabs>
 
 ## Integrations
 
 <CardGroup cols={2}>
-  <Card title="Confirm dialog + React Aria" href="/integrations/react-aria/confirm-dialog" icon="/icons/react-aria.svg" arrow />
-  <Card title="Confirm dialog + Base UI" href="/integrations/base-ui/confirm-dialog" icon="/icons/base-ui.svg" arrow />
+  <Card
+    title="Confirm dialog + React Aria"
+    href="/integrations/react-aria/confirm-dialog"
+    icon="/icons/react-aria.svg"
+    arrow
+  />
+  <Card
+    title="Confirm dialog + Base UI"
+    href="/integrations/base-ui/confirm-dialog"
+    icon="/icons/base-ui.svg"
+    arrow
+  />
 </CardGroup>
 
 ## Variations
