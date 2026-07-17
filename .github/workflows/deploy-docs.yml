@@ -1,33 +1,42 @@
 name: Deploy docs
 
-# Manual dispatch for now. Once the /layers FTP account + repository secrets
-# (FTP_HOST, FTP_USERNAME, FTP_PASSWORD) are configured, enable auto-deploy on
-# main by uncommenting the `push` block below.
+# Production FTP for the unversioned /layers docs site.
+# Triggers: manual, GitHub Release published (Changesets), or a PR merged to
+# main that carries the `docs` label (docs-ahead of the next package release).
+# Requires repo secrets: FTP_HOST, FTP_USERNAME, FTP_PASSWORD.
 on:
   workflow_dispatch:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - apps/docs/**
-  #     - .github/workflows/deploy-docs.yml
+  release:
+    types: [published]
+  pull_request:
+    types: [closed]
+    branches: [main]
 
 permissions:
   contents: read
 
-# Don't overlap production deploys; let the queued one finish.
+# One production FTP root — serialize all deploys.
 concurrency:
-  group: deploy-docs-${{ github.ref }}
+  group: deploy-docs-production
   cancel-in-progress: false
 
 jobs:
   deploy:
     name: 🚀 Build & Deploy docs (FTP)
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event_name == 'release' ||
+      (github.event_name == 'pull_request' &&
+       github.event.pull_request.merged == true &&
+       contains(github.event.pull_request.labels.*.name, 'docs'))
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7
         with:
           persist-credentials: false
+          # PR merge: deploy the merge commit on main. Release / dispatch: event SHA.
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.merge_commit_sha || github.sha }}
           # Full history: lastModified (sitemap <lastmod>) uses `git log` per file.
           fetch-depth: 0
 
