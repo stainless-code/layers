@@ -71,8 +71,8 @@ function isElementHost(
 /**
  * Provides a {@link LayerClient} to descendant consumers via `@lit/context`.
  *
- * Attaches a {@link ContextProvider} to `host`; descendants resolve it with
- * {@link useLayerClient} or by omitting `client` on a hook. A new client is
+ * Attaches a `@lit/context` `ContextProvider` to `host`; descendants resolve it
+ * with {@link useLayerClient} or by omitting `client` on a hook. A new client is
  * created when `client` is omitted.
  *
  * @param host Lit element host that owns the context provider.
