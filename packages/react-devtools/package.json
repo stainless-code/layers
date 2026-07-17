@@ -61,7 +61,7 @@
   },
   "dependencies": {
     "@stainless-code/layers-devtools": "workspace:*",
-    "@tanstack/devtools-utils": "0.5.1"
+    "@tanstack/devtools-utils": "0.6.0"
   },
   "devDependencies": {
     "@stainless-code/layers": "workspace:*",
