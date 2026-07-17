@@ -22,7 +22,7 @@ group.dispose(); // usually automatic via adapter lifecycle
 
 ## Inline child outlet
 
-Render the child stack inside the parent layer's DOM. React, Preact, Solid, and Vue ship an `Outlet` component; Angular uses `renderInto`; Svelte exposes the child `stack` directly:
+Render the child stack inside the parent layer's DOM. React, Preact, Solid, and Vue ship an `Outlet` component; Lit returns `outlet(): TemplateResult`; Angular uses `renderInto`; Svelte exposes the child `stack` directly:
 
 <Tabs>
 <Tab title="React" icon="/icons/react.svg">
@@ -124,6 +124,37 @@ const group = useLayerGroup(call);</script>
 ```
 
 </Tab>
+<Tab title="Lit" icon="/icons/lit.svg">
+
+```ts lineNumbers
+import { LitElement, html } from "lit";
+import { useLayerGroup } from "@stainless-code/lit-layers";
+import type { LayerComponentProps } from "@stainless-code/lit-layers";
+
+class Drawer extends LitElement {
+  declare call: LayerComponentProps<void, void>["call"];
+  #group?: ReturnType<typeof useLayerGroup>;
+
+  createRenderRoot() {
+    return this;
+  }
+
+  render() {
+    this.#group ??= useLayerGroup(this, this.call);
+    return html`<div role="dialog">
+      <button
+        type="button"
+        @click=${() => void this.#group!.open({ ...nestedConfirm, payload })}
+      >
+        Edit details
+      </button>
+      ${this.#group.outlet()}
+    </div>`;
+  }
+}
+```
+
+</Tab>
 <Tab title="Svelte (runes)" icon="/icons/svelte.svg">
 
 ```svelte lineNumbers
@@ -179,7 +210,7 @@ Store entry renders via `$childStack` + standalone `callFor` — same `group.ope
 | `open` | Opens on the child stack (stack id pre-bound) |
 | `dismissAll` | Closes all child layers |
 | `states` / `stack` | Reactive snapshot of child layers |
-| `Outlet` / `renderInto` / `stack` | Render surface (adapter-specific) |
+| `Outlet` / `outlet()` / `renderInto` / `stack` | Render surface (adapter-specific) |
 | `stackId` | Derived id — `` `${parentStackId}~${parentLayerId}~${name}` `` |
 
 :::warning[Heads up]

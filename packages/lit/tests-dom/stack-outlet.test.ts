@@ -97,6 +97,73 @@ describe("Lit adapter — StackOutlet", () => {
     expect(outlet.querySelector('[role="dialog"]')).toBeNull();
   });
 
+  it("does not remount the layer component when state changes", async () => {
+    let mountCount = 0;
+    class StatusDialog extends LitElement {
+      static properties = {
+        call: { attribute: false },
+        payload: { attribute: false },
+        actionStatus: { type: String },
+      };
+      declare call: LayerCallContext<{ title: string }, boolean>;
+      declare payload: { title: string };
+      declare actionStatus: string;
+
+      createRenderRoot(): this {
+        return this;
+      }
+
+      connectedCallback(): void {
+        super.connectedCallback();
+        mountCount += 1;
+      }
+
+      render() {
+        return html`<div role="dialog" aria-label=${this.payload.title}>
+          <span data-testid="status">${this.actionStatus}</span>
+          <button type="button" @click=${() => this.call.setRunning(true)}>
+            Run
+          </button>
+        </div>`;
+      }
+    }
+    customElements.define("test-status-dialog", StatusDialog);
+
+    const statusOptions = layerOptions<{ title: string }, boolean>({
+      stack: "confirm",
+      key: ["confirm", "status"],
+      component: StatusDialog,
+      exitingDelay: 0,
+    });
+
+    const client = new LayerClient();
+    const { outlet } = await mountProvider(client);
+
+    void client.open({
+      ...statusOptions,
+      payload: { title: "Status modal" },
+    });
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+    await Promise.resolve();
+
+    expect(outlet.querySelector('[role="dialog"]')).toBeTruthy();
+    expect(mountCount).toBe(1);
+    expect(outlet.querySelector('[data-testid="status"]')?.textContent).toBe(
+      "idle",
+    );
+
+    (outlet.querySelector("button") as HTMLButtonElement).click();
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+    await Promise.resolve();
+
+    expect(mountCount).toBe(1);
+    expect(outlet.querySelector('[data-testid="status"]')?.textContent).toBe(
+      "running",
+    );
+  });
+
   it("dev-warns on missing component and renders nothing", async () => {
     const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
     const client = new LayerClient();
