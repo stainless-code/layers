@@ -23,6 +23,8 @@ class LayerClient {
   ensureStack(id: string, options?: StackOptions): LayerStack;
   getStackIds(): string[];
   subscribeStacks(listener: (stackId: string) => void): () => void;
+  subscribeNotify(listener: (event: StackNotifyEvent) => void): () => void;
+  seedNotify(stackId?: string): void;
   dismissAll(
     stackId?: string,
     response?: unknown,
@@ -38,6 +40,8 @@ class LayerClient {
 | `ensureStack`     | Returns a stack, applying `StackOptions` only when creating it                                         |
 | `getStackIds`     | Lists materialized stack ids                                                                           |
 | `subscribeStacks` | Notifies when a stack is created for the first time                                                    |
+| `subscribeNotify` | Labeled stack transitions (`StackNotifyEvent`) for inspectors / Devtools                               |
+| `seedNotify`      | Re-emits a `register` notify for one stack, or all materialized stacks when omitted                    |
 | `dismissAll`      | Async bulk dismiss on one stack (honors blockers unless `mode: "force"`)                               |
 
 <AutoTypeTable
@@ -79,6 +83,14 @@ class LayerStack {
 | `dismiss`           | Resolve one layer; returns whether dismissal succeeded (blockers may veto)                                                |
 | `cancelQueued`      | Resolve a serial `queued` layer without mounting; omit `{ id }` → FIFO head for the key, `{ id }` → exact queued instance |
 | `addBlocker`        | Stack-scoped dismiss gate; returns a disposer                                                                             |
+
+## StackNotifyEvent
+
+JSON-safe transition record for `subscribeNotify` (Devtools and headless inspectors). Distinct from `subscribe` snapshot identity — see [Devtools](/guides/devtools).
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="StackNotifyAction" />
+<AutoTypeTable path="../../packages/core/src/types.ts" name="LayerNotifyView" />
+<AutoTypeTable path="../../packages/core/src/types.ts" name="StackNotifyEvent" />
 
 ## LayerState
 

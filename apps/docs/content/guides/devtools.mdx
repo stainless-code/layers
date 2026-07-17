@@ -57,9 +57,9 @@ Buttons call the live `LayerClient` — not bus commands:
 
 | Control | Behavior |
 | ------- | -------- |
-| Dismiss | Soft dismiss — respects blockers |
-| Cancel queued | `cancelQueued` on the FIFO head |
-| Force dismiss | `{ force: true }` after confirm |
+| Soft dismiss | Top active layer — respects blockers |
+| Cancel queued | FIFO head of the serial queue |
+| Force dismiss | Top active layer with `{ force: true }` after confirm |
 | Dismiss all | Modes: `skipBlocked` / `stopAtBlocked` / `force` |
 
 ## Subscribe without the panel
@@ -74,10 +74,11 @@ const off = client.subscribeNotify((event) => {
 // later: off()
 ```
 
-Zero listeners ⇒ ~zero cost. Core stays free of `@tanstack/*`.
+`seedNotify(stackId?)` re-emits a `register` snapshot for late subscribers (Devtools calls this on attach). Core stays free of `@tanstack/*`.
 
 ## Related
 
 - [Dismissal blockers](/guides/dismissal-blockers) — soft vs force / `dismissAll` modes
 - [Serial queues](/guides/serial-queues) — queued rows in the inspector
+- [Core API](/reference/core-api) — `subscribeNotify`, `seedNotify`, `StackNotifyEvent`
 - [Glossary](/concepts/glossary) — `StackNotifyEvent`, `subscribeNotify`, `#dispatch`
