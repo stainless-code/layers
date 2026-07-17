@@ -118,6 +118,138 @@ describe("LayerClient — subscribeNotify", () => {
     expect(open?.active[0]?.payloadTruncated).toBe(true);
     expect(open?.active[0]?.payload).toBeUndefined();
   });
+
+  it("omits payload fields when open has no payload / undefined", () => {
+    const client = new LayerClient();
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+    void client.open({ key: ["no-payload"] });
+    const open = events.find((e) => e.action === "open");
+    expect(open?.active[0]?.payload).toBeUndefined();
+    expect(open?.active[0]?.payloadTruncated).toBeUndefined();
+  });
+
+  it("marks payloadTruncated for non-finite number payloads", () => {
+    const client = new LayerClient();
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+    void client.open({ key: ["nan"], payload: Number.NaN });
+    const open = events.find((e) => e.action === "open");
+    expect(open?.active[0]?.payloadTruncated).toBe(true);
+    expect(open?.active[0]?.payload).toBeUndefined();
+  });
+
+  it("isolates a throwing listener so open still materializes", async () => {
+    const client = new LayerClient();
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify(() => {
+      throw new Error("bad listener");
+    });
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+
+    const promise = client.open({ key: ["a"], payload: 1 });
+    expect(promise).toBeInstanceOf(Promise);
+    await Promise.resolve();
+
+    expect(client.getStack().getSnapshot()).toHaveLength(1);
+    expect(events.map((e) => e.action)).toEqual(["register", "open"]);
+  });
+
+  it("emits update after stack.update", () => {
+    const client = new LayerClient();
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+    void client.open({ key: ["a"], payload: { n: 1 } });
+    const stack = client.getStack();
+    const layer = stack.getLayer(stack.getSnapshot()[0]!.id)!;
+    events.length = 0;
+    stack.update(layer, { n: 2 });
+    expect(events.map((e) => e.action)).toEqual(["update"]);
+    expect(events[0]?.active[0]?.payload).toEqual({ n: 2 });
+  });
+
+  it("emits cancelQueued for a serial queued layer", async () => {
+    const client = new LayerClient({
+      defaultStackOptions: {
+        default: { scope: { strategy: "serial" } },
+      },
+    });
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+    void client.open({ key: ["a"], payload: { n: 1 } });
+    void client.open({ key: ["b"], payload: { n: 2 } });
+    expect(client.getStack().getQueuedSnapshot()).toHaveLength(1);
+    events.length = 0;
+    expect(client.getStack().cancelQueued(["b"], undefined)).toBe(true);
+    expect(events.some((e) => e.action === "cancelQueued")).toBe(true);
+    expect(events.at(-1)?.queued).toHaveLength(0);
+  });
+
+  it("emits dismissAll after dismissAll clears the stack", async () => {
+    const client = new LayerClient({
+      defaultStackOptions: {
+        default: { scope: { strategy: "serial" } },
+      },
+    });
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+    void client.open({ key: ["a"], payload: { n: 1 } });
+    void client.open({ key: ["b"], payload: { n: 2 } });
+    expect(client.getStack().getQueuedSnapshot()).toHaveLength(1);
+    events.length = 0;
+    await client.dismissAll();
+    expect(events.some((e) => e.action === "dismissAll")).toBe(true);
+    expect(events.at(-1)?.active).toHaveLength(0);
+    expect(events.at(-1)?.queued).toHaveLength(0);
+  });
+
+  it("emits dismissAll when only active layers exist", async () => {
+    const client = new LayerClient();
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+    void client.open({ key: ["solo"], payload: { n: 1 } });
+    await Promise.resolve();
+    expect(client.getStack().getQueuedSnapshot()).toHaveLength(0);
+    expect(client.getStack().getSnapshot()).toHaveLength(1);
+    events.length = 0;
+    await client.dismissAll();
+    expect(events.some((e) => e.action === "dismissAll")).toBe(true);
+    expect(events.at(-1)?.active).toHaveLength(0);
+  });
+
+  it("seedNotify re-emits register for existing stacks", () => {
+    const client = new LayerClient();
+    void client.open({ key: ["a"], payload: 1, stack: "modal" });
+    const events: StackNotifyEvent[] = [];
+    client.subscribeNotify((event) => {
+      events.push(event);
+    });
+    client.seedNotify("modal");
+    expect(events).toHaveLength(1);
+    expect(events[0]?.action).toBe("register");
+    expect(events[0]?.stackId).toBe("modal");
+    expect(events[0]?.active).toHaveLength(1);
+
+    events.length = 0;
+    client.seedNotify();
+    expect(
+      events.some((e) => e.stackId === "modal" && e.action === "register"),
+    ).toBe(true);
+  });
 });
 
 describe("LayerClient — subscribeStacks", () => {

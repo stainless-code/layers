@@ -28,6 +28,8 @@ Cross-package type resolution in dev uses a `@stainless-code/source` export cond
 
 The isolation invariant: each adapter package imports **only** `@stainless-code/layers` + its library or framework peer. The package boundary enforces it structurally (an undeclared import fails install/build); `sherif` (workspace dependency lint) + per-package `knip` catch drift, and core keeps a zero-dependency guard. No cross-adapter coupling.
 
+Optional `@stainless-code/layers-devtools` and `@stainless-code/react-layers-devtools` sit **outside** this core/adapter seam: they are a TanStack Devtools UI (`EventClient` + Solid panel + React doorbell), not part of the zero-dep core and not framework adapters.
+
 ## Adapter ergonomics
 
 Every adapter exposes the same primitives (client context, `useLayerClient`, wired + observe hooks, `useStack`/`useQueuedStack` options-bag subscriptions) and re-exports the full core, so anything one adapter can do is reachable in another through those. On top of the primitives each adapter ships ergonomic wrappers — sugar over the primitives, not extra engine capability. All adapters have reached parity; **Angular, Alpine, and Svelte diverge by design** because they build compiler-free (tsdown, no framework compiler), so they render through markup-in-template / primitive APIs instead of shipped host components or a `component` registry.

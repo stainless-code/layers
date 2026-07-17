@@ -8,7 +8,7 @@ React doorbell for `@stainless-code/layers-devtools` — one plugin line into `<
 
 `bun add -d @stainless-code/react-layers-devtools @tanstack/react-devtools`
 
-**Peers:** `react` (^18 or ^19), `@stainless-code/react-layers`, `@tanstack/react-devtools`, `@tanstack/devtools-utils`
+**Peers:** `react` (^18 or ^19), `@stainless-code/react-layers`, `@tanstack/react-devtools`
 
 ## Taste
 

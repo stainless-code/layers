@@ -93,4 +93,46 @@ describe("attachLayerDevtools", () => {
     detach();
     expect(getAttachedLayerClient()).toBeNull();
   });
+
+  it("re-attach without detach does not double-subscribe", async () => {
+    const emit = spyOn(layersEventClient, "emit");
+    const client = new LayerClient();
+    attachLayerDevtools(client);
+    attachLayerDevtools(client);
+
+    emit.mockClear();
+    void client.open({ key: ["once"], payload: 1 });
+    await Promise.resolve();
+
+    const stateCalls = emit.mock.calls.filter(
+      (call) => call[0] === "stack-state",
+    );
+    // register + open once each (not doubled)
+    expect(stateCalls).toHaveLength(2);
+
+    emit.mockRestore();
+  });
+
+  it("attach(B) detaches prior client A", async () => {
+    const emit = spyOn(layersEventClient, "emit");
+    const a = new LayerClient();
+    const b = new LayerClient();
+    attachLayerDevtools(a);
+    attachLayerDevtools(b);
+
+    emit.mockClear();
+    void a.open({ key: ["from-a"], payload: 1 });
+    await Promise.resolve();
+    expect(
+      emit.mock.calls.filter((call) => call[0] === "stack-state"),
+    ).toHaveLength(0);
+
+    void b.open({ key: ["from-b"], payload: 1 });
+    await Promise.resolve();
+    expect(
+      emit.mock.calls.filter((call) => call[0] === "stack-state").length,
+    ).toBeGreaterThan(0);
+
+    emit.mockRestore();
+  });
 });

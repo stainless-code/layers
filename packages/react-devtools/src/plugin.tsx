@@ -3,6 +3,7 @@ import { createReactPlugin } from "@tanstack/devtools-utils/react";
 
 import { LayersDevtoolsPanel } from "./ReactLayersDevtools";
 
+/** Optional client override when the panel should not use the attached live client. */
 export interface LayersDevtoolsPluginOptions {
   client?: LayerClient;
 }
@@ -14,6 +15,11 @@ const defaultLayersPlugins = createReactPlugin({
   Component: LayersDevtoolsPanel,
 });
 
+/**
+ * TanStack Devtools plugin for Layers — mounts the Solid inspector via the
+ * React doorbell. Pass `{ client }` to bind a specific {@link LayerClient};
+ * otherwise the panel uses the client from {@link attachLayerDevtools}.
+ */
 export function layersDevtoolsPlugin(
   opts?: LayersDevtoolsPluginOptions,
 ): ReturnType<LayersDevtoolsPluginFactory> {
@@ -29,5 +35,6 @@ export function layersDevtoolsPlugin(
   return withClient[0]();
 }
 
+/** No-op TanStack Devtools plugin for production / non-development bundles. */
 export const layersDevtoolsNoOpPlugin: LayersDevtoolsPluginFactory =
   defaultLayersPlugins[1];

@@ -352,12 +352,14 @@ export class LayerStack<
 
   async dismissAll(response: R, opts?: DismissAllOptions): Promise<void> {
     const mode = opts?.mode ?? this.options.dismissAllMode ?? "skipBlocked";
-    notifyManager.batch(() => {
-      this.#dispatch("dismissAll", () => {
+    // Final labeled snapshot: active-only stacks only emit per-layer `"dismiss"`.
+    const shouldEmit = this.#scopeQueue.length > 0 || this.#layers.length > 0;
+    try {
+      notifyManager.batch(() => {
         // Drain the queue FIRST so a dismissed active layer's #remove does
         // not activate a queued one. Queued callers get their response
         // without ever mounting.
-        for (const entry of [...this.#scopeQueue]) {
+        for (const entry of this.#scopeQueue) {
           entry.layer.abort();
           entry.layer.resolve(response);
           entry.layer.setPartial({
@@ -370,15 +372,19 @@ export class LayerStack<
         this.#scopeQueue = [];
         this.#flush();
       });
-    });
-    for (const l of this.#layers) {
-      if (mode === "force") {
-        await this.dismiss(l, response, { force: true });
-        continue;
+      for (const l of this.#layers) {
+        if (mode === "force") {
+          await this.dismiss(l, response, { force: true });
+          continue;
+        }
+        const ok = await this.dismiss(l, response);
+        if (!ok && mode === "stopAtBlocked") {
+          return;
+        }
       }
-      const ok = await this.dismiss(l, response);
-      if (!ok && mode === "stopAtBlocked") {
-        return;
+    } finally {
+      if (shouldEmit) {
+        this.#emitNotify("dismissAll");
       }
     }
   }
@@ -540,6 +546,12 @@ function projectJsonSafePayload(raw: unknown): {
   payload?: unknown;
   payloadTruncated?: boolean;
 } {
+  if (raw === undefined) {
+    return {};
+  }
+  if (typeof raw === "number" && !Number.isFinite(raw)) {
+    return { payloadTruncated: true };
+  }
   try {
     return { payload: JSON.parse(JSON.stringify(raw)) as unknown };
   } catch {

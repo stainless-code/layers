@@ -80,7 +80,7 @@
       "project": ["src/**/*.{ts,tsx}"]
     },
     "packages/react-devtools": {
-      "entry": ["src/**/*.test.ts", "src/**/*.test.tsx"],
+      "entry": ["src/**/*.test.ts"],
       "project": ["src/**/*.{ts,tsx}"]
     }
   },

@@ -53,7 +53,11 @@ export class LayerClient {
       stack.onLayerDismiss = (layer) => this.#drainChildStacks(layer.id);
       stack.onNotify = (event) => {
         for (const listener of this.#notifyListeners) {
-          listener(event);
+          try {
+            listener(event);
+          } catch {
+            // Isolate listeners so one throw cannot abort open / ensureStack.
+          }
         }
       };
       this.#stacks.set(id, stack);
@@ -170,6 +174,20 @@ export class LayerClient {
   subscribeNotify(listener: (event: StackNotifyEvent) => void): () => void {
     this.#notifyListeners.add(listener);
     return () => this.#notifyListeners.delete(listener);
+  }
+
+  /**
+   * Re-emits the current snapshot as a `register` notify for one stack, or all
+   * materialized stacks when `stackId` is omitted (devtools seed).
+   */
+  seedNotify(stackId?: string): void {
+    if (stackId !== undefined) {
+      this.#stacks.get(stackId)?.emitRegisterNotify();
+      return;
+    }
+    for (const stack of this.#stacks.values()) {
+      stack.emitRegisterNotify();
+    }
   }
 
   dismissAll(

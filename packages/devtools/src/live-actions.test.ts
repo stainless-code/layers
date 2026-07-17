@@ -89,4 +89,16 @@ describe("live-actions", () => {
     expect(stack.getSnapshot()).toHaveLength(0);
     expect(stack.getQueuedSnapshot()).toHaveLength(0);
   });
+
+  it("missing stackId does not materialize a stack", async () => {
+    const client = new LayerClient();
+    expect(client.getStackIds()).toEqual([]);
+
+    expect(softDismissTop(client, "missing")).toBe(false);
+    expect(cancelQueuedHead(client, "missing")).toBe(false);
+    expect(forceDismissTop(client, "missing")).toBe(false);
+    await dismissAllWithMode(client, "missing", "force");
+
+    expect(client.getStackIds()).toEqual([]);
+  });
 });
