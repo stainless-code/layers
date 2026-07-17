@@ -257,6 +257,12 @@ export class LayerStack<
     layer: Layer<P, R, E, D>,
     response: R,
   ): Promise<boolean> {
+    // Fresh read — concurrent force may dismiss while we await blockers.
+    const alreadyDismissed = () => layer.state.phase === "dismissed";
+    // Already exiting / dismissed — do not flip `dismissing` (Soft dismiss during exit).
+    if (alreadyDismissed()) {
+      return true;
+    }
     notifyManager.batch(() => {
       this.#dispatch("phase", () => {
         layer.setPartial({ dismissing: true });
@@ -264,8 +270,7 @@ export class LayerStack<
       });
     });
     const vetoed = await this.#vetoed(layer);
-    // A concurrent force may have already dismissed while we awaited.
-    if (layer.state.phase === "dismissed") {
+    if (alreadyDismissed()) {
       return true;
     }
     if (vetoed) {

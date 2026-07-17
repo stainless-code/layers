@@ -50,6 +50,7 @@ export const LayersDevtoolsPanel: LayersDevtoolsPanelComponent = (props) => {
   return <LayersDevtoolsPanelFromContext {...(props ?? {})} />;
 };
 
+/** No-op Layers panel for production / non-development bundles. */
 export const LayersDevtoolsPanelNoOp: LayersDevtoolsPanelComponent = (
   props,
 ) => {

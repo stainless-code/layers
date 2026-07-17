@@ -15,19 +15,21 @@ interface LayersDevtoolsStore {
   snapshotsByStackId: Record<string, StackSnapshot>;
 }
 
-const initialLayersDevtoolsStore: LayersDevtoolsStore = {
-  stackIds: [],
-  selectedStackId: null,
-  snapshotsByStackId: {},
-};
+function createEmptyLayersDevtoolsStore(): LayersDevtoolsStore {
+  return {
+    stackIds: [],
+    selectedStackId: null,
+    snapshotsByStackId: {},
+  };
+}
 
 const LayersDevtoolsContext = createContext<
   [LayersDevtoolsStore, (fn: (draft: LayersDevtoolsStore) => void) => void]
->([initialLayersDevtoolsStore, () => {}]);
+>([createEmptyLayersDevtoolsStore(), () => {}]);
 
 export function LayersContextProvider(props: { children: JSX.Element }) {
   const [store, setStore] = createStore<LayersDevtoolsStore>(
-    initialLayersDevtoolsStore,
+    createEmptyLayersDevtoolsStore(),
   );
 
   createEffect(() => {

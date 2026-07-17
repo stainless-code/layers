@@ -1,5 +1,6 @@
 import * as Devtools from "./core";
 
+/** Solid panel core for TanStack Devtools (NoOp outside `development`). */
 export const LayersDevtoolsCore: typeof Devtools.LayersDevtoolsCore =
   process.env.NODE_ENV !== "development"
     ? Devtools.LayersDevtoolsCoreNoOp

@@ -186,6 +186,7 @@ export interface LayerNotifyView {
   index: number;
   stackSize: number;
   payload?: unknown;
+  /** `true` when `payload` could not be JSON-cloned and was omitted. */
   payloadTruncated?: boolean;
 }
 

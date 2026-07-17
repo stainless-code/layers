@@ -1,3 +1,4 @@
+/** Solid panel core for TanStack Devtools (always-on production entry). */
 export { LayersDevtoolsCore } from "./core";
 
 export { attachLayerDevtools } from "./attach";

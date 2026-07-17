@@ -26,4 +26,5 @@ class LayersDevtoolsEventClient extends EventClient<LayersEventMap> {
   }
 }
 
+/** Shared EventClient for Layers Devtools (`stack-state` / `stack-registry`). */
 export const layersEventClient = new LayersDevtoolsEventClient();
