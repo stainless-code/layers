@@ -4,7 +4,7 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 
 ## Robustness
 
-- **[Devtools + `#dispatch`](./plans/devtools-dispatch.md)** — thin `#dispatch` + `subscribeNotify` / `StackNotifyEvent` in core; Solid panel in `@stainless-code/layers-devtools` (`packages/devtools`); React doorbell `@stainless-code/react-layers-devtools` (`packages/react-devtools`). Plan **In progress**; site guide `/guides/devtools`.
+- **[Devtools + `#dispatch`](./plans/devtools-dispatch.md)** — thin `#dispatch` + `subscribeNotify` / `StackNotifyEvent`; Solid panel + React doorbell. Plan **In progress**.
 
 ## Backlog (grill before building)
 

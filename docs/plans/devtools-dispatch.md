@@ -1,6 +1,6 @@
 # Devtools + `#dispatch` (TanStack shell)
 
-> Plan owner: open. Status: **In progress** (slices 1–5 landed in tree; folders `packages/devtools` + `packages/react-devtools`, npm `@stainless-code/layers-devtools` + `@stainless-code/react-layers-devtools`). Linked from [`docs/roadmap.md`](../roadmap.md) Robustness.
+> Plan owner: open. Status: **In progress** (slices 1–5 in tree). Linked from [`docs/roadmap.md`](../roadmap.md) Robustness.
 
 ## Problem
 
@@ -8,21 +8,22 @@
 
 ## Decisions (locked)
 
-| Topic              | Decision                                                                                                                                                     |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Timing             | Build now on 0.2.x (experimental; schema may churn)                                                                                                          |
-| Shell              | TanStack Devtools unified shell ([docs](https://tanstack.com/devtools/latest)); Pacer/a11y = cookbook                                                        |
-| Packages           | **3 involved, 2 new:** `@stainless-code/layers` (exists) · `@stainless-code/layers-devtools` · `@stainless-code/react-layers-devtools`. No `./react` subpath |
-| Event ownership    | **Core** owns `StackNotifyEvent` types + emit; **devtools** owns EventClient bridge + Solid panel                                                            |
-| Zero-dep           | Path **B** — no `@tanstack/*` in core; `LayerClient#subscribeNotify`                                                                                         |
-| `#dispatch`        | Thin choke point (label + existing mutators + `#flush`); not a pure reducer rewrite                                                                          |
-| Emit gate          | Only when `#flush` changes snapshot/queued refs; plus stack `register`; action label from causing `#dispatch`                                                |
-| Panel UI           | Solid core in `layers-devtools` (`constructCoreClass`); thin React doorbell                                                                                  |
-| EventClient        | Regular **dependency** of `layers-devtools` (`pluginId: 'layers'`, `reconnectEveryMs: 1000`)                                                                 |
-| Wire shape         | `stackId`, `seq`, `ts`, coarse `action`, `active`/`queued` projections, JSON-safe `payload` + `payloadTruncated`                                             |
-| Actions (live-ref) | Soft dismiss · cancel queued · force dismiss (confirm) · `dismissAll` (all modes). No bus command protocol                                                   |
-| Mount              | Auto-attach from `StackProvider` context; `{ client }` override                                                                                              |
-| Deferred           | Other framework doorbells · bus bidirectional · time-travel · fine `dismiss-begin`/`vetoed` labels · marketplace PR                                          |
+| Topic              | Decision                                                                                                                                            |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Timing             | Build now on 0.2.x (experimental; schema may churn)                                                                                                 |
+| Shell              | TanStack Devtools unified shell ([docs](https://tanstack.com/devtools/latest)); Pacer/a11y = cookbook                                               |
+| Packages           | **3 involved, 2 new:** `@stainless-code/layers` · `@stainless-code/layers-devtools` · `@stainless-code/react-layers-devtools`. No `./react` subpath |
+| Folders            | `packages/devtools` + `packages/react-devtools` (short folders; long npm names)                                                                     |
+| Event ownership    | **Core** owns `StackNotifyEvent` types + emit; **devtools** owns EventClient bridge + Solid panel                                                   |
+| Zero-dep           | Path **B** — no `@tanstack/*` in core; `LayerClient#subscribeNotify`                                                                                |
+| `#dispatch`        | Thin choke point (label + existing mutators + `#flush`); not a pure reducer rewrite                                                                 |
+| Emit gate          | Only when `#flush` changes snapshot/queued refs; plus stack `register`; action label from causing `#dispatch`                                       |
+| Panel UI           | Solid core in `layers-devtools` (`constructCoreClass`); thin React doorbell                                                                         |
+| EventClient        | Regular **dependency** of `layers-devtools` (`pluginId: 'layers'`, `reconnectEveryMs: 1000`)                                                        |
+| Wire shape         | `stackId`, `seq`, `ts`, coarse `action`, `active`/`queued` projections, JSON-safe `payload` + `payloadTruncated`                                    |
+| Actions (live-ref) | Soft dismiss · cancel queued · force dismiss (confirm) · `dismissAll` (all modes). No bus command protocol                                          |
+| Mount              | Auto-attach from `StackProvider` context; `{ client }` override                                                                                     |
+| Deferred           | Other framework doorbells · bus bidirectional · time-travel · fine `dismiss-begin`/`vetoed` labels · marketplace PR                                 |
 
 ### Rejected alternatives
 
@@ -34,101 +35,23 @@
 | Emit on every `#dispatch` including no-op `#flush`            | Spam; diverge from adapter snapshot identity                       |
 | Bus-bidirectional commands                                    | Live `LayerClient` in doorbell is enough for v1 actions            |
 
-## Proposed interface
+## Shipped surface (source of truth)
 
-### Core (`@stainless-code/layers`)
+- Core: `StackNotifyAction` / `LayerNotifyView` / `StackNotifyEvent` in `packages/core/src/types.ts`; `LayerClient#subscribeNotify` + `seedNotify`; stack `#dispatch` → `#flush` gate
+- `layers-devtools`: `attachLayerDevtools` → EventClient (`stack-state` / `stack-registry`) + Solid panel + live-ref actions
+- `react-layers-devtools`: `layersDevtoolsPlugin` + NoOp / `./production`; auto-attach under `StackProvider`
 
-```ts
-type StackNotifyAction =
-  | "register"
-  | "open"
-  | "queue"
-  | "update"
-  | "setRunning"
-  | "settle"
-  | "dismiss"
-  | "dismissAll"
-  | "cancelQueued"
-  | "phase"
-  | "remove";
+Site recipe: `/guides/devtools`.
 
-interface LayerNotifyView {
-  id: string;
-  key: string; // display / keySignature string
-  phase: LayerPhase;
-  transition: LayerTransition;
-  actionStatus: LayerActionStatus;
-  dismissing: boolean;
-  ended: boolean;
-  index: number;
-  stackSize: number;
-  payload?: unknown; // JSON-safe
-  payloadTruncated?: boolean;
-}
+## Testing
 
-interface StackNotifyEvent {
-  stackId: string;
-  seq: number;
-  ts: number;
-  action: StackNotifyAction;
-  active: LayerNotifyView[];
-  queued: LayerNotifyView[];
-}
-
-// LayerClient
-subscribeNotify(listener: (event: StackNotifyEvent) => void): () => void;
-```
-
-Internal: `#dispatch(action)` → existing commit paths → `#flush` → if refs changed, fan out `subscribeNotify` (client aggregates per-stack).
-
-### `layers-devtools`
-
-- `attachLayerDevtools(client)` → `subscribeNotify` + `subscribeStacks` → `EventClient.emit('stack-state' | 'stack-registry', …)`
-- Solid panel: stack picker, active/queued table, payload JSON, action log column, live-ref buttons
-- Deps: `@stainless-code/layers`, `@tanstack/devtools-event-client`, Solid + `@tanstack/devtools-utils` / `devtools-ui` as needed
-
-### `react-layers-devtools`
-
-```tsx
-import { TanStackDevtools } from "@tanstack/react-devtools";
-import { layersDevtoolsPlugin } from "@stainless-code/react-layers-devtools";
-
-<StackProvider>
-  <App />
-  {import.meta.env.DEV && (
-    <TanStackDevtools plugins={[layersDevtoolsPlugin()]} />
-  )}
-</StackProvider>;
-```
-
-Peers: `react`, `@stainless-code/react-layers`, `@tanstack/react-devtools`, `@tanstack/devtools-utils`. Pacer-style NoOp / `./production` tuple.
-
-## Dependency strategy
-
-| Package                 | Deps                                                             |
-| ----------------------- | ---------------------------------------------------------------- |
-| core                    | none (in-process `#dispatch` + listener Set)                     |
-| `layers-devtools`       | layers; **dep** `devtools-event-client`; Solid / utils for panel |
-| `react-layers-devtools` | `layers-devtools`; peers React + TanStack React Devtools         |
-
-## Tracer-bullet order
-
-1. Core: thin `#dispatch` on `open` + dismiss-commit + `#flush` gate + `subscribeNotify` test
-2. Frame v1: remaining mutation paths + JSON-safe views + `register`
-3. `layers-devtools`: attach + EventClient + Solid read-only table
-4. `react-layers-devtools`: plugin + context attach
-5. Live-ref actions: dismiss / cancelQueued / force+confirm / dismissAll modes
-6. Docs recipe + changeset
-
-## Testing strategy
-
-- Core: every public mutation that changes snapshots emits once with expected `action`; no-op `#flush` silent; `notifyManager.batch` unchanged for `subscribe`
-- Devtools: map/attach unit tests; JSON-safe payload cases (`payloadTruncated`)
-- React DOM: plugin inside `StackProvider`; table updates after `open`; dismiss button closes layer
+- Core: mutations that change snapshots emit once with expected `action`; no-op `#flush` silent; `notifyManager.batch` unchanged for `subscribe`
+- Devtools: attach + live-actions unit tests; JSON-safe `payloadTruncated`
+- Deferred: React DOM harness for panel buttons
 
 ## Glossary impact
 
-Added: **StackNotifyEvent**, **subscribeNotify**, **#dispatch** (concept). See [`docs/glossary.md`](../glossary.md).
+**StackNotifyEvent**, **subscribeNotify**, **#dispatch** — [`docs/glossary.md`](../glossary.md).
 
 ## Out of scope
 

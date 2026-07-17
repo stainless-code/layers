@@ -15,11 +15,7 @@ const defaultLayersPlugins = createReactPlugin({
   Component: LayersDevtoolsPanel,
 });
 
-/**
- * TanStack Devtools plugin for Layers — mounts the Solid inspector via the
- * React doorbell. Pass `{ client }` to bind a specific {@link LayerClient};
- * otherwise the panel uses the client from {@link attachLayerDevtools}.
- */
+/** TanStack plugin. Pass `{ client }` to bind a specific {@link LayerClient}. */
 export function layersDevtoolsPlugin(
   opts?: LayersDevtoolsPluginOptions,
 ): ReturnType<LayersDevtoolsPluginFactory> {

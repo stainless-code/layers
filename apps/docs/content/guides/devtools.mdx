@@ -11,13 +11,13 @@ Debug stuck modals, serial queues, and dismiss blockers without adding admin rou
 
 ## Install
 
-Peer the React adapter and TanStack's React shell. The panel package (`@stainless-code/layers-devtools`) comes transitively.
+Needs the React adapter and `@tanstack/react-devtools`. The Solid panel (`@stainless-code/layers-devtools`) comes transitively.
 
 ```package-install
 npm i -D @stainless-code/react-layers-devtools @tanstack/react-devtools
 ```
 
-## Mount inside `StackProvider`
+## Mount under `StackProvider`
 
 The plugin auto-attaches the context `LayerClient`. Keep `<TanStackDevtools />` under `<StackProvider>` (or pass `{ client }`).
 
@@ -41,21 +41,19 @@ function App() {
 }
 ```
 
-Override when the shell sits outside the provider:
+When the shell sits outside the provider:
 
 ```tsx
 layersDevtoolsPlugin({ client: myLayerClient });
 ```
 
-## What the panel shows
+## Read the panel
 
-- Named stacks and active / queued rows (phase, transition, `actionStatus`, id, key)
-- JSON-safe payload projection (`payloadTruncated` when a value cannot be cloned)
-- Coarse `action` labels from the core `#dispatch` stream (`open`, `dismiss`, …)
+Active / queued rows carry coarse `#dispatch` `action` labels. Payloads are JSON-safe (`payloadTruncated` when a value cannot be cloned).
 
-## Panel actions
+## Dismiss from the panel
 
-Buttons call the **live** `LayerClient` (not a bus command protocol):
+Buttons call the live `LayerClient` — not bus commands:
 
 | Control | Behavior |
 | ------- | -------- |
@@ -64,9 +62,7 @@ Buttons call the **live** `LayerClient` (not a bus command protocol):
 | Force dismiss | `{ force: true }` after confirm |
 | Dismiss all | Modes: `skipBlocked` / `stopAtBlocked` / `force` |
 
-## Headless stream
-
-Apps that only need events (tests, custom inspectors) skip the panel:
+## Subscribe without the panel
 
 ```ts
 import { LayerClient } from "@stainless-code/layers";
@@ -78,7 +74,7 @@ const off = client.subscribeNotify((event) => {
 // later: off()
 ```
 
-Zero listeners ⇒ ~zero cost. Core stays free of `@tanstack/*` (tenet: technology-agnostic engine).
+Zero listeners ⇒ ~zero cost. Core stays free of `@tanstack/*`.
 
 ## Related
 
