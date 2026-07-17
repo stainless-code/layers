@@ -1,9 +1,11 @@
+import { ContextEvent } from "@lit/context";
 import { LitElement, html } from "lit";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   AppHostElement,
   defineStackElements,
+  layerClientContext,
   layerOptions,
   LayerClient,
   StackOutlet,
@@ -387,6 +389,30 @@ describe("Lit adapter — useLayerGroup", () => {
 
     expect(outlet.querySelector('[aria-label="Child"]')).toBeTruthy();
     expect(outlet.textContent).toContain("Child");
+  });
+
+  it("dispatches one layer-client context-request on the useLayerGroup host", async () => {
+    const client = new LayerClient();
+    const { outlet } = await mountProvider(client, "drawer");
+
+    // Count requests on the parent host: capture bubbling context-request
+    // before/during connect by listening on the outlet (composed events).
+    let layerClientRequests = 0;
+    outlet.addEventListener("context-request", (e) => {
+      const ev = e as InstanceType<typeof ContextEvent>;
+      if (ev.context === layerClientContext) layerClientRequests += 1;
+    });
+
+    void client.open({ ...parentOptions, payload: { title: "Parent" } });
+    await (outlet as unknown as { updateComplete: Promise<unknown> })
+      .updateComplete;
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const parent = outlet.querySelector("test-parent-drawer");
+    expect(parent).toBeTruthy();
+    // ParentDrawer: one shared resolve for the group (not group + #states).
+    expect(layerClientRequests).toBe(1);
   });
 });
 

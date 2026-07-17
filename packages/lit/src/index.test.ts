@@ -407,6 +407,15 @@ describe("useLayerGroup (lit)", () => {
         (result as unknown as Record<string | symbol, unknown>)["_$litType$"],
     ).toBeDefined();
   });
+
+  it("throws without a client when context can't resolve (non-element host)", () => {
+    const client = new LayerClient();
+    const { host } = createHost();
+    const call = makeCall(client);
+    expect(() =>
+      useLayerGroup<unknown, unknown>(host, call, undefined, undefined),
+    ).toThrow("[layers/lit] useLayerGroup");
+  });
 });
 
 describe("defineStackElements (lit)", () => {

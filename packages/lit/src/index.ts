@@ -323,7 +323,8 @@ export class StackController<T = LayerState[]> implements ReactiveController {
 
   /**
    * Bind a {@link LayerClient} when constructed with `deferClient` (internal:
-   * {@link LayerController} shares one lazy context resolve across its stacks).
+   * {@link LayerController} / {@link LayerGroupController} share one lazy
+   * context resolve across their stack controllers).
    */
   bindClient(client: LayerClient): void {
     if (this.#stack !== null) {
@@ -877,6 +878,7 @@ export class LayerGroupController<
   R,
   RootProps = unknown,
 > implements ReactiveController {
+  #host: ReactiveControllerHost;
   #client: LayerClient | undefined;
   #group: ReturnType<typeof createLayerGroup> | null = null;
   #states: StackController<LayerState[]>;
@@ -891,32 +893,37 @@ export class LayerGroupController<
     options?: LayerGroupOptions,
     client?: LayerClient,
   ) {
+    this.#host = host;
     this.#call = call;
     this.#options = options;
     this.#rootProps = call.root;
     this.#stackId = childStackId(call, options?.name);
 
+    // Same shared-resolve shape as LayerController: one lazy context consumer,
+    // then bindClient + requestUpdate so outlet() does not depend on #states
+    // coincidentally re-rendering the host.
+    const deferClient = !client;
+    this.#states = new StackController(
+      host,
+      { stack: this.#stackId, client },
+      client,
+      false,
+      deferClient,
+    );
+
     if (client) {
       this.#init(client);
     } else if (isElementHost(host)) {
-      new ContextConsumer(host, {
-        context: layerClientContext,
-        subscribe: true,
-        callback: (c: LayerClient) => {
-          if (this.#group === null) this.#init(c);
-        },
+      resolveClientLazy(host, undefined, (c) => {
+        if (this.#group === null) this.#init(c);
+        this.#states.bindClient(c);
+        this.#host.requestUpdate();
       });
     } else {
       throw new Error(
         "[layers/lit] useLayerGroup needs an explicit `client` or a LitElement host so context can resolve.",
       );
     }
-    this.#states = new StackController(
-      host,
-      { stack: this.#stackId, client: this.#client },
-      undefined,
-      false,
-    );
     host.addController(this);
   }
 
