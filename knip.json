@@ -77,7 +77,7 @@
     }
   },
   "ignoreWorkspaces": ["apps/docs"],
-  "ignoreDependencies": ["@stainless-code/codemap", "@angular/core"],
+  "ignoreDependencies": ["@stainless-code/codemap"],
   "ignoreBinaries": ["lychee"],
   "ignoreIssues": {
     "packages/angular/src/index.ts": ["duplicates"],

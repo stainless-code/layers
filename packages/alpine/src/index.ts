@@ -31,7 +31,10 @@ import type { AlpineLike } from "./alpine-types.js";
 import { getLayerClient, setLayerClient } from "./layer-client.js";
 
 export * from "@stainless-code/layers";
-/** Core headless factory — not the wired {@link createLayer}. */
+/**
+ * Core headless factory — not the wired {@link createLayer}.
+ * @reexport
+ */
 export { createLayer as createLayerHandle } from "@stainless-code/layers";
 export { getLayerClient, setLayerClient } from "./layer-client.js";
 export type { AlpineLike } from "./alpine-types.js";

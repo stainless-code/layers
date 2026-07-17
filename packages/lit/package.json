@@ -63,8 +63,8 @@
   "devDependencies": {
     "@lit/context": "1.1.6",
     "jsdom": "29.1.1",
-    "lit": "3.3.1",
-    "vitest": "4.1.9"
+    "lit": "3.3.3",
+    "vitest": "4.1.10"
   },
   "peerDependencies": {
     "@lit/context": ">=1.1.0",

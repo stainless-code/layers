@@ -4,8 +4,8 @@ import type {
   DefaultLayerError,
   DismissOptions,
   LayerCallContext,
+  LayerState,
 } from "./types";
-import type { LayerState } from "./types";
 
 /**
  * Creates the framework-neutral imperative context passed to a layer component.
