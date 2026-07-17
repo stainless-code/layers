@@ -7,7 +7,7 @@ search:
 
 `StackOutlet` maps a stack snapshot to registered components — the convenience path. When you need custom portals, per-layer switches, or non-component renderers, use the headless primitives.
 
-## useStackHandles
+## Map stacks with useStackHandles
 
 Returns `{ states, getCall }` — everything `StackOutlet` uses internally:
 
@@ -205,7 +205,7 @@ Store entry subscribes via `$stack` + standalone `callFor(client, stackId, state
 
 `StackOutlet` deliberately has **no** `render` prop — headless is the escape hatch.
 
-## StackSubscribe
+## Subscribe with StackSubscribe
 
 Isolate a selector in JSX/template without pulling the full snapshot into your component:
 
@@ -352,9 +352,10 @@ For fully-typed selector output in Vue, prefer `useStack({ stack, select })` in 
 | Adapter        | Headless path                                | Built-in outlet           |
 | -------------- | -------------------------------------------- | ------------------------- |
 | React / Preact | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
-| Solid / Vue    | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
-| Lit            | `useStackHandles`, `<stack-subscribe>`       | `<stack-outlet>`          |
+| Solid          | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
 | Angular        | `useStackHandles`, `renderStack(vcr)`        | `renderStack`             |
+| Vue            | `useStackHandles`, `StackSubscribe`          | `StackOutlet`             |
+| Lit            | `useStackHandles`, `<stack-subscribe>`       | `<stack-outlet>`          |
 | Svelte (runes) | `useStack().current` + `callFor`             | — (render in your markup) |
 | Svelte (store) | `$stack` + `callFor(client, stackId, state)` | —                         |
 

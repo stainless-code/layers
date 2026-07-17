@@ -7,7 +7,7 @@ search:
 
 A drawer that opens a sub-dialog needs its own stack — but tied to the parent layer's lifetime. Layer groups create a child stack on the same `LayerClient`; when the parent dismisses, children drain automatically.
 
-## Core primitive
+## Create a child stack
 
 `createLayerGroup(client, call, options?)` registers a child stack derived from the parent's `stackId` and instance `layerId`. Adapters wrap it as `useLayerGroup(call)` (Lit: `useLayerGroup(host, call, …)`):
 
@@ -20,9 +20,9 @@ group.dismissAll();
 group.dispose(); // usually automatic via adapter lifecycle
 ```
 
-## Inline child outlet
+## Render the child stack inline
 
-Render the child stack inside the parent layer's DOM. React, Preact, Solid, and Vue ship an `Outlet` component; Lit returns `outlet(): TemplateResult`; Angular uses `renderInto`; Svelte exposes the child `stack` directly:
+Render the child stack inside the parent layer's DOM. React, Preact, Solid, Angular, Vue, Lit, and Svelte each expose a child render path — `Outlet`, `renderInto`, `outlet()`, or the child `stack` (tabs below):
 
 <Tabs>
 <Tab title="React" icon="/icons/react.svg">
@@ -210,7 +210,7 @@ Store entry renders via `$childStack` + standalone `callFor` — same `group.ope
 </Tab>
 </Tabs>
 
-## What you get
+## Inspect the group handle
 
 | Member | Role |
 | ------ | ---- |

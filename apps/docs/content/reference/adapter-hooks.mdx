@@ -15,7 +15,7 @@ search:
 
 | Role | Hooks | Default return |
 | ---- | ----- | -------------- |
-| **Wire** — `createLayer` + reactive fields | `useLayer` (React / Preact / Solid / Vue / Lit), `injectLayer` (Angular), `createLayer` (Svelte) | `WiredLayerHandle` — ops + `state` / `queued` / `top` |
+| **Wire** — `createLayer` + reactive fields | `useLayer` (React / Preact / Solid / Vue / Lit); `injectLayer` (Angular); `createLayer` (Svelte) | `WiredLayerHandle` — ops + `state` / `queued` / `top` |
 | **Observe mounted** — whole stack or per-key filter | `useStack`, `useLayerState` | `LayerState[]` (or selected `T`) |
 | **Observe queued** — serial-waiting layers | `useQueuedStack`, `useLayerQueuedState` | `LayerState[]` (or selected `T`) |
 
@@ -75,14 +75,14 @@ Svelte runes/store use the same option shapes; runes entries return `SvelteStack
 
 ## Hook matrix
 
-| Hook | React / Preact / Solid / Vue | Lit | Angular | Svelte (runes) | Svelte (store) |
-| ---- | ---------------------------- | --- | ------- | -------------- | -------------- |
-| Wired handle | `useLayer(options, client?)` | `useLayer(host, options, client?)` | `injectLayer` (`useLayer` alias) | `createLayer` | `createLayer` |
-| Mounted stack | `useStack(opts?, client?)` | `useStack(host, opts?, client?)` | `useStack` / `injectStack` | `useStack` | `useStack` |
-| Queued stack | `useQueuedStack(opts?, client?)` | `useQueuedStack(host, opts?, client?)` | `useQueuedStack` / `injectQueuedStack` | `createQueuedStack` | `createQueuedStack` |
-| Mounted per-key | `useLayerState(opts, client?)` | `useLayerState(host, opts, client?)` | `useLayerState` / `injectLayerState` | `createLayerState` | `createLayerState` |
-| Queued per-key | `useLayerQueuedState(opts, client?)` | `useLayerQueuedState(host, opts, client?)` | `useLayerQueuedState` / `injectLayerQueuedState` | `createLayerQueuedState` | `createLayerQueuedState` |
-| Client | `useLayerClient()` | `useLayerClient(host)` → `.current` | `useLayerClient()` | `useLayerClient()` | `useLayerClient()` |
+| Hook | React / Preact / Solid | Angular | Vue | Lit | Svelte (runes) | Svelte (store) |
+| ---- | ---------------------- | ------- | --- | --- | -------------- | -------------- |
+| Wired handle | `useLayer(options, client?)` | `injectLayer` (`useLayer` alias) | `useLayer(options, client?)` | `useLayer(host, options, client?)` | `createLayer` | `createLayer` |
+| Mounted stack | `useStack(opts?, client?)` | `useStack` / `injectStack` | `useStack(opts?, client?)` | `useStack(host, opts?, client?)` | `useStack` | `useStack` |
+| Queued stack | `useQueuedStack(opts?, client?)` | `useQueuedStack` / `injectQueuedStack` | `useQueuedStack(opts?, client?)` | `useQueuedStack(host, opts?, client?)` | `createQueuedStack` | `createQueuedStack` |
+| Mounted per-key | `useLayerState(opts, client?)` | `useLayerState` / `injectLayerState` | `useLayerState(opts, client?)` | `useLayerState(host, opts, client?)` | `createLayerState` | `createLayerState` |
+| Queued per-key | `useLayerQueuedState(opts, client?)` | `useLayerQueuedState` / `injectLayerQueuedState` | `useLayerQueuedState(opts, client?)` | `useLayerQueuedState(host, opts, client?)` | `createLayerQueuedState` | `createLayerQueuedState` |
+| Client | `useLayerClient()` | `useLayerClient()` | `useLayerClient()` | `useLayerClient(host)` → `.current` | `useLayerClient()` | `useLayerClient()` |
 
 ### Return shapes
 
@@ -98,13 +98,13 @@ Wired adapters extend `LayerHandle` with reactive `state`, `queued`, and `top` (
 
 ### Ergonomic wrappers
 
-| Wrapper | React / Preact / Solid / Vue | Lit | Angular | Svelte |
-| ------- | ---------------------------- | --- | ------- | ------ |
-| Stack render | `StackOutlet` | `<stack-outlet>` (`defineStackElements()`) | `renderStack(vcr)` | `{#each …current}` + `callFor` |
-| Headless render | `useStackHandles` | `useStackHandles(host, …)` | `useStackHandles` | — |
-| Nested stack | `useLayerGroup` → `Outlet` | `useLayerGroup(host, call)` → `outlet()` | `useLayerGroup` → `renderInto(vcr)` | `useLayerGroup` → `stack` |
-| Async actions | `useMutationFlow` | `useMutationFlow(host, call)` | same | same |
-| App factory | `createStackHook` | `createStackHook` → CEs | `createStackHook` → `renderInto` | not shipped |
+| Wrapper | React / Preact / Solid | Angular | Vue | Lit | Svelte |
+| ------- | ---------------------- | ------- | --- | --- | ------ |
+| Stack render | `StackOutlet` | `renderStack(vcr)` | `StackOutlet` | `<stack-outlet>` (`defineStackElements()`) | `{#each …current}` + `callFor` |
+| Headless render | `useStackHandles` | `useStackHandles` | `useStackHandles` | `useStackHandles(host, …)` | — |
+| Nested stack | `useLayerGroup` → `Outlet` | `useLayerGroup` → `renderInto(vcr)` | `useLayerGroup` → `Outlet` | `useLayerGroup(host, call)` → `outlet()` | `useLayerGroup` → `stack` |
+| Async actions | `useMutationFlow` | same | same | `useMutationFlow(host, call)` | same |
+| App factory | `createStackHook` | `createStackHook` → `renderInto` | `createStackHook` | `createStackHook` → CEs | not shipped |
 
 ## Stack rendering divergences
 
