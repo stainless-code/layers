@@ -713,21 +713,13 @@ export class StackHandlesController implements ReactiveController {
   ) {
     this.#stackId = stack;
     this.#rootProps = rootProps;
-    this.#states = new StackController(
-      host,
-      { stack, client },
-      undefined,
-      false,
-    );
+    this.#states = new StackController(host, { stack }, client, false, !client);
     if (client) {
       this.#initStack(client);
     } else if (isElementHost(host)) {
-      new ContextConsumer(host, {
-        context: layerClientContext,
-        subscribe: true,
-        callback: (c: LayerClient) => {
-          this.#initStack(c);
-        },
+      resolveClientLazy(host, undefined, (c) => {
+        this.#states.bindClient(c);
+        this.#initStack(c);
       });
     } else {
       throw new Error(
@@ -1353,18 +1345,17 @@ export class AppStackController implements ReactiveController {
     stackId: string,
   ) {
     this.#stackId = stackId;
-    // One shared resolve for open/dismissAll and `#states` (same pattern as
-    // LayerController / LayerGroupController).
+    // Pass an explicit client into `#states` so it does not open a second
+    // context consumer that can diverge from `open` / `dismissAll`.
     this.#states = new StackController(
       host,
       { stack: stackId },
-      undefined,
+      client,
       false,
       !client,
     );
     if (client) {
       this.#client = client;
-      this.#states.bindClient(client);
     } else if (isElementHost(host)) {
       resolveClientLazy(host, undefined, (c) => {
         this.#client = c;
