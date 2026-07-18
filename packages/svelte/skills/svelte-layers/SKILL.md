@@ -210,13 +210,13 @@ export const notice = layerOptions<void>({
 ```svelte
 <!-- NoticeButton.svelte -->
 <script lang="ts">
-  import { useLayerClient } from "@stainless-code/svelte-layers";
+  import { createLayer } from "@stainless-code/svelte-layers";
   import { notice } from "./layers/notice";
 
-  const client = useLayerClient();
+  const c = createLayer(notice);
 </script>
 
-<button type="button" onclick={() => void client.open(notice)}>
+<button type="button" onclick={() => void c.open()}>
   Show notice
 </button>
 ```

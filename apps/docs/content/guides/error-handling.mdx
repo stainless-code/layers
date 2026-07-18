@@ -5,7 +5,7 @@ search:
   tags: ["guide"]
 ---
 
-`client.open()` returns `Promise<R>` — the direct-`await` contract. Resolution types flow through `DataTag`; **rejections do not** (a TypeScript limitation). Narrow errors in `catch` with runtime guards.
+`open()` returns `Promise<R>` — the direct-`await` contract. Resolution types flow through `DataTag`; **rejections do not** (a TypeScript limitation). Narrow errors in `catch` with runtime guards.
 
 ## What rejects
 
@@ -17,8 +17,12 @@ The promise rejects when:
 Dismissal during `pending` resolves with the dismissal response (the in-flight `loadFn` is aborted via `AbortController`); it does not reject.
 
 ```ts lineNumbers
+import { createLayer } from "@stainless-code/layers";
+
+const c = createLayer(layer, client);
+
 try {
-  const data = await client.open({ ...layer, payload });
+  const data = await c.open(payload);
 } catch (err) { // [!code highlight]
   // err is unknown — narrow explicitly
 }
@@ -27,10 +31,12 @@ try {
 ## Narrow validation errors
 
 ```ts lineNumbers
-import { isPayloadValidationError } from "@stainless-code/layers";
+import { createLayer, isPayloadValidationError } from "@stainless-code/layers";
+
+const c = createLayer(prompt, client);
 
 try {
-  await client.open({ ...prompt, payload: untrusted });
+  await c.open(untrusted);
 } catch (err) {
   if (isPayloadValidationError(err)) { // [!code highlight]
     showFieldErrors(err.issues);
@@ -59,6 +65,8 @@ declare module "@stainless-code/layers" {
 When a layer defines `loadFn`, a throw rejects the caller's `await`:
 
 ```ts lineNumbers
+import { createLayer } from "@stainless-code/layers";
+
 const detail = layerOptions<{ id: string }, Detail, ApiError>({
   stack: "modal",
   key: ["detail"],
@@ -70,8 +78,10 @@ const detail = layerOptions<{ id: string }, Detail, ApiError>({
   },
 });
 
+const c = createLayer(detail, client);
+
 try {
-  await client.open({ ...detail, payload: { id: "42" } });
+  await c.open({ id: "42" });
 } catch (err) {
   if (err instanceof ApiError) { // [!code highlight]
     /* … */
@@ -82,7 +92,7 @@ try {
 The loaded `data` is available on the layer state when `loadFn` succeeds; on error the layer enters `phase: "error"`.
 
 :::note
-A `Result`-returning `open` was deliberately rejected to preserve direct `await`. Narrow in `catch` instead.
+A `Result`-returning `open` was deliberately rejected to preserve direct `await`. Narrow in `catch` instead. Bag-form `client.open({ …opts, payload })` rejects the same way.
 :::
 
 See [Payload validation](/guides/payload-validation) for `PayloadValidationError` and [Lifecycle](/concepts/lifecycle) for `phase: "error"`.

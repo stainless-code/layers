@@ -12,6 +12,8 @@ Toasts, snackbars, and progress indicators share one surface: a single layer ins
 Pass `upsert: true` when opening (or set it on `layerOptions`) so a second open with the same key merges into the existing layer instead of stacking a duplicate:
 
 ```ts lineNumbers
+import { createLayer } from "@stainless-code/layers";
+
 const toast = layerOptions<{ msg: string }>({
   stack: "toast",
   key: ["toast"],
@@ -19,9 +21,12 @@ const toast = layerOptions<{ msg: string }>({
   upsert: true, // [!code highlight]
 });
 
-void client.open({ ...toast, payload: { msg: "Saved" } });
-void client.open({ ...toast, payload: { msg: "Synced" } }); // same instance, payload merged
+const c = createLayer(toast, client);
+void c.open({ msg: "Saved" });
+void c.open({ msg: "Synced" }); // same instance, payload merged
 ```
+
+Adapters: `useLayer(toast)` / `injectLayer` / `createLayer` — same `open` / `upsert` ops. Bag-form `client.open({ ...toast, payload })` still works when you need a dynamic key.
 
 ## Live updates
 
@@ -58,7 +63,7 @@ function Progress({ call, payload }: LayerComponentProps<{ pct: number }>) {
 
 | Pattern | API |
 | ------- | --- |
-| Replace content on repeat open | `upsert: true` on `open` |
+| Replace content on repeat open | `upsert: true` on `open` / `layerOptions` |
 | Patch while mounted | `call.update(patch)` or `stack.update(layer, patch)` |
 | Dismiss the singleton | `call.dismiss()` or `stack.dismiss(layer)` |
 

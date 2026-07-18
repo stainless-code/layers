@@ -5,7 +5,7 @@ search:
   tags: ["concept"]
 ---
 
-A confirm, toast, or drawer rarely stays where it started — prop-drilled `isOpen` and threaded callbacks don't scale. Layers moves that into a **headless client**: declare once, mount an outlet, `await client.open(...)` (or a wired handle) from any call site. Zero-dep core; thin adapters bind each framework's reactivity.
+A confirm, toast, or drawer rarely stays where it started — prop-drilled `isOpen` and threaded callbacks don't scale. Layers moves that into a **headless client**: declare once, mount an outlet, `await confirm.open(...)` from any call site (wired handle or bag-form). Zero-dep core; thin adapters bind each framework's reactivity.
 
 ## Engine model
 
@@ -16,7 +16,7 @@ LayerClient ──┬── LayerStack (named, ordered) ── Layer[]
 
 1. **Declare** — `layerOptions<P, R>({ stack, key, ... })` brands the <Tooltip tip="The logical identity of a layer; find/upsert/gcTime operate on its signature.">key</Tooltip> with a `DataTag` so `open()` infers the response type.
 2. **Observe** — subscribe to a stack snapshot; adapters bind `LayerStack.subscribe` / `getSnapshot` to UI reactivity.
-3. **Call** — `await client.open({ ...options, payload })` or a wired handle's `open(payload)`; resolution happens when something calls `call.end(response)` or `call.dismiss(response)`.
+3. **Call** — a wired handle's `open(payload)` (or bag-form `client.open({ ...options, payload })`); resolution happens when something calls `call.end(response)` or `call.dismiss(response)`.
 
 ## Package boundary
 

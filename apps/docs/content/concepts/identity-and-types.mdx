@@ -5,7 +5,7 @@ search:
   tags: ["concept"]
 ---
 
-Two opens with the same `key` share **logical identity**; each still gets a unique instance id (**physical identity**). `DataTag` branding carries the response type through `await client.open(...)`, so no explicit generic is needed.
+Two opens with the same `key` share **logical identity**; each still gets a unique instance id (**physical identity**). `DataTag` branding carries the response type through `await confirm.open(...)` (wired handle or bag-form), so no explicit generic is needed.
 
 ## Key vs instance id
 
@@ -20,7 +20,7 @@ Two opens with the same `key` share **logical identity**; each still gets a uniq
 
 ## Wired handle path
 
-Besides `client.open({ …layerOptions, payload })`, bind a declaration with `createLayer(options, client)` (headless) or `useLayer(options)` (adapter). Payload-only `open`/`upsert` infer `R` from the same `DataTag` on `options.key`:
+Bind a declaration with `useLayer(options)` (adapter) or `createLayer(options, client)` (headless). Payload-only `open`/`upsert` infer `R` from the same `DataTag` on `options.key`:
 
 ```tsx
 import { useLayer } from "@stainless-code/react-layers";
@@ -32,12 +32,14 @@ const ok = await confirmLayer.open({ title: "Remove?" });
 
 Pass `{ id: state.id }` on `dismiss`/`update`/`cancelQueued` when targeting a specific instance — `current` on the handle is the caller's last `open`, not an implicit default for stack ops.
 
+Bag-form `client.open({ …layerOptions, payload })` stays valid — see [Migration](/reference/migration).
+
 ## DataTag — typed `await open`
 
-`layerOptions` brands its `key` with a `DataTag`, so `LayerClient.open` infers the response type with no explicit generic:
+`layerOptions` brands its `key` with a `DataTag`, so handle `open` and `LayerClient.open` infer the response type with no explicit generic:
 
 ```ts
-import { LayerClient, layerOptions } from "@stainless-code/layers";
+import { LayerClient, createLayer, layerOptions } from "@stainless-code/layers";
 
 type ConfirmPayload = { title: string };
 type ConfirmResponse = boolean;
@@ -49,7 +51,8 @@ const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
   key: ["confirm", "remove"],
 });
 
-const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+const c = createLayer(confirm, client);
+const ok = await c.open({ title: "Remove?" });
 //    ^? boolean
 ```
 
@@ -72,12 +75,15 @@ There is **no** global key→response registry. Colocated `layerOptions` / `laye
 The response type `R` defaults to `void` (fire-and-forget), and `payload` is omittable when the layer needs no input:
 
 ```ts
+import { createLayer } from "@stainless-code/layers";
+
 const about = layerOptions({
   stack: "modal",
   key: ["about"],
 });
 
-void client.open(about); // fire-and-forget
+const c = createLayer(about, client);
+void c.open(); // fire-and-forget
 ```
 
 ## Register and DefaultLayerError
