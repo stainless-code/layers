@@ -35,7 +35,7 @@ Two views: this matrix contrasts **one exemplar per category**; the [full spectr
 | Payload validation    |    ✅ Std Schema     |          ❌          |         ❌         |         ❌         |          ❌           |          ❌          |
 | Nested groups         |          ✅          |          ❌          |         ❌         |         ❌         |          ❌           |          ❌          |
 | Upsert / live-update  |          ✅          |          ✅          |         🟡         |         🟡         |          ✅           |          🟡          |
-| Transition axis       |  ✅ 3-state+settle   |    🟡 exit delay     |  🟡 delayVisible   |  🟡 close/unmount  |          🟡           |          ❌          |
+| Transition axis       |  ✅ 3-state+settle   |    🟡 exit delay     |  🟡 delayVisible   |  🟡 close/unmount  |          🟡           |       🟡 delay       |
 | SSR subscribe-safe    |          ✅          |    ✅ EMPTY_STACK    |         🟡         |         🟡         |          🟡           |          ❌          |
 
 Legend: ✅ full · 🟡 partial · ❌ none · (R) React-only. Cells are engine axes only — see the next section for what Layers deliberately leaves to your UI stack.
@@ -127,25 +127,25 @@ Legend: ✅ full · 🟡 partial · ❌ none. Cells are engine axes only — foc
 ## Adoption (market snapshot, not capability)
 
 :::note
-Stars and npm downloads measure adoption, not engine depth. Layers is v0.1.0 and pre-launch — adoption lag is not an engine verdict.
+Stars and npm downloads measure adoption, not engine depth. Layers is v0.2.2 and early — adoption lag is not an engine verdict.
 
-Last verified: 2026-07-15
+Last verified: 2026-07-18
 :::
 
 | Library               | Category              | Stars                | npm dl/mo | Note                                           |
 | --------------------- | --------------------- | -------------------- | --------- | ---------------------------------------------- |
 | nice-modal-react      | Registry / reducer    | ~2.3k                | ~1.1M     | Incumbent registry (React)                     |
-| react-call            | Orchestration engine  | ~1.3k                | ~160k     | Closest React DX peer                          |
-| overlay-kit           | Registry / reducer    | ~0.7k                | ~190k     | Toss-backed reducer (React)                    |
-| react-modal-hook      | Registry / reducer    | ~0.25k               | ~292k     | Hook + portal host (React, migration pool)     |
-| react-modal-promise   | Registry / reducer    | ~0.07k               | ~187k     | Promise primitive (React, migration pool)      |
-| pushmodal             | Registry / reducer    | ~0.2k                | ~10k      | shadcn LIFO stack (React)                      |
-| @mantine/modals       | Batteries-included UI | (in 31.4k★ monorepo) | —         | Batteries-included (React)                     |
-| vue-final-modal       | Batteries-included UI | ~1k                  | ~275k     | Vue batteries-included (stalled since 2024-09) |
-| @corvu/dialog         | DOM primitive         | ~0.7k                | ~38k      | Solid DOM primitive (complementary)            |
-| jenesius-vue-modal    | Orchestration engine  | ~160                 | ~19k      | Vue orchestration engine                       |
+| react-call            | Orchestration engine  | ~1.3k                | ~174k     | Closest React DX peer                          |
+| overlay-kit           | Registry / reducer    | ~0.7k                | ~198k     | Toss-backed reducer (React)                    |
+| react-modal-hook      | Registry / reducer    | ~0.25k               | ~276k     | Hook + portal host (React, migration pool)     |
+| react-modal-promise   | Registry / reducer    | ~0.07k               | ~198k     | Promise primitive (React, migration pool)      |
+| pushmodal             | Registry / reducer    | ~0.2k                | ~23k      | shadcn LIFO stack (React)                      |
+| @mantine/modals       | Batteries-included UI | (in 31.5k★ monorepo) | —         | Batteries-included (React)                     |
+| vue-final-modal       | Batteries-included UI | ~1k                  | ~285k     | Vue batteries-included (stalled since 2024-09) |
+| @corvu/dialog         | DOM primitive         | ~0.7k                | ~45k      | Solid DOM primitive (complementary)            |
+| jenesius-vue-modal    | Orchestration engine  | ~160                 | ~23k      | Vue orchestration engine                       |
 | svelte-promise-modals | Batteries-included UI | ~34                  | —         | Svelte batteries-included                      |
-| Layers                | Orchestration engine  | ~1                   | —         | v0.1.0, pre-launch                             |
+| Layers                | Orchestration engine  | ~1                   | ~0.5k     | v0.2.2, experimental                           |
 
 Live demos, source, and the changelog are the proof — not a star count.
 
@@ -153,11 +153,11 @@ Live demos, source, and the changelog are the proof — not a star count.
 
 Capability for these is in the [table above](#across-the-whole-landscape); this section carries the human context the cells can't — who's still shipping, who stalled, who's gone.
 
-- **Vue** — `jenesius-vue-modal` active (Jun 2026); `kolirt/vue-modal` closest Vue analog (grouped stacks + async guards + nested groups, Reka UI integration); `vue-final-modal` stalled since 2024-09.
+- **Vue** — `jenesius-vue-modal` git-active (Jun 2026; npm last 2024-07); `kolirt/vue-modal` closest Vue analog (grouped stacks + async guards + nested groups, Reka UI integration); `vue-final-modal` stalled since 2024-09.
 - **Svelte** — `svelte-promise-modals` active (Jul 2026); `@svelte-put/async-stack` engine peer (pause/resume + progress recipe); `svelte-modals` dormant (Mar 2025).
-- **Solid** — `@corvu/dialog` active DOM primitive (pair with Layers, not compete); `solid-modal-manager` declarative registry.
-- **Angular** — `ngx-call` react-call port (low adoption); `@ngneat/dialog` source gone, still ~5.7k dl/wk — a vacuum; `@angular-libs/dialog` native `<dialog>` + plugin lifecycle (created 2026-05).
-- **Multi-framework** — `@gwn-sheet-stack` tier-1 architectural peer (headless core + FSM + router adapters, 2fw, pre-1.0); `overlastic` 4fw partial engine (DOM-mount); `dialog-fn` 3fw cleanest core+adapter split; `ui-call` 5fw, abandoned Feb 2026.
+- **Solid** — `@corvu/dialog` DOM primitive (pair with Layers, not compete; last npm 2025-01); `solid-modal-manager` declarative registry.
+- **Angular** — `ngx-call` react-call port (low adoption); `@ngneat/dialog` source gone, still ~6.9k dl/wk — a vacuum; `@angular-libs/dialog` native `<dialog>` + plugin lifecycle (created 2026-05).
+- **Multi-framework** — `@gwn-sheet-stack` tier-1 architectural peer (headless core + FSM + router adapters, 2fw, pre-1.0); `overlastic` 4fw partial engine (DOM-mount; also publishes `@overlastic/vue2`); `dialog-fn` 3fw cleanest core+adapter split; `ui-call` 5fw, abandoned Feb 2026.
 
 ## When not to choose Layers
 
