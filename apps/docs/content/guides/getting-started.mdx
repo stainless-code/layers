@@ -79,24 +79,7 @@ function App() {
 
 ## Open and await
 
-Call `client.open` from anywhere inside the provider — the response type is inferred:
-
-```tsx
-import { useLayerClient } from "@stainless-code/react-layers";
-
-function useRemove() {
-  const client = useLayerClient();
-  return async () => {
-    const ok = await client.open({ ...confirm, payload: { title: "Remove?" } }); // [!code highlight]
-    //    ^? boolean
-    if (ok) {
-      /* … */
-    }
-  };
-}
-```
-
-Or wire the declaration with `useLayer(options)` — same inference, payload-only `open`, plus reactive `state`/`queued`/`top` for UI:
+Wire the declaration with `useLayer(options)` — payload-only `open`, inferred `R`, plus reactive `state`/`queued`/`top`:
 
 ```tsx
 import { useLayer } from "@stainless-code/react-layers";
@@ -105,7 +88,7 @@ function RemoveButton() {
   const confirmLayer = useLayer(confirm);
 
   async function handleRemove() {
-    const ok = await confirmLayer.open({ title: "Remove?" });
+    const ok = await confirmLayer.open({ title: "Remove?" }); // [!code highlight]
     //    ^? boolean
     if (ok) {
       /* … */
@@ -120,6 +103,6 @@ function RemoveButton() {
 }
 ```
 
-See [Glossary](/concepts/glossary) for drive vs observe.
+Bag-form stays valid when you already hold a client: `await client.open({ ...confirm, payload })`. See [Glossary](/concepts/glossary) for drive vs observe and [Migration](/reference/migration) for the escape hatch.
 
 > Optional payload and response — see [Awaiting results](/guides/awaiting-results#fire-and-forget).

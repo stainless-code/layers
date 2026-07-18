@@ -5,13 +5,15 @@ search:
   tags: ["guide"]
 ---
 
-A bad payload at `open` should reject before a component ever mounts. Pass `validate` on `layerOptions` or at `open` to parse untrusted input **synchronously**; failure rejects `open` with `PayloadValidationError` and mounts nothing.
+A bad payload at `open` should reject before a component ever mounts. Pass `validate` on `layerOptions` or at bag-form `open` to parse untrusted input **synchronously**; failure rejects `open` with `PayloadValidationError` and mounts nothing.
 
-## Sync validator function
+## Wired handle (`ValidatedLayerHandle`)
 
-A sync `(input) => output` function — throw on invalid:
+When `validate` is on `layerOptions`, `createLayer` / `useLayer` return a `ValidatedLayerHandle` — `open`/`upsert` take schema **input**; `current` and `update` use parsed **output**:
 
-```ts lineNumbers
+```tsx lineNumbers
+import { useLayer } from "@stainless-code/react-layers";
+
 const prompt = layerOptions<{ label: string }, string>({
   stack: "prompt",
   key: ["prompt", "rename"],
@@ -28,10 +30,19 @@ const prompt = layerOptions<{ label: string }, string>({
   },
 });
 
-// open's payload arg is the validator INPUT; the layer stores OUTPUT
-await client.open({ ...prompt, payload: { label: "  hello  " } });
-// layer sees { label: "hello" }
+function RenameButton() {
+  const c = useLayer(prompt);
+  // open's arg is validator INPUT; the layer stores OUTPUT
+  return (
+    <button type="button" onClick={() => void c.open({ label: "  hello  " })}>
+      Rename
+    </button>
+  );
+}
+// component payload: { label: "hello" }
 ```
+
+Headless hosts use `createLayer(prompt, client)` with the same input/output split.
 
 ## Standard Schema
 
@@ -39,14 +50,19 @@ Any library implementing [Standard Schema v1](https://standardschema.dev) works 
 
 ```ts
 import * as z from "zod";
+import { createLayer } from "@stainless-code/layers";
 
 const schema = z.object({ email: z.string().email() });
 
-await client.open({
-  ...invite,
-  payload: { email: "user@example.com" },
-  validate: schema,
+const invite = layerOptions<{ email: string }, void>({
+  stack: "modal",
+  key: ["invite"],
+  component: Invite,
+  validate: schema, // [!code highlight]
 });
+
+const c = createLayer(invite, client);
+await c.open({ email: "user@example.com" });
 ```
 
 Core ships the `StandardSchemaV1` type interface — no schema-library dependency.
@@ -56,10 +72,12 @@ Core ships the `StandardSchemaV1` type interface — no schema-library dependenc
 When validation fails, `open` rejects with `PayloadValidationError`:
 
 ```ts
-import { isPayloadValidationError } from "@stainless-code/layers";
+import { createLayer, isPayloadValidationError } from "@stainless-code/layers";
+
+const c = createLayer(prompt, client);
 
 try {
-  await client.open({ ...prompt, payload: untrusted });
+  await c.open(untrusted);
 } catch (err) {
   if (isPayloadValidationError(err)) {
     for (const issue of err.issues) {
@@ -69,36 +87,17 @@ try {
 }
 ```
 
-## Wired handle (`ValidatedLayerHandle`)
+## Bag-form (escape hatch)
 
-When `validate` is on `layerOptions`, `createLayer` / `useLayer` return a `ValidatedLayerHandle` — `open`/`upsert` take schema **input**; `current` and `update` use parsed **output**:
+Pass `validate` at the call site when the options bag does not carry it:
 
-```tsx lineNumbers
-import { useLayer } from "@stainless-code/react-layers";
-
-const prompt = layerOptions<string, string>({
-  stack: "prompt",
-  key: ["prompt", "rename"],
-  component: Prompt,
-  validate: (input: unknown) => {
-    if (typeof input !== "string" || !input.trim()) throw new Error("Required");
-    return input.trim();
-  },
+```ts
+await client.open({
+  ...invite,
+  payload: { email: "user@example.com" },
+  validate: schema,
 });
-
-function RenameButton() {
-  const promptLayer = useLayer(prompt);
-
-  return (
-    <button onClick={() => void promptLayer.open("  hello  ")}>
-      Rename
-    </button>
-  );
-}
-// component payload: "hello" (output)
 ```
-
-Headless hosts use `createLayer(prompt, client)` with the same input/output split.
 
 ## Rules
 

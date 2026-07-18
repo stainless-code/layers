@@ -23,7 +23,6 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 
 - **MCP server + Ask AI** — require `deployment.output: "server"` + a deploy adapter + API key + rate limits on `/api/ask`. `llms.txt` / `llms-full.txt` / per-page `.md` mirrors / `agent-readability.json` already cover the static agent surface.
 - **`<Component>`/`examples/` consolidation** — collapse the React (and optionally Vue/Svelte) live-demo slice onto Blume's native `<Component path=…>` (live preview + source tabs from one file); keep Solid/Preact/Angular as `?raw` code tabs. Large restructure; defer until the recipe matrix stabilizes.
-- **Drive-first guide pedagogy (optional)** — some guides still lead with bag-form `client.open` then mention wired handles (`awaiting-results`, `error-handling`, `payload-validation`, `singletons`, concepts). Adapter headlines already teach Drive; flip guides only if we want site-wide Drive-first pedagogy — bag-form stays a valid escape hatch ([migration](../apps/docs/content/reference/migration.mdx)).
 
 ## Out of scope
 

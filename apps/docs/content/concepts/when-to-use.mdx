@@ -7,7 +7,7 @@ search:
 
 Overlay UI is cross-cutting, but component models push its state local. You end up prop-drilling `isOpen`, lifting state, threading `onConfirm`/`onCancel`, duplicating modal boilerplate, and hand-rolling z-order and one-at-a-time logic. Layers moves overlay state into a headless `LayerClient` you invoke imperatively: declare a layer once, open it from anywhere.
 
-Awaiting a result is **optional** — `void client.open({ ...toast, payload })` is a complete fire-and-forget call; the typed response is a bonus axis, not a requirement.
+Awaiting a result is **optional** — `void toast.open(payload)` on a wired handle is a complete fire-and-forget call; the typed response is a bonus axis, not a requirement.
 
 | Use case                                                                                                                                      | What it involves                                                                                                                                                     | Fit                               |
 | --------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- |

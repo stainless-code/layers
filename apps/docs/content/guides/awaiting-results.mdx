@@ -1,32 +1,35 @@
 ---
 title: Awaiting results
-description: Await typed responses from client.open, infer types via DataTag, or fire-and-forget with void.
+description: Await typed responses from a wired handle (or bag-form open), infer types via DataTag, or fire-and-forget with void.
 search:
   tags: ["guide"]
 ---
 
-Need a boolean back from a confirm? `await client.open(...)` returns `Promise<R>`, and the response type flows from your layer definition with no explicit generic. Awaiting is optional — fire-and-forget is equally first-class.
+Need a boolean back from a confirm? Wire the declaration, then `await confirm.open(...)` — `Promise<R>` with no call-site generic. Awaiting is optional; fire-and-forget is equally first-class.
 
 ## Typed await
 
-Brand the contract once with `layerOptions<P, R>()`. The `key` carries a `DataTag`, so `await client.open({ ...confirm, payload })` infers `R`:
+Brand the contract once with `layerOptions<P, R>()`. The `key` carries a `DataTag`, so payload-only `open` infers `R`:
 
 ```tsx lineNumbers
+import { createLayer } from "@stainless-code/layers";
+
 const confirm = layerOptions<ConfirmPayload, boolean>({
   stack: "confirm",
   key: ["confirm", "remove"],
   component: ConfirmDialog,
 });
 
-const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+const c = createLayer(confirm, client);
+const ok = await c.open({ title: "Remove?" });
 //    ^? boolean
 ```
 
-You can also brand a key alone with `layerKey<R>()(key)` when options are inlined at the call site. See [Identity and types](/concepts/identity-and-types) for how `DataTag` inference works.
+Adapters bind the same handle with `useLayer` / `injectLayer` / `createLayer` (see tabs below). You can also brand a key alone with `layerKey<R>()(key)` when options are inlined at the call site. See [Identity and types](/concepts/identity-and-types).
 
 ## Open from your framework
 
-`client.open({ …layerOptions, payload })` works everywhere. Adapters also ship a **wired handle** — `useLayer(options)` (Svelte: `createLayer`; Angular: `injectLayer`) — for payload-only `open` plus reactive `state`/`queued`/`top`:
+Adapters ship a **wired handle** — `useLayer(options)` (Svelte: `createLayer`; Angular: `injectLayer`) — for payload-only `open` plus reactive `state`/`queued`/`top`:
 
 <Tabs>
 <Tab title="React" icon="/icons/react.svg">
@@ -184,18 +187,32 @@ async function remove() {
 </Tab>
 </Tabs>
 
+## Bag-form (escape hatch)
+
+`client.open({ …layerOptions, payload })` stays valid — headless call sites, dynamic keys, or when you already hold a `LayerClient`:
+
+```ts lineNumbers
+const ok = await client.open({ ...confirm, payload: { title: "Remove?" } });
+//    ^? boolean
+```
+
+See [Migration](/reference/migration) — bag-form remains first-class alongside Drive handles.
+
 ## Fire-and-forget
 
 When a layer needs no return value, omit the response generic (defaults to `void`) and skip `await`:
 
 ```tsx
+import { createLayer } from "@stainless-code/layers";
+
 const about = layerOptions({
   stack: "modal",
   key: ["about"],
   component: About,
 });
 
-void client.open(about);
+const c = createLayer(about, client);
+void c.open();
 ```
 
 The layer dismisses itself — typically via `call.dismiss()` inside the component. Use `void` to signal intentional fire-and-forget when your linter flags floating promises.
