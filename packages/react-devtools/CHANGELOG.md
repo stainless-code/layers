@@ -1,5 +1,14 @@
 # @stainless-code/react-layers-devtools
 
+## 0.2.3
+
+### Patch Changes
+
+- [#23](https://github.com/stainless-code/layers/pull/23) [`259c859`](https://github.com/stainless-code/layers/commit/259c859f31be59d18005156acc3ed536327625bf) Thanks [@SutuSebastian](https://github.com/SutuSebastian)! - Polish Layers DevTools panel branding (docs-aligned tokens/logo, TanStack UI primitives) and follow the host theme; React doorbell defaults to OS `prefers-color-scheme` when the host omits `theme`. Plugin label is "Layers".
+
+- Updated dependencies [[`259c859`](https://github.com/stainless-code/layers/commit/259c859f31be59d18005156acc3ed536327625bf)]:
+  - @stainless-code/layers-devtools@0.2.3
+
 ## 0.2.2
 
 ### Patch Changes

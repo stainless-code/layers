@@ -1,6 +1,6 @@
 {
   "name": "@stainless-code/react-layers-devtools",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "React doorbell for @stainless-code/layers-devtools in TanStack Devtools.",
   "keywords": [
     "devtools",
