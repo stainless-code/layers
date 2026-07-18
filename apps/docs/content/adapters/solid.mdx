@@ -54,7 +54,7 @@ import {
   LayerClientContext,
   LayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
   type LayerComponentProps,
 } from "@stainless-code/solid-layers";
 
@@ -80,12 +80,10 @@ const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
 const client = new LayerClient();
 
 function RemoveButton() {
-  const c = useLayerClient();
+  const c = useLayer(confirm);
   return (
     <button
-      onClick={() =>
-        void c.open({ ...confirm, payload: { title: "Remove item?" } })
-      }
+      onClick={() => void c.open({ title: "Remove item?" })}
     >
       Remove
     </button>

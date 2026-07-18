@@ -64,7 +64,7 @@ import {
   layerOptions,
   provideLayerClient,
   renderStack,
-  useLayerClient,
+  injectLayer,
   type LayerComponentProps,
 } from "@stainless-code/angular-layers";
 
@@ -98,7 +98,7 @@ const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
   template: `<button (click)="remove()">Remove</button><ng-container #outlet />`,
 })
 export class AppComponent {
-  private client = useLayerClient();
+  private c = injectLayer(confirm);
   private vcr = inject(ViewContainerRef);
 
   constructor() {
@@ -106,7 +106,7 @@ export class AppComponent {
   }
 
   async remove() {
-    await this.client.open({ ...confirm, payload: { title: "Remove item?" } });
+    await this.c.open({ title: "Remove item?" });
   }
 }
 ```

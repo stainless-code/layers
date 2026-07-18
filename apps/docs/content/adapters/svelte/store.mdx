@@ -69,6 +69,7 @@ Import client/stack APIs from **one** entry only. Mixing `@stainless-code/svelte
 <script lang="ts">
   import {
     callFor,
+    createLayer,
     layerOptions,
     setLayerClient,
     useLayerClient,
@@ -86,9 +87,10 @@ Import client/stack APIs from **one** entry only. Mixing `@stainless-code/svelte
     stack: "confirm",
     key: ["confirm", "remove"],
   });
+  const c = createLayer(confirm);
 
   async function remove() {
-    await client.open({ ...confirm, payload: { title: "Remove item?" } });
+    await c.open({ title: "Remove item?" });
   }
 </script>
 

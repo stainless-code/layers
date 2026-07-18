@@ -45,9 +45,7 @@ function App() {
 ```tsx
 import {
   layerOptions,
-  StackProvider,
-  StackOutlet,
-  useLayerClient,
+  useLayer,
   type LayerComponentProps,
 } from "@stainless-code/preact-layers";
 
@@ -74,12 +72,10 @@ const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
 });
 
 function RemoveButton() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   return (
     <button
-      onClick={() =>
-        void client.open({ ...confirm, payload: { title: "Remove item?" } })
-      }
+      onClick={() => void c.open({ title: "Remove item?" })}
     >
       Remove
     </button>

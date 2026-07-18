@@ -147,13 +147,13 @@ export const notice = layerOptions<void>({
 ```vue
 <!-- FireAndForgetOpener.vue -->
 <script setup lang="ts">
-import { useLayerClient } from "@stainless-code/vue-layers";
+import { useLayer } from "@stainless-code/vue-layers";
 import { notice } from "./notice";
 
-const client = useLayerClient();
+const c = useLayer(notice);
 
 function showNotice() {
-  void client.open(notice);
+  void c.open();
 }
 </script>
 

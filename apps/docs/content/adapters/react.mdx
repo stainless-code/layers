@@ -44,9 +44,7 @@ Same pattern across adapters — declare, mount, open:
 ```tsx
 import {
   layerOptions,
-  StackOutlet,
-  StackProvider,
-  useLayerClient,
+  useLayer,
   type LayerComponentProps,
 } from "@stainless-code/react-layers";
 
@@ -73,12 +71,10 @@ const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
 });
 
 function RemoveButton() {
-  const client = useLayerClient();
+  const c = useLayer(confirm);
   return (
     <button
-      onClick={() =>
-        void client.open({ ...confirm, payload: { title: "Remove item?" } })
-      }
+      onClick={() => void c.open({ title: "Remove item?" })}
     >
       Remove
     </button>

@@ -49,7 +49,7 @@ import {
   layerOptions,
   provideLayerClient,
   StackOutlet,
-  useLayerClient,
+  useLayer,
   type LayerComponentProps,
 } from "@stainless-code/vue-layers";
 
@@ -79,10 +79,10 @@ const confirm = layerOptions<ConfirmPayload, ConfirmResponse>({
 });
 
 provideLayerClient();
-const client = useLayerClient();
+const c = useLayer(confirm);
 
 async function remove() {
-  await client.open({ ...confirm, payload: { title: "Remove item?" } });
+  await c.open({ title: "Remove item?" });
 }
 </script>
 
