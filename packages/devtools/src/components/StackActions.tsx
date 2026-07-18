@@ -1,5 +1,6 @@
 import type { DismissAllMode, LayerClient } from "@stainless-code/layers";
-import { createSignal, For } from "solid-js";
+import { Button, Select } from "@tanstack/devtools-ui";
+import { createSignal } from "solid-js";
 
 import {
   cancelQueuedHead,
@@ -14,12 +15,6 @@ const DISMISS_ALL_MODES: DismissAllMode[] = [
   "stopAtBlocked",
   "force",
 ];
-
-const buttonStyle = {
-  "font-size": "0.75rem",
-  padding: "0.25rem 0.5rem",
-  cursor: "pointer",
-} as const;
 
 export function StackActions(props: {
   stackId: string;
@@ -43,13 +38,13 @@ export function StackActions(props: {
         display: "flex",
         "flex-wrap": "wrap",
         gap: "0.5rem",
-        "align-items": "center",
+        "align-items": "flex-end",
+        "margin-top": "0.75rem",
         "margin-bottom": "0.75rem",
       }}
     >
-      <button
-        type="button"
-        style={buttonStyle}
+      <Button
+        variant="secondary"
         disabled={!props.hasActive}
         onClick={() =>
           withClient((client) => {
@@ -58,10 +53,9 @@ export function StackActions(props: {
         }
       >
         Soft dismiss
-      </button>
-      <button
-        type="button"
-        style={buttonStyle}
+      </Button>
+      <Button
+        variant="warning"
         disabled={!props.hasQueued}
         onClick={() =>
           withClient((client) => {
@@ -70,10 +64,9 @@ export function StackActions(props: {
         }
       >
         Cancel queued
-      </button>
-      <button
-        type="button"
-        style={buttonStyle}
+      </Button>
+      <Button
+        variant="danger"
         disabled={!props.hasActive}
         onClick={() =>
           withClient((client) => {
@@ -89,38 +82,26 @@ export function StackActions(props: {
         }
       >
         Force dismiss
-      </button>
-      <label
-        style={{
-          display: "inline-flex",
-          "align-items": "center",
-          gap: "0.35rem",
-          "font-size": "0.75rem",
-        }}
+      </Button>
+      <Select
+        label="dismissAll"
+        options={DISMISS_ALL_MODES.map((mode) => ({
+          value: mode,
+          label: mode,
+        }))}
+        value={dismissAllMode()}
+        onChange={(value) => setDismissAllMode(value as DismissAllMode)}
+      />
+      <Button
+        variant="primary"
+        onClick={() =>
+          withClient((client) => {
+            void dismissAllWithMode(client, props.stackId, dismissAllMode());
+          })
+        }
       >
-        dismissAll
-        <select
-          value={dismissAllMode()}
-          onChange={(e) =>
-            setDismissAllMode(e.currentTarget.value as DismissAllMode)
-          }
-        >
-          <For each={DISMISS_ALL_MODES}>
-            {(mode) => <option value={mode}>{mode}</option>}
-          </For>
-        </select>
-        <button
-          type="button"
-          style={buttonStyle}
-          onClick={() =>
-            withClient((client) => {
-              void dismissAllWithMode(client, props.stackId, dismissAllMode());
-            })
-          }
-        >
-          Run
-        </button>
-      </label>
+        Run
+      </Button>
     </div>
   );
 }

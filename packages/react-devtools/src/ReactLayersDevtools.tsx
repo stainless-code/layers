@@ -9,6 +9,8 @@ import type { DevtoolsPanelProps } from "@tanstack/devtools-utils/react";
 import type { JSX } from "react";
 import { useEffect } from "react";
 
+import { resolveDefaultTheme } from "./resolveDefaultTheme";
+
 export interface LayersDevtoolsReactInit extends Partial<DevtoolsPanelProps> {
   /** When set, skips {@link useLayerClient} for attach. */
   client?: LayerClient;
@@ -24,7 +26,7 @@ function resolvePanelProps(
   props?: LayersDevtoolsReactInit,
 ): DevtoolsPanelProps {
   return {
-    theme: props?.theme ?? "dark",
+    theme: props?.theme ?? resolveDefaultTheme(),
     devtoolsOpen: props?.devtoolsOpen ?? false,
   };
 }

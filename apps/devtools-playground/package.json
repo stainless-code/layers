@@ -1,0 +1,28 @@
+{
+  "name": "@stainless-code/layers-devtools-playground",
+  "private": true,
+  "description": "Local Vite playground for Layers + TanStack DevTools demos and UI polish.",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b && vite build",
+    "dev": "vite",
+    "preview": "vite preview",
+    "typecheck": "bun run --filter '@stainless-code/layers' --filter '@stainless-code/react-layers' --filter '@stainless-code/react-layers-devtools' build && tsc -b --noEmit"
+  },
+  "dependencies": {
+    "@stainless-code/react-layers": "workspace:*",
+    "@stainless-code/react-layers-devtools": "workspace:*",
+    "@tanstack/react-devtools": "0.10.8",
+    "react": "19.2.7",
+    "react-dom": "19.2.7"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.1.11",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@vitejs/plugin-react": "6.0.1",
+    "tailwindcss": "4.1.11",
+    "typescript": "6.0.3",
+    "vite": "8.1.5"
+  }
+}

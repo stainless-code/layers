@@ -84,7 +84,7 @@
       "project": ["src/**/*.{ts,tsx}", "tests-dom/**/*.tsx"]
     }
   },
-  "ignoreWorkspaces": ["apps/docs"],
+  "ignoreWorkspaces": ["apps/*"],
   "ignoreDependencies": ["@stainless-code/codemap"],
   "ignoreBinaries": ["lychee"],
   "ignoreIssues": {

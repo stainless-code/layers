@@ -5,7 +5,7 @@ import { layersDevtoolsNoOpPlugin, layersDevtoolsPlugin } from "./plugin";
 describe("layersDevtoolsPlugin", () => {
   it("returns a TanStack plugin descriptor", () => {
     const plugin = layersDevtoolsPlugin();
-    expect(plugin.name).toBe("TanStack Layers");
+    expect(plugin.name).toBe("Layers");
     expect(typeof plugin.render).toBe("function");
   });
 
@@ -13,13 +13,13 @@ describe("layersDevtoolsPlugin", () => {
     const plugin = layersDevtoolsPlugin({
       client: { getStackIds: () => [] } as never,
     });
-    expect(plugin.name).toBe("TanStack Layers");
+    expect(plugin.name).toBe("Layers");
     expect(typeof plugin.render).toBe("function");
   });
 
   it("exposes a no-op plugin factory", () => {
     const plugin = layersDevtoolsNoOpPlugin();
-    expect(plugin.name).toBe("TanStack Layers");
+    expect(plugin.name).toBe("Layers");
     expect(typeof plugin.render).toBe("function");
   });
 });

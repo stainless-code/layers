@@ -12,7 +12,7 @@ export default function LayersDevtools(props: DevtoolsProps) {
   return (
     <ThemeContextProvider theme={props.theme}>
       <LayersContextProvider>
-        <Shell />
+        <Shell theme={props.theme} />
       </LayersContextProvider>
     </ThemeContextProvider>
   );
