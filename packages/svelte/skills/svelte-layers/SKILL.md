@@ -11,7 +11,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/svelte-layers"
-  library_version: "0.2.2"
+  library_version: "0.2.3"
   framework: "svelte"
 sources:
   - https://stainless-code.com/layers/adapters/svelte/runes
