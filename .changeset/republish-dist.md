@@ -12,4 +12,4 @@
 "@stainless-code/angular-layers": patch
 ---
 
-Republish with built `dist/` artifacts. `0.2.0`/`0.2.1` tarballs were packed without a prior build (exports pointed at missing `./dist/*`). Release now builds and asserts dist files before pack.
+Republish with built `dist/` — prior 0.2.x tarballs omitted it (pack ran without build).

@@ -2,12 +2,10 @@
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
-// Bun cannot perform npm OIDC publishing. Pack with Bun to resolve `workspace:*`,
-// then publish the tarball with npm for OIDC authentication and provenance.
-// Build first so `dist/` exists; refuse to pack when export targets are missing.
-// Create an annotated git tag, then print `New tag: <name>@<version>` so
-// changesets/action can push the tag and open a GitHub Release.
-// Existing registry versions are skipped so partial releases can be retried.
+// Pack with Bun (resolves workspace:*) then npm-publish the tarball — Bun can't do npm OIDC/provenance.
+// Build first and assert `exports` dist paths exist (CI checkout has no dist/).
+// After publish: annotated `name@version` tag + `New tag:` line for changesets/action (push + GitHub Release).
+// Skip versions already on the registry so partial releases can retry.
 import { $ } from "bun";
 
 const PACKAGES_DIR = "packages";
@@ -36,7 +34,6 @@ async function ensureReleaseTag(tag: string): Promise<void> {
   await $`git tag -a ${tag} -m ${tag}`;
 }
 
-/** Collect `./dist/...` paths referenced by package.json `exports`. */
 function distExportPaths(exportsField: unknown): string[] {
   const out = new Set<string>();
   const visit = (value: unknown) => {
@@ -60,7 +57,7 @@ function assertDistReady(dir: string, pkg: PackageJson): void {
   );
   if (missing.length === 0) return;
   throw new Error(
-    `${pkg.name}: missing built artifacts (run build before pack):\n  - ${missing.join("\n  - ")}`,
+    `${pkg.name}: missing dist export targets after build:\n  - ${missing.join("\n  - ")}`,
   );
 }
 
