@@ -101,12 +101,17 @@ function playgroundLayer<
 
 function delay(ms: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
+      return;
+    }
+
     const timer = setTimeout(resolve, ms);
     signal?.addEventListener(
       "abort",
       () => {
         clearTimeout(timer);
-        reject(new DOMException("Aborted", "AbortError"));
+        reject(signal.reason ?? new DOMException("Aborted", "AbortError"));
       },
       { once: true },
     );
@@ -498,7 +503,11 @@ function SettingsDrawer({
     <DrawerShell transition={transition}>
       <div className="flex items-center justify-between border-b border-[var(--ink-border)] px-6 py-5">
         <DialogTitle>{payload.title}</DialogTitle>
-        <Btn variant="subtle" onClick={() => call.end(false)}>
+        <Btn
+          variant="subtle"
+          aria-label="Close drawer"
+          onClick={() => call.end(false)}
+        >
           ✕
         </Btn>
       </div>
@@ -550,6 +559,7 @@ function ToastLayer({ call, payload, transition }: LayerProps<ToastPayload>) {
       <Btn
         variant="subtle"
         className="px-2 py-1"
+        aria-label="Dismiss notification"
         onClick={() => call.dismiss()}
       >
         ✕
