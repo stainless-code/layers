@@ -11,7 +11,7 @@ export interface LayersDevtoolsPluginOptions {
 type LayersDevtoolsPluginFactory = ReturnType<typeof createReactPlugin>[0];
 
 const defaultLayersPlugins = createReactPlugin({
-  name: "TanStack Layers",
+  name: "Layers",
   Component: LayersDevtoolsPanel,
 });
 
@@ -23,7 +23,7 @@ export function layersDevtoolsPlugin(
     return defaultLayersPlugins[0]();
   }
   const withClient = createReactPlugin({
-    name: "TanStack Layers",
+    name: "Layers",
     Component: (panelProps) => (
       <LayersDevtoolsPanel {...panelProps} client={opts.client} />
     ),

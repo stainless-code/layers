@@ -1,0 +1,99 @@
+@import "tailwindcss";
+
+/* Palette from `apps/docs/theme.css`. */
+:root {
+  color-scheme: light;
+  --ink: #faf8f5;
+  --ink-raised: #f0ede8;
+  --ink-panel: #ffffff;
+  --ink-border: #e2ddd6;
+  --ink-muted: #6b6863;
+  --ink-text: #1c1b19;
+  --teal: #0d9488;
+  --teal-dim: #0f766e;
+  --teal-glow: rgb(13 148 136 / 0.16);
+  --danger: #dc2626;
+  --success: #059669;
+  --radius: 12px;
+  --radius-sm: 8px;
+  --shadow: 0 24px 80px rgb(28 27 25 / 0.12);
+  --font-display: "Inter Tight", Inter, ui-sans-serif, system-ui, sans-serif;
+  --font-body:
+    Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+    Helvetica, Arial, sans-serif;
+  --font-mono:
+    "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --ink: #18181b;
+    --ink-raised: #27272a;
+    --ink-panel: #1f1f23;
+    --ink-border: #3f3f46;
+    --ink-muted: #a1a1aa;
+    --ink-text: #f5f0e8;
+    --teal: #2dd4bf;
+    --teal-dim: #14b8a6;
+    --teal-glow: rgb(45 212 191 / 0.18);
+    --danger: #f87171;
+    --success: #34d399;
+    --shadow: 0 24px 80px rgb(0 0 0 / 0.45);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  background:
+    radial-gradient(1200px 600px at 10% -10%, var(--teal-glow), transparent),
+    radial-gradient(900px 500px at 90% 0%, var(--teal-glow), transparent),
+    var(--ink);
+  color: var(--ink-text);
+  -webkit-font-smoothing: antialiased;
+}
+
+button,
+input {
+  font: inherit;
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse-ring {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 var(--teal-glow);
+  }
+  50% {
+    box-shadow: 0 0 0 10px transparent;
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
