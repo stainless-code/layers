@@ -41,6 +41,7 @@ jobs:
 
       # Opens/updates the Version PR when `.changeset/*.md` exist. When there are none, the action
       # can still run `publish` (see changesets/action) so a just-merged Version PR can ship.
+      # `bun run release` builds packages and asserts `dist/` export targets before pack/publish.
       # `changeset publish` should exit 0 when there is nothing new to publish. If this job fails,
       # read the step log: common causes are OIDC/trusted-publishing misconfig (`id-token: write`,
       # the `release` environment, or the npm trusted-publisher binding), registry/network errors,
