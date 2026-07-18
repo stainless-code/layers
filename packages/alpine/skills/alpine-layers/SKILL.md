@@ -12,7 +12,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/alpine-layers"
-  library_version: "0.2.1"
+  library_version: "0.2.2"
   framework: "alpinejs"
 sources:
   - https://stainless-code.com/layers/adapters/alpine
