@@ -8,6 +8,7 @@ Forward-looking work only — not a mirror of `src/`. Shipped features live in [
 - **Devtools bus commands / time-travel** — EventClient bidirectional + recorder (live-ref actions cover v1).
 - **`LayerStack.setOptions`** — mutate `scope`/`gcTime`/`dismissAllMode` post-construction so `handle.stack.setOptions(...)` works.
 - **Multi-TypeScript type-test matrix** — run `.test-d` across TS versions in CI to guard the inference surface (DataTag / overloads). Low effort, high ROI.
+- **TypeScript 7** — native Go `tsc` / LSP (typically 8–12× faster). Repo is on 6.0.3; `latest` is 7.0.x. Blockers: no stable programmatic API until 7.1 (typescript-eslint / Volar / Vue·Svelte·Astro·MDX stay on 6 via `@typescript/typescript6` or npm aliases); 6.0 deprecations are hard errors (`types: []` default, `rootDir: ./`, no `baseUrl` / `moduleResolution: node`, etc.). Path: clear 6.0 deprecations → dual-install 7 `tsc` + 6 API for tooling → flip when 7.1 API + ecosystem catch up. Pairs with the type-test matrix.
 - **Infer `D` from `loadFn`** — type a layer's `data` from the `loadFn` return without an explicit generic. Needs a dedicated type pass (interacts with the `const Key` inference).
 - **`initialSnapshot` (SSR rehydration)** — seed a stack so layers render server-side and hydrate (layers are client-only today; the `transition` axis would hydrate as `settled`).
 - **Thenable `.status`** — expose a layer / `open` promise that React Suspense can read.

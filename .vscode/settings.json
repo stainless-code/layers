@@ -37,8 +37,8 @@
     "**/bun.lock": true,
     "**/dist": true
   },
-  "typescript.experimental.useTsgo": true,
-  "typescript.preferences.importModuleSpecifier": "shortest",
-  "typescript.preferences.preferTypeOnlyAutoImports": true,
-  "typescript.tsdk": "node_modules/typescript/lib"
+  "js/ts.experimental.useTsgo": true,
+  "js/ts.preferences.importModuleSpecifier": "shortest",
+  "js/ts.preferences.preferTypeOnlyAutoImports": true,
+  "js/ts.tsdk.path": "node_modules/typescript/lib"
 }
