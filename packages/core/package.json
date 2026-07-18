@@ -1,6 +1,6 @@
 {
   "name": "@stainless-code/layers",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Headless, UI-agnostic layer/stack manager for modal/dialog/drawer/popover/toast UI. Call a layer like an async function and await its response.",
   "keywords": [
     "dialog",

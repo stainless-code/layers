@@ -1,6 +1,6 @@
 {
   "name": "@stainless-code/layers-devtools",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "TanStack Devtools panel for @stainless-code/layers — stack picker and layer state inspector.",
   "keywords": [
     "devtools",
