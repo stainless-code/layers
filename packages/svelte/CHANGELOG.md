@@ -1,5 +1,11 @@
 # @stainless-code/svelte-layers
 
+## 0.2.3
+
+### Patch Changes
+
+- [#25](https://github.com/stainless-code/layers/pull/25) [`ae949d2`](https://github.com/stainless-code/layers/commit/ae949d2a7555867353d787e16411be755fbde2f2) Thanks [@SutuSebastian](https://github.com/SutuSebastian)! - Prefer wired handles (`useLayer` / `createLayer`) in Confirm docs and fire-and-forget skill examples; bag-form `client.open` remains a valid escape hatch.
+
 ## 0.2.2
 
 ### Patch Changes
