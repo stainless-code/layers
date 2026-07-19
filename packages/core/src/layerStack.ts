@@ -234,6 +234,13 @@ export class LayerStack<
         (this.options.scope?.onLoadError ?? "block") === "advance"
       ) {
         // Drop the failed occupant and drain — no lasting error UI on this stack.
+        // Mirror #commitDismiss: notify before remove so child stacks tear down.
+        this.onLayerDismiss?.(layer);
+        layer.setPartial({
+          phase: "dismissed",
+          transition: "settled",
+          ended: true,
+        });
         this.#remove(layer);
         return;
       }

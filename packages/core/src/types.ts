@@ -143,7 +143,7 @@ export type OpenLayerOptions<
 /** Rejects keys that do not exist on `T`. */
 export type OmitKeyof<T, K extends keyof T> = Omit<T, K>;
 
-/** Serial policy when a mounted layer's `loadFn` rejects. @default "block" */
+/** Serial policy when a mounted layer's `loadFn` rejects. */
 export type SerialOnLoadError = "block" | "advance";
 
 export interface StackOptions {
@@ -155,8 +155,9 @@ export interface StackOptions {
   scope?: {
     strategy: "serial" | "parallel";
     /**
-     * Serial only. `block` — keep `phase: "error"` until dismiss (default).
+     * Serial only. `block` — keep `phase: "error"` until dismiss.
      * `advance` — remove the failed layer and drain the next queued open.
+     * @default "block"
      */
     onLoadError?: SerialOnLoadError;
   };

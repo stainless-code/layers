@@ -21,7 +21,7 @@ scope: {
 | Strategy | Behavior |
 | -------- | -------- |
 | `parallel` (default) | Layers stack freely; multiple `pending`/`active` layers at once. |
-| `serial` | One occupying layer at a time (`pending` / `active` / `error`); later opens queue as `phase: "queued"` (not in `getSnapshot()`). |
+| `serial` | One occupying layer at a time (`pending` / `active` / `error` under default `onLoadError: "block"`); later opens queue as `phase: "queued"` (not in `getSnapshot()`). |
 
 Queued layers are visible via `getQueuedSnapshot()`. The next queued layer activates when the occupant leaves — dismiss, or `onLoadError: "advance"` after a failed `loadFn`. `dismissAll` drains the queue without mounting queued callers.
 

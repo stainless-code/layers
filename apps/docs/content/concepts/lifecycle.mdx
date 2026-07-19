@@ -26,7 +26,7 @@ stateDiagram-v2
     removed --> [*]: gcTime = 0
 ```
 
-**Serial scope** adds `queued`: later opens wait behind an active layer and are not in `getSnapshot()` — use `getQueuedSnapshot()` to observe them.
+**Serial scope** adds `queued`: later opens wait behind the occupying layer and are not in `getSnapshot()` — use `getQueuedSnapshot()` to observe them.
 
 ## The three axes
 
@@ -41,7 +41,7 @@ actionStatus: "idle" | "running"; // in-flight action
 | Phase | Meaning |
 | ----- | ------- |
 | `pending` | `loadFn` in flight (cancelable via `AbortController`). |
-| `queued` | Serial scope only: waiting behind an active layer; not in `getSnapshot()`; visible via `getQueuedSnapshot()`. |
+| `queued` | Serial scope only: waiting behind the occupying layer; not in `getSnapshot()`; visible via `getQueuedSnapshot()`. |
 | `active` | Mounted; component receives `call`, `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, `dismissing`. |
 | `dismissed` | Caller's `await` resolved (`ended=true`); layer may still be mounted while `transition: "exiting"`. |
 | `error` | `loadFn` threw; the caller's `await` rejects. |

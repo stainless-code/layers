@@ -52,7 +52,7 @@ const steps = [
 
 for (const step of steps) {
   void client.open(step); // [!code highlight]
-  // only one active; rest queue
+  // only one occupying; rest queue
 }
 ```
 
@@ -99,7 +99,7 @@ On a wired handle, `confirmLayer.cancelQueued(false)` is FIFO for the bound key;
 
 ## Handle failed loads
 
-A rejecting `loadFn` leaves `phase: "error"` mounted. By default that layer still occupies the lane (`onLoadError: "block"`) — queued work waits, and further opens queue — until you dismiss it from error UI or `catch`.
+By default (`onLoadError: "block"`), a rejecting `loadFn` leaves `phase: "error"` mounted and still occupying the lane — queued work waits, and further opens queue — until you dismiss it from error UI or `catch`.
 
 For a silent skip (remove the failed layer and drain the next queued open):
 

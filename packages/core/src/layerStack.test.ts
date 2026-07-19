@@ -307,6 +307,83 @@ describe("LayerStack — scope serial", () => {
     expect(stack.getQueuedSnapshot().map((l) => l.payload.n)).toEqual([3]);
   });
 
+  it("onLoadError advance: empty queue clears the failed layer", async () => {
+    const stack = new LayerStack<{ n: number }, boolean, Error>("s", {
+      scope: { strategy: "serial", onLoadError: "advance" },
+    });
+    const a = stack.open({
+      key: ["a"],
+      payload: { n: 1 },
+      loadFn: async () => {
+        throw new Error("boom");
+      },
+    });
+    await expect(a.promise.promise).rejects.toThrow("boom");
+    expect(stack.getSnapshot()).toHaveLength(0);
+    expect(stack.getQueuedSnapshot()).toHaveLength(0);
+  });
+
+  it("onLoadError advance: fires onLayerDismiss before remove", async () => {
+    const dismissed: string[] = [];
+    const stack = new LayerStack<{ n: number }, boolean, Error>("s", {
+      scope: { strategy: "serial", onLoadError: "advance" },
+    });
+    stack.onLayerDismiss = (layer) => {
+      dismissed.push(layer.id);
+    };
+    const a = stack.open({
+      key: ["a"],
+      payload: { n: 1 },
+      loadFn: async () => {
+        throw new Error("boom");
+      },
+    });
+    await expect(a.promise.promise).rejects.toThrow("boom");
+    expect(dismissed).toEqual([a.id]);
+  });
+
+  it("onLoadError advance: dismiss on failed handle is a no-op for the next layer", async () => {
+    let rejectLoad!: (error: Error) => void;
+    const stack = new LayerStack<{ n: number }, boolean, Error>("s", {
+      scope: { strategy: "serial", onLoadError: "advance" },
+    });
+    const a = stack.open({
+      key: ["a"],
+      payload: { n: 1 },
+      loadFn: () =>
+        new Promise<never>((_, reject) => {
+          rejectLoad = reject;
+        }),
+    });
+    const b = stack.open({ key: ["b"], payload: { n: 2 } });
+    rejectLoad(new Error("boom"));
+    await expect(a.promise.promise).rejects.toThrow("boom");
+    expect(stack.getSnapshot()[0]?.id).toBe(b.id);
+
+    await expect(stack.dismiss(a, false)).resolves.toBe(true);
+    expect(stack.getSnapshot()).toEqual([
+      expect.objectContaining({ id: b.id, phase: "active" }),
+    ]);
+    await expect(a.promise.promise).rejects.toThrow("boom");
+  });
+
+  it("onLoadError advance is ignored on parallel stacks", async () => {
+    const stack = new LayerStack<{ n: number }, boolean, Error>("s", {
+      scope: { strategy: "parallel", onLoadError: "advance" },
+    });
+    const a = stack.open({
+      key: ["a"],
+      payload: { n: 1 },
+      loadFn: async () => {
+        throw new Error("boom");
+      },
+    });
+    await expect(a.promise.promise).rejects.toThrow("boom");
+    expect(stack.getSnapshot()).toEqual([
+      expect.objectContaining({ phase: "error", payload: { n: 1 } }),
+    ]);
+  });
+
   it("cancelQueued resolves a queued layer without mounting it", async () => {
     const stack = new LayerStack<{ n: number }, boolean>("s", {
       scope: { strategy: "serial" },
