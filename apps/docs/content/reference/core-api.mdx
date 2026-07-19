@@ -30,19 +30,24 @@ class LayerClient {
     response?: unknown,
     opts?: DismissAllOptions,
   ): Promise<void>;
+  cancelAll(
+    stackId?: string,
+    opts?: { reason?: LayerCancelReason },
+  ): Promise<void>;
 }
 ```
 
 | Method            | Purpose                                                                                                |
 | ----------------- | ------------------------------------------------------------------------------------------------------ |
-| `open`            | Opens a layer on a stack; resolves with the dismissal response (or rejects on load/validation failure) |
+| `open`            | Opens a layer on a stack; resolves with the dismissal response (or rejects on load/validation/cancel) |
 | `getStack`        | Returns a stack by id, creating the default stack on first access                                      |
 | `ensureStack`     | Returns a stack, applying `StackOptions` only when creating it                                         |
 | `getStackIds`     | Lists materialized stack ids                                                                           |
 | `subscribeStacks` | Notifies when a stack is created for the first time                                                    |
 | `subscribeNotify` | Labeled stack transitions (`StackNotifyEvent`) for inspectors / Devtools                               |
 | `seedNotify`      | Re-emits a `register` notify for one stack, or all materialized stacks when omitted                    |
-| `dismissAll`      | Async bulk dismiss on one stack (honors blockers unless `mode: "force"`)                               |
+| `dismissAll`      | Async bulk dismiss on one stack (honors blockers unless `mode: "force"`); completes with `response`     |
+| `cancelAll`       | Force-clear; rejects every open/queued caller with `LayerCancelledError` (skips blockers)              |
 
 <AutoTypeTable
   path="../../packages/core/src/types.ts"
@@ -66,6 +71,7 @@ class LayerStack {
   getLayer(id: string): Layer | undefined;
   dismiss(layer, response?, opts?: DismissOptions): Promise<boolean>;
   dismissAll(response?, opts?: DismissAllOptions): Promise<void>;
+  cancelAll(opts?: { reason?: LayerCancelReason }): Promise<void>;
   addBlocker(fn: StackBlockerFn): () => void;
   cancelQueued(key: LayerKey, response, opts?: { id?: string }): boolean;
   settle(layer): void;
@@ -185,6 +191,24 @@ class LayerKeyError extends Error {
 function isLayerKeyError(value: unknown): value is LayerKeyError;
 
 function assertLayerKey(key: unknown): asserts key is LayerKey;
+```
+
+## Layer cancel errors
+
+System teardown (`cancelAll`, parent-dismiss child drain, group dispose, host disconnect) rejects `open()` with `LayerCancelledError`. User `dismiss` / `dismissAll(response)` still resolve with `R`. See [Error handling](/guides/error-handling).
+
+```ts
+type LayerCancelReason =
+  | "parentDismiss"
+  | "groupDispose"
+  | "cancelAll"
+  | "stackDisconnect";
+
+class LayerCancelledError extends Error {
+  readonly reason: LayerCancelReason;
+}
+
+function isLayerCancelledError(value: unknown): value is LayerCancelledError;
 ```
 
 ## createLayer

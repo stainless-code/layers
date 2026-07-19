@@ -66,14 +66,17 @@ export function forceDismissTop(
   return stack.dismiss(layer, undefined, { force: true });
 }
 
-/** Run {@link LayerClient#dismissAll} with an explicit mode. */
+/**
+ * Force-clears a stack via {@link LayerClient#cancelAll} (rejects open callers).
+ * `mode` is unused — kept for call-site compatibility with the mode picker UI.
+ */
 export function dismissAllWithMode(
   client: LayerClient,
   stackId: string,
-  mode: DismissAllMode,
+  _mode: DismissAllMode,
 ): Promise<void> {
   if (!client.getStackIds().includes(stackId)) {
     return Promise.resolve();
   }
-  return client.dismissAll(stackId, undefined, { mode });
+  return client.cancelAll(stackId, { reason: "cancelAll" });
 }

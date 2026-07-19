@@ -53,8 +53,8 @@ Default configurable via `StackOptions.dismissAllMode` / `LayerClientOptions.def
 | ---- | -------- |
 | `end` / `dismiss` (user intent) | Honor |
 | `cancelQueued` (serial, never mounted) | Skip |
-| Component / group-hook unmount | Honor |
-| Layer-group cascade (`onLayerDismiss` → drain child stacks) | Force children — guard the parent instead |
+| `cancelAll` / group-hook unmount / host disconnect | Skip |
+| Layer-group cascade (`onLayerDismiss` → `cancelAll` on children) | Skip — rejects child `open()` with `LayerCancelledError`; guard the parent instead |
 
 :::tip
 For adapter-level patterns — dirty-form guards, confirm dialogs, backdrop handling — see [Dismissal & blockers](/guides/dismissal-blockers).

@@ -17,6 +17,9 @@ The promise rejects when:
 
 1. **`loadFn` throws** — typed at runtime as the layer's error type `E`
 2. **`validate` fails** — `PayloadValidationError`
+3. **System teardown** — `LayerCancelledError` from `cancelAll` (parent dismiss drain, layer-group dispose, host disconnect)
+
+User dismiss / `dismissAll(response)` still **resolves** with `R` (including `undefined` for `R = void`). Narrow cancel with `isLayerCancelledError` — do not treat it as the user choosing a falsy response.
 
 Dismissal during `pending` resolves with the dismissal response (the in-flight `loadFn` is aborted via `AbortController`); it does not reject.
 
@@ -44,6 +47,25 @@ try {
 } catch (err) {
   if (isPayloadValidationError(err)) { // [!code highlight]
     showFieldErrors(err.issues);
+    return;
+  }
+  throw err;
+}
+```
+
+## Narrow teardown cancel
+
+```ts lineNumbers
+import { createLayer, isLayerCancelledError } from "@stainless-code/layers";
+
+const c = createLayer(confirm, client);
+
+try {
+  const ok = await c.open(payload);
+  if (ok) deleteThing();
+} catch (err) {
+  if (isLayerCancelledError(err)) { // [!code highlight]
+    // parent/group/host tore the stack down — not user "No"
     return;
   }
   throw err;

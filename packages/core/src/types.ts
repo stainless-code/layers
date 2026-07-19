@@ -192,6 +192,7 @@ export type StackNotifyAction =
   | "dismiss"
   | "dismissVetoed"
   | "dismissAll"
+  | "cancelAll"
   | "cancelQueued"
   | "phase"
   | "remove";

@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  isLayerCancelledError,
   isLayerKeyError,
   isPayloadValidationError,
+  LayerCancelledError,
   LayerKeyError,
   PayloadValidationError,
 } from "./errors";
@@ -325,6 +327,47 @@ describe("LayerStack — scope serial", () => {
     expect(await b.promise.promise).toBe(true);
     expect(stack.getSnapshot()).toHaveLength(0);
     expect(stack.getQueuedSnapshot()).toHaveLength(0);
+  });
+
+  it("cancelAll rejects active and queued open() promises", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    const a = stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["b"], payload: { n: 2 } });
+    expect(stack.getQueuedSnapshot()).toHaveLength(1);
+    await stack.cancelAll({ reason: "cancelAll" });
+    await expect(a.promise.promise).rejects.toBeInstanceOf(LayerCancelledError);
+    await expect(b.promise.promise).rejects.toBeInstanceOf(LayerCancelledError);
+    expect(stack.getSnapshot()).toHaveLength(0);
+    expect(stack.getQueuedSnapshot()).toHaveLength(0);
+    try {
+      await a.promise.promise;
+    } catch (error) {
+      expect(isLayerCancelledError(error)).toBe(true);
+      if (isLayerCancelledError(error)) {
+        expect(error.reason).toBe("cancelAll");
+      }
+    }
+  });
+
+  it("cancelAll skips blockers", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s");
+    const layer = stack.open({ key: ["a"], payload: { n: 1 } });
+    stack.addBlocker(() => false);
+    await stack.cancelAll();
+    await expect(layer.promise.promise).rejects.toBeInstanceOf(
+      LayerCancelledError,
+    );
+    expect(stack.getSnapshot()).toHaveLength(0);
+  });
+
+  it("dismissAll(undefined) for void R still resolves (not cancel)", async () => {
+    const stack = new LayerStack<{ n: number }, void>("s");
+    const layer = stack.open({ key: ["a"], payload: { n: 1 } });
+    await stack.dismissAll(undefined);
+    await expect(layer.promise.promise).resolves.toBe(undefined);
+    expect(stack.getSnapshot()).toHaveLength(0);
   });
 
   it("onLoadError block (default): error occupies lane; queued waits; no leapfrog", async () => {

@@ -127,7 +127,7 @@ call.dismiss(response, opts?: { force?: boolean }): Promise<boolean>;
 
 Return value = "did it dismiss?". `{ force: true }` bypasses blockers. Repeat `end`/`dismiss` while `dismissing` dedupes to the in-flight promise; `force` wins immediately. Predicate throw/reject = veto (fail-closed; dev warning).
 
-**Paths** — honor blockers: `end`/`dismiss` (user intent). Skip: `cancelQueued` (serial, never mounted). Force: component/outlet unmount, route teardown; **layer-group cascade** (`onLayerDismiss` → `#drainChildStacks`) forces children — guard the parent instead.
+**Paths** — honor blockers: `end`/`dismiss` (user intent). Skip: `cancelQueued` (serial, never mounted), `cancelAll` (system teardown). **Layer-group cascade** (`onLayerDismiss` → `#drainChildStacks` → `cancelAll`) rejects child `open()` with `LayerCancelledError` — guard the parent instead.
 
 **`dismissAll` modes** — `stack.dismissAll(response, opts?: { mode? })` is async:
 
@@ -182,7 +182,7 @@ Narrow in a `catch` with the shipped guards (`isPayloadValidationError`) or the 
 
 ## Layer groups
 
-A parent layer owns a **child stack** on the same `LayerClient` via `createLayerGroup(client, call)` (each adapter wraps it as `useLayerGroup(call)`). The child stack id is derived collision-safely from the parent's `stackId` + instance `layerId` — `` `${parentStackId}~${parentLayerId}~${name}` `` — so sibling and nested groups never clash. Lifetime is **event-driven**: `LayerStack.onLayerDismiss` fires on dismiss → the client drains that layer's registered child stacks, recursively for nesting. No second client, no manual cleanup. Rejected alternatives: a second `LayerClient` (disconnected from provider/config) and a `call.group()` method (would couple the call-context module to the client).
+A parent layer owns a **child stack** on the same `LayerClient` via `createLayerGroup(client, call)` (each adapter wraps it as `useLayerGroup(call)`). The child stack id is derived collision-safely from the parent's `stackId` + instance `layerId` — `` `${parentStackId}~${parentLayerId}~${name}` `` — so sibling and nested groups never clash. Lifetime is **event-driven**: `LayerStack.onLayerDismiss` fires on dismiss → the client `cancelAll`s that layer's registered child stacks (`reason: "parentDismiss"`), recursively for nesting. No second client, no manual cleanup. Rejected alternatives: a second `LayerClient` (disconnected from provider/config) and a `call.group()` method (would couple the call-context module to the client).
 
 ## Type defaults & inference
 

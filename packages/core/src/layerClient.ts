@@ -1,4 +1,5 @@
 import type { DataTag } from "./dataTag";
+import type { LayerCancelReason } from "./errors";
 import { LayerStack } from "./layerStack";
 import type {
   DefaultLayerError,
@@ -96,7 +97,7 @@ export class LayerClient {
       return;
     }
     for (const childId of childIds) {
-      void this.#stacks.get(childId)?.dismissAll(undefined, { mode: "force" });
+      void this.#stacks.get(childId)?.cancelAll({ reason: "parentDismiss" });
     }
     this.#childStacksByParent.delete(parentLayerId);
   }
@@ -198,5 +199,19 @@ export class LayerClient {
     return (
       this.#stack(stackId) as LayerStack<unknown, unknown, unknown, unknown>
     ).dismissAll(response, opts);
+  }
+
+  /**
+   * Force-clears a stack and rejects every open/queued caller with
+   * {@link LayerCancelledError}. System teardown — prefer {@link dismissAll}
+   * when completing with a response.
+   */
+  cancelAll(
+    stackId = "default",
+    opts?: { reason?: LayerCancelReason },
+  ): Promise<void> {
+    return (
+      this.#stack(stackId) as LayerStack<unknown, unknown, unknown, unknown>
+    ).cancelAll(opts);
   }
 }

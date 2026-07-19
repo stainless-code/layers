@@ -1,3 +1,5 @@
+import { LayerCancelledError } from "./errors";
+import type { LayerCancelReason } from "./errors";
 import { Layer } from "./layer";
 import { createLayerGcCache } from "./layerGcCache";
 import { notifyManager } from "./notifyManager";
@@ -413,6 +415,57 @@ export class LayerStack<
         this.#emitNotify("dismissAll");
       }
     }
+  }
+
+  /**
+   * Force-clears the stack and rejects every open/queued caller with
+   * {@link LayerCancelledError}. Skips blockers. System teardown path —
+   * use {@link dismissAll} when completing with a response.
+   */
+  async cancelAll(opts?: { reason?: LayerCancelReason }): Promise<void> {
+    const error = new LayerCancelledError(opts?.reason ?? "cancelAll");
+    const shouldEmit = this.#scopeQueue.length > 0 || this.#layers.length > 0;
+    try {
+      notifyManager.batch(() => {
+        for (const entry of this.#scopeQueue) {
+          this.#rejectCancel(entry.layer, error);
+        }
+        this.#scopeQueue = [];
+        const mounted = [...this.#layers];
+        this.#layers = [];
+        for (const layer of mounted) {
+          this.#rejectCancel(layer, error);
+          this.onLayerDismiss?.(layer);
+          this.#gcCache.maybeStore(layer);
+        }
+        this.#flush();
+      });
+    } finally {
+      if (shouldEmit) {
+        this.#emitNotify("cancelAll");
+      }
+    }
+  }
+
+  /** Abort, reject open(), mark dismissed — no completion response. */
+  #rejectCancel(layer: Layer<P, R, E, D>, error: LayerCancelledError): void {
+    if (layer.enterTimer) {
+      clearTimeout(layer.enterTimer);
+      layer.enterTimer = undefined;
+    }
+    if (layer.exitTimer) {
+      clearTimeout(layer.exitTimer);
+      layer.exitTimer = undefined;
+    }
+    layer.abort();
+    layer.reject(error as E);
+    // Prevent unhandledrejection when callers used void open().
+    void layer.promise.promise.catch(() => {});
+    layer.setPartial({
+      phase: "dismissed",
+      transition: "settled",
+      ended: true,
+    });
   }
 
   /**

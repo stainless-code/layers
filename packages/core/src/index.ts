@@ -38,5 +38,7 @@ export {
   isPayloadValidationError,
   LayerKeyError,
   isLayerKeyError,
+  LayerCancelledError,
+  isLayerCancelledError,
 } from "./errors";
-export type { ValidationIssue } from "./errors";
+export type { ValidationIssue, LayerCancelReason } from "./errors";

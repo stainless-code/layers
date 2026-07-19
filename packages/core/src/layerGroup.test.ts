@@ -1,5 +1,6 @@
 import { describe, expect, it } from "bun:test";
 
+import { isLayerCancelledError, LayerCancelledError } from "./errors";
 import { LayerClient } from "./layerClient";
 import { childStackId, createLayerGroup } from "./layerGroup";
 import { LayerStack } from "./layerStack";
@@ -43,7 +44,17 @@ describe("createLayerGroup — cascade", () => {
 
     await drawer.dismiss(parentLayer, false);
     expect(childStack.getSnapshot()).toHaveLength(0);
-    expect(await childPending).toBe(undefined);
+    let childError: unknown;
+    try {
+      await childPending;
+    } catch (error) {
+      childError = error;
+    }
+    expect(childError).toBeInstanceOf(LayerCancelledError);
+    expect(isLayerCancelledError(childError)).toBe(true);
+    if (isLayerCancelledError(childError)) {
+      expect(childError.reason).toBe("parentDismiss");
+    }
     void parentPending;
   });
 });
@@ -84,8 +95,8 @@ describe("createLayerGroup — nesting", () => {
     await drawer.dismiss(parentLayer, false);
     expect(childStack.getSnapshot()).toHaveLength(0);
     expect(grandchildStack.getSnapshot()).toHaveLength(0);
-    expect(await childPending).toBe(undefined);
-    expect(await grandchildPending).toBe(undefined);
+    await expect(childPending).rejects.toBeInstanceOf(LayerCancelledError);
+    await expect(grandchildPending).rejects.toBeInstanceOf(LayerCancelledError);
   });
 });
 

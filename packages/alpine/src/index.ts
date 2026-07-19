@@ -486,7 +486,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
   const states = useStack<RootProps>({ stack: stackId }, resolved);
   const dispose = () => {
     group.dispose();
-    resolved.dismissAll(group.stackId);
+    resolved.cancelAll(group.stackId, { reason: "groupDispose" });
     states.destroy();
   };
   const open = (<

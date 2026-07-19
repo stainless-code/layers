@@ -512,7 +512,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
 
   inject(DestroyRef).onDestroy(() => {
     group.dispose();
-    client.dismissAll(group.stackId);
+    client.cancelAll(group.stackId, { reason: "groupDispose" });
   });
 
   const states = useStack({ stack: stackId });

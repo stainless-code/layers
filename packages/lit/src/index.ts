@@ -930,7 +930,9 @@ export class LayerGroupController<
           this.#init(c);
         } else if (this.#client !== c) {
           this.#group.dispose();
-          this.#client?.dismissAll(this.#stackId);
+          this.#client?.cancelAll(this.#stackId, {
+            reason: "stackDisconnect",
+          });
           this.#init(c);
         }
         this.#states.bindClient(c);
@@ -952,7 +954,7 @@ export class LayerGroupController<
   hostConnected(): void {}
   hostDisconnected(): void {
     this.#group?.dispose();
-    this.#client?.dismissAll(this.#stackId);
+    this.#client?.cancelAll(this.#stackId, { reason: "stackDisconnect" });
   }
 
   get stackId(): string {

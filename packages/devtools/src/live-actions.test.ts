@@ -83,7 +83,8 @@ describe("live-actions", () => {
     await Promise.resolve();
 
     await dismissAllWithMode(client, "default", "force");
-    await Promise.all([a, b]);
+    await expect(a).rejects.toBeTruthy();
+    await expect(b).rejects.toBeTruthy();
 
     const stack = client.getStack("default");
     expect(stack.getSnapshot()).toHaveLength(0);

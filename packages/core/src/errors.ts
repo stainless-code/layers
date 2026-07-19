@@ -66,3 +66,44 @@ export class LayerKeyError extends Error {
 export function isLayerKeyError(value: unknown): value is LayerKeyError {
   return value instanceof LayerKeyError;
 }
+
+/** Why {@link LayerCancelledError} rejected an `open()` promise. */
+export type LayerCancelReason =
+  | "parentDismiss"
+  | "groupDispose"
+  | "cancelAll"
+  | "stackDisconnect";
+
+/**
+ * Rejects `open()` when a stack is torn down without a completion response
+ * (`cancelAll`, parent dismiss drain, group dispose, host disconnect).
+ */
+export class LayerCancelledError extends Error {
+  readonly reason: LayerCancelReason;
+  constructor(reason: LayerCancelReason = "cancelAll") {
+    super(`LayerCancelledError: ${reason}`);
+    this.name = "LayerCancelledError";
+    this.reason = reason;
+  }
+}
+
+/**
+ * Narrows an unknown rejection to {@link LayerCancelledError}.
+ *
+ * @example
+ * ```ts
+ * import { isLayerCancelledError } from "@stainless-code/layers";
+ *
+ * try {
+ *   await confirm.open(payload);
+ * } catch (error) {
+ *   if (isLayerCancelledError(error)) return;
+ *   throw error;
+ * }
+ * ```
+ */
+export function isLayerCancelledError(
+  value: unknown,
+): value is LayerCancelledError {
+  return value instanceof LayerCancelledError;
+}

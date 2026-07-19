@@ -534,7 +534,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
 
   onScopeDispose(() => {
     group.dispose();
-    client.dismissAll(group.stackId);
+    client.cancelAll(group.stackId, { reason: "groupDispose" });
   });
 
   const states = useStack({ stack: stackId });

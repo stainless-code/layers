@@ -5,7 +5,7 @@ search:
   tags: ["guide"]
 ---
 
-A drawer that opens a sub-dialog needs its own stack — but tied to the parent layer's lifetime. Layer groups create a child stack on the same `LayerClient`; when the parent dismisses, children drain automatically.
+A drawer that opens a sub-dialog needs its own stack — but tied to the parent layer's lifetime. Layer groups create a child stack on the same `LayerClient`; when the parent dismisses, children are cleared with `cancelAll` and awaiting child `open()` promises reject with `LayerCancelledError` (not a completion response).
 
 ## Create a child stack
 
