@@ -54,7 +54,7 @@ find .agents/skills -name SKILL.md -exec sh -c 'n=$(wc -l < "$1"); [ "$n" -gt 12
 
 ## User-only router
 
-[`ask-agents`](../ask-agents/SKILL.md) — `grill-me`, `grill-with-docs`, `teach`, `writing-great-skills`, `writing-agents-config`. Wrappers **≤10 lines**.
+[`ask-agents`](../ask-agents/SKILL.md) — `grill-me`, `grill-with-docs`, `teach`, `writing-great-skills`, `writing-agents-config`, `minimum-diff`. Wrappers **≤10 lines**.
 
 ## Layers-specific tradeoffs
 
