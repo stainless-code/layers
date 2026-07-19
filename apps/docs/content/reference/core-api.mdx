@@ -77,7 +77,7 @@ class LayerStack {
 | Method              | Purpose                                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------- |
 | `getSnapshot`       | Stable-ref snapshot of mounted layers (`pending`/`active`/`dismissed`/`error`)                                            |
-| `getQueuedSnapshot` | Serial-scope queue — layers waiting behind an active layer                                                                |
+| `getQueuedSnapshot` | Serial-scope queue — layers waiting behind the occupying layer                                                            |
 | `subscribe`         | Register for snapshot changes (batched via `notifyManager`)                                                               |
 | `find`              | Topmost mounted layer for a logical key (key signature; `findLast`)                                                       |
 | `dismiss`           | Resolve one layer; returns whether dismissal succeeded (blockers may veto)                                                |
@@ -103,6 +103,7 @@ Immutable snapshot of one layer, consumed by selectors.
 Per-stack options passed to `ensureStack` or `LayerClientOptions.defaultStackOptions`.
 
 <AutoTypeTable path="../../packages/core/src/types.ts" name="StackOptions" />
+<AutoTypeTable path="../../packages/core/src/types.ts" name="SerialOnLoadError" />
 
 ## layerOptions
 

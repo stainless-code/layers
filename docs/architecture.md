@@ -65,7 +65,7 @@ serial scope: later opens wait as `queued` (not mounted) — see `getQueuedSnaps
 ```
 
 - `pending` — `loadFn` in flight (cancelable via `AbortController`).
-- `queued` — serial scope only: waiting behind an active layer; not in `getSnapshot()`; visible via `getQueuedSnapshot()`.
+- `queued` — serial scope only: waiting behind the occupying layer; not in `getSnapshot()`; visible via `getQueuedSnapshot()`.
 - `active` — mounted; component receives `call` (`end`/`dismiss`/`update`/`setRunning`/`settle`/`ended`/`index`/`stackSize`/`root`/`stackId`/`layerId`/`addBlocker`), `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, `dismissing`.
 - `dismissed` — caller's `await` resolved (`ended=true`); `transition: "exiting"` keeps the layer mounted for `exitingDelay` (or until `settle`); on removal, cached for `gcTime` so re-opening the same key restores `data` without re-running `loadFn`.
 - `error` — `loadFn` threw; the caller's `await` rejects.
@@ -157,7 +157,7 @@ Narrow in a `catch` with the shipped guards (`isPayloadValidationError`) or the 
 ## Stacks, scope, gcTime
 
 - **Named stacks** — `LayerClient.getStack(id)`; isolated. `open({ stack })` picks one.
-- **`scope: { strategy: 'serial' }`** — only one `pending`/`active` layer at a time; later opens queue (`phase: 'queued'`, visible via `getQueuedSnapshot()`) and activate when the active one is dismissed. `parallel` (default) stacks freely. `dismissAll` (async; see § Blockers) drains the queue, resolving queued callers without mounting.
+- **`scope: { strategy: 'serial', onLoadError?: 'block' | 'advance' }`** — one occupying layer at a time (`pending` / `active` / `error` under default `onLoadError: 'block'`); later opens queue (`phase: 'queued'`, visible via `getQueuedSnapshot()`) and activate when the occupant leaves. `onLoadError: 'advance'` removes a failed `loadFn` layer and drains the next queued open. `parallel` (default) stacks freely. `dismissAll` (async; see § Blockers) drains the queue, resolving queued callers without mounting.
 - **`gcTime`** — dismissed layers cached (in the internal `layerGcCache` module — a small removable-cache primitive) so re-opening the same key skips `loadFn`. **One slot per key signature — last-dismissed-wins**; the displaced entry is evicted with explicit teardown, and re-open cancels the timer. A cached layer is off-`getSnapshot()` and inherently unobserved, so the timer-runs-while-cached model already matches observer-gated gc. _Rejected: pausing gc while the stack is unmounted (would serve unbounded-stale data — no `staleTime`/refetch model — and risk retention), and a per-layer observer refcount (a stack-level proxy for it); revisit only alongside a real freshness model._
 
 ## Notifications

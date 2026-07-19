@@ -1,6 +1,6 @@
 ---
 title: Serial queues
-description: One active layer at a time with scope serial, getQueuedSnapshot, and queued-confirm flows.
+description: One occupying layer at a time with scope serial, getQueuedSnapshot, and queued-confirm flows.
 search:
   tags: ["guide"]
 ---
@@ -39,7 +39,7 @@ stack.subscribe(() => {
 });
 ```
 
-Queued layers are not mounted — their components do not render until the active layer dismisses.
+Queued layers are not mounted — their components do not render until the occupying layer leaves.
 
 ## Onboarding flow
 
@@ -52,7 +52,7 @@ const steps = [
 
 for (const step of steps) {
   void client.open(step); // [!code highlight]
-  // only one active; rest queue
+  // only one occupying; rest queue
 }
 ```
 
@@ -96,6 +96,20 @@ stack.cancelQueued(["confirm", "remove"], false, { id: queuedState.id }); // [!c
 ```
 
 On a wired handle, `confirmLayer.cancelQueued(false)` is FIFO for the bound key; `confirmLayer.cancelQueued(false, { id })` targets one row.
+
+## Handle failed loads
+
+By default (`onLoadError: "block"`), a rejecting `loadFn` leaves `phase: "error"` mounted. That layer still occupies the lane — queued work waits, and further opens queue — until you dismiss it from error UI or `catch`.
+
+For a silent skip (remove the failed layer and drain the next queued open):
+
+```ts
+client.ensureStack("onboarding", {
+  scope: { strategy: "serial", onLoadError: "advance" },
+});
+```
+
+Narrow rejections in [Error handling](/guides/error-handling).
 
 ## Edge cases
 

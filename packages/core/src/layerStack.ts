@@ -101,9 +101,13 @@ export class LayerStack<
     return this.options.scope?.strategy === "serial";
   }
 
+  /** Serial occupancy — pending, active, or mounted error (block policy). */
   #hasActive(): boolean {
     return this.#layers.some(
-      (l) => l.state.phase === "pending" || l.state.phase === "active",
+      (l) =>
+        l.state.phase === "pending" ||
+        l.state.phase === "active" ||
+        l.state.phase === "error",
     );
   }
 
@@ -221,6 +225,23 @@ export class LayerStack<
       });
     } catch (error) {
       if (layer.aborted) {
+        return;
+      }
+      const isAdvance =
+        this.#serial &&
+        (this.options.scope?.onLoadError ?? "block") === "advance";
+      if (isAdvance) {
+        // Drop the failed occupant and drain — no lasting error UI.
+        // Mirror #commitDismiss: mark dismissed, then onLayerDismiss, then remove.
+        layer.reject(error as E);
+        layer.setPartial({
+          error: error as E,
+          phase: "dismissed",
+          transition: "settled",
+          ended: true,
+        });
+        this.onLayerDismiss?.(layer);
+        this.#remove(layer);
         return;
       }
       layer.setPartial({ error: error as E, phase: "error" });

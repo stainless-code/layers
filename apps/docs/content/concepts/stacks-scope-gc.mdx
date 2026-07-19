@@ -12,15 +12,18 @@ A **named stack** (`LayerStack`) is an ordered collection of active layers for o
 Per-stack queueing is configured on `StackOptions`:
 
 ```ts
-scope: { strategy: "serial" | "parallel" } // parallel when omitted
+scope: {
+  strategy: "serial" | "parallel", // parallel when omitted
+  onLoadError?: "block" | "advance", // serial only; default "block"
+}
 ```
 
 | Strategy | Behavior |
 | -------- | -------- |
 | `parallel` (default) | Layers stack freely; multiple `pending`/`active` layers at once. |
-| `serial` | Only one `pending`/`active` layer at a time; later opens queue as `phase: "queued"` (not in `getSnapshot()`). |
+| `serial` | One occupying layer at a time (`pending` / `active` / `error` under default `onLoadError: "block"`); later opens queue as `phase: "queued"` (not in `getSnapshot()`). |
 
-Queued layers are visible via `getQueuedSnapshot()`. When the active layer dismisses, the next queued layer activates. `dismissAll` drains the queue, resolving queued callers without mounting them.
+Queued layers are visible via `getQueuedSnapshot()`. The next queued layer activates when the occupant leaves — dismiss, or `onLoadError: "advance"` after a failed `loadFn`. `dismissAll` drains the queue without mounting queued callers.
 
 :::tip
 Use serial scope for one-at-a-time flows — onboarding steps, queued confirms, or any surface that must not show two layers simultaneously.
