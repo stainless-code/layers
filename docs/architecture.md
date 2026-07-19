@@ -21,7 +21,7 @@ The seam is a **published package boundary** in a bun-workspaces monorepo: one z
   renders layers (StackOutlet, renderStack, or useStack().current — see § Adapter ergonomics)
 ```
 
-- **Core** (`packages/core` → `@stainless-code/layers`): `LayerClient` (`ensureStack`, `getStackIds`, `subscribeStacks`), `LayerStack` (`dismiss`/`dismissAll`/`addBlocker`/`settle`/`setRunning`/`cancelQueued`/`getQueuedSnapshot`), `Layer`, `Subscribable`, `notifyManager`, `ControlledPromise`, `createCallContext`, `layerOptions`, `layerKey`/`DataTag`, `createLayer`/`LayerHandle`/`ValidatedLayerHandle`, `createLayerGroup`/`childStackId`, `layerGcCache` (internal), `errors`, payload validation (`StandardSchemaV1`, `Validator`, `PayloadValidationError`, `isPayloadValidationError`), `Register`/`DefaultLayerError`, `utils`. Zero deps; `sideEffects: false`. Entry `.` → `src/index.ts`.
+- **Core** (`packages/core` → `@stainless-code/layers`): `LayerClient` (`ensureStack`, `getStackIds`, `subscribeStacks`), `LayerStack` (`dismiss`/`dismissAll`/`cancelAll`/`addBlocker`/`settle`/`setRunning`/`cancelQueued`/`getQueuedSnapshot`), `Layer`, `Subscribable`, `notifyManager`, `ControlledPromise`, `createCallContext`, `layerOptions`, `layerKey`/`DataTag`, `createLayer`/`LayerHandle`/`ValidatedLayerHandle`, `createLayerGroup`/`childStackId`, `layerGcCache` (internal), `errors`, payload validation (`StandardSchemaV1`, `Validator`, `PayloadValidationError`, `isPayloadValidationError`), `Register`/`DefaultLayerError`, `utils`. Zero deps; `sideEffects: false`. Entry `.` → `src/index.ts`.
 - **Adapters** (`packages/<fw>` → `@stainless-code/<fw>-layers`): each declares the library or framework as a **required peer dependency** and `@stainless-code/layers` as a direct dependency, re-exports core (including `createLayer`), and exposes the wired/observe hooks (`useLayer` / `useLayerState` / `useQueuedStack` / `useLayerQueuedState` — names vary per § Adapter ergonomics), a `useStack`-shaped binding, an idiomatic client-context provider + `useLayerClient` (React/Preact `StackProvider`; Svelte `setLayerClient`; Vue/Lit `provideLayerClient`; Solid `LayerClientContext`; Angular `LAYER_CLIENT` + `provideLayerClient`; Alpine `getLayerClient` / `setLayerClient` in plugin closure), and a rendering surface (`StackOutlet`, or the imperative/primitive equivalent — see § Adapter ergonomics). Lit peers are `lit` + `@lit/context`; CEs register via explicit `defineStackElements()` (not on import). Alpine peers `alpinejs` (required) plus optional peer `@alpinejs/focus` (`peerDependenciesMeta.optional`); `./cdn` bootstrap mirrors ESM. **Svelte ships two entries in one package:** `.` (runes, `svelte/reactivity`, 5.7+) and `./store` (stores, `svelte/store`, 3.0+). All adapters have reached ergonomic parity; Angular, Alpine, and Svelte diverge by design (compiler-free / markup-in-template → primitive rendering rather than shipped host components or a `component` registry); Lit diverges with shadow provider + light-DOM outlet CEs + `LayerGroup.outlet()` (footnote ⁷).
 
 Cross-package type resolution in dev uses a `@stainless-code/source` export condition (each package's `exports` maps it to `src`) plus tsconfig `customConditions`, so typecheck resolves core's source without a build-order dependency; published consumers get `dist` via the standard `types`/`import` conditions.
@@ -127,7 +127,7 @@ call.dismiss(response, opts?: { force?: boolean }): Promise<boolean>;
 
 Return value = "did it dismiss?". `{ force: true }` bypasses blockers. Repeat `end`/`dismiss` while `dismissing` dedupes to the in-flight promise; `force` wins immediately. Predicate throw/reject = veto (fail-closed; dev warning).
 
-**Paths** — honor blockers: `end`/`dismiss` (user intent). Skip: `cancelQueued` (serial, never mounted). Force: component/outlet unmount, route teardown; **layer-group cascade** (`onLayerDismiss` → `#drainChildStacks`) forces children — guard the parent instead.
+**Paths** — honor blockers: `end`/`dismiss` (user intent). Skip: `cancelQueued` (serial, never mounted), `cancelAll` (system teardown). **Layer-group cascade** (`onLayerDismiss` → `#drainChildStacks` → `cancelAll`) rejects child `open()` with `LayerCancelledError` — guard the parent instead.
 
 **`dismissAll` modes** — `stack.dismissAll(response, opts?: { mode? })` is async:
 
@@ -147,10 +147,11 @@ Gate runs **before** exit transition (§ Transitions): allowed → resolve promi
 
 `open` returns `Promise<R>` (the await-the-response contract) — so error types are **not** carried on the promise (TypeScript can't type promise rejections). The promise **rejects** with:
 
-- the `loadFn`-thrown error (typed `E` at runtime), or
-- a `PayloadValidationError` when `validate` fails (see below).
+- the `loadFn`-thrown error (typed `E` at runtime),
+- a `PayloadValidationError` when `validate` fails (see below), or
+- a `LayerCancelledError` from system teardown (`cancelAll`, parent-dismiss child clear, group dispose, host disconnect).
 
-Narrow in a `catch` with the shipped guards (`isPayloadValidationError`) or the app's own error guards. A typed-error-on-await would require a `Result`-returning `open`, which we deliberately reject to keep the direct-`await` ergonomic; an opt-in `openSafe()` may come later.
+Narrow in a `catch` with the shipped guards (`isPayloadValidationError`, `isLayerCancelledError`) or the app's own error guards. A typed-error-on-await would require a `Result`-returning `open`, which we deliberately reject to keep the direct-`await` ergonomic; an opt-in `openSafe()` may come later.
 
 **Payload validation** — an optional `validate` (a [Standard Schema](https://standardschema.dev) or a sync `(input) => output` fn) on `open`/`layerOptions` parses untrusted input **synchronously at `open`, before mount**. It parses/transforms: `open`'s `payload` argument is the schema **input**, while the layer stores (and the component sees) the **output**. Invalid input rejects `open` with `PayloadValidationError` and mounts nothing; an async schema is a config error. No schema-library dependency — Standard Schema is the universal interface.
 
@@ -182,7 +183,7 @@ Narrow in a `catch` with the shipped guards (`isPayloadValidationError`) or the 
 
 ## Layer groups
 
-A parent layer owns a **child stack** on the same `LayerClient` via `createLayerGroup(client, call)` (each adapter wraps it as `useLayerGroup(call)`). The child stack id is derived collision-safely from the parent's `stackId` + instance `layerId` — `` `${parentStackId}~${parentLayerId}~${name}` `` — so sibling and nested groups never clash. Lifetime is **event-driven**: `LayerStack.onLayerDismiss` fires on dismiss → the client drains that layer's registered child stacks, recursively for nesting. No second client, no manual cleanup. Rejected alternatives: a second `LayerClient` (disconnected from provider/config) and a `call.group()` method (would couple the call-context module to the client).
+A parent layer owns a **child stack** on the same `LayerClient` via `createLayerGroup(client, call)` (each adapter wraps it as `useLayerGroup(call)`). The child stack id is derived collision-safely from the parent's `stackId` + instance `layerId` — `` `${parentStackId}~${parentLayerId}~${name}` `` — so sibling and nested groups never clash. Lifetime is **event-driven**: `LayerStack.onLayerDismiss` fires on dismiss → the client `cancelAll`s that layer's registered child stacks (`reason: "parentDismiss"`), recursively for nesting. No second client, no manual cleanup. Rejected alternatives: a second `LayerClient` (disconnected from provider/config) and a `call.group()` method (would couple the call-context module to the client).
 
 ## Type defaults & inference
 

@@ -467,13 +467,17 @@ export interface LayerGroup<RootProps = unknown> {
   dismissAll: (response?: unknown) => void;
   states: AlpineStack<RootProps>;
   stackId: string;
-  /** Tear down the child stack group subscription and dismiss child layers. */
+  /**
+   * Tear down the group subscription and `cancelAll` child layers
+   * (`LayerCancelledError`, reason `groupDispose`).
+   */
   dispose(): void;
 }
 
 /**
  * Nested child stack for a parent layer call. Render with a nested
- * `x-layer-outlet` bound to {@link LayerGroup.stackId}.
+ * `x-layer-outlet` bound to {@link LayerGroup.stackId}. Parent cleanup
+ * `cancelAll`s the child stack (`LayerCancelledError`).
  */
 export function useLayerGroup<P, R, RootProps = unknown>(
   call: LayerCallContext<P, R, RootProps>,
@@ -486,7 +490,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
   const states = useStack<RootProps>({ stack: stackId }, resolved);
   const dispose = () => {
     group.dispose();
-    resolved.dismissAll(group.stackId);
+    resolved.cancelAll(group.stackId, { reason: "groupDispose" });
     states.destroy();
   };
   const open = (<

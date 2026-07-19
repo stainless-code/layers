@@ -66,3 +66,54 @@ export class LayerKeyError extends Error {
 export function isLayerKeyError(value: unknown): value is LayerKeyError {
   return value instanceof LayerKeyError;
 }
+
+/**
+ * Why {@link LayerCancelledError} rejected an `open()` promise.
+ *
+ * - `parentDismiss` — child stack `cancelAll`'d when its parent layer dismissed
+ * - `groupDispose` — adapter / host cleaned up a `useLayerGroup` owner
+ * - `cancelAll` — explicit {@link LayerStack#cancelAll} / {@link LayerClient#cancelAll}
+ * - `stackDisconnect` — host disconnect (e.g. Lit `hostDisconnected`)
+ */
+export type LayerCancelReason =
+  | "parentDismiss"
+  | "groupDispose"
+  | "cancelAll"
+  | "stackDisconnect";
+
+/**
+ * Rejects `open()` when a stack is torn down without a completion response
+ * (`cancelAll`, parent dismiss child clear, group dispose, `stackDisconnect`).
+ */
+export class LayerCancelledError extends Error {
+  /** {@link LayerCancelReason} that triggered this rejection. */
+  readonly reason: LayerCancelReason;
+  constructor(reason: LayerCancelReason = "cancelAll") {
+    super(`LayerCancelledError: ${reason}`);
+    this.name = "LayerCancelledError";
+    this.reason = reason;
+  }
+}
+
+/**
+ * Narrows an unknown rejection to {@link LayerCancelledError}.
+ * Treat any cancel reason as normal teardown unless you branch on
+ * {@link LayerCancelledError#reason}.
+ *
+ * @example
+ * ```ts
+ * import { isLayerCancelledError } from "@stainless-code/layers";
+ *
+ * try {
+ *   await confirm.open(payload);
+ * } catch (error) {
+ *   if (isLayerCancelledError(error)) return;
+ *   throw error;
+ * }
+ * ```
+ */
+export function isLayerCancelledError(
+  value: unknown,
+): value is LayerCancelledError {
+  return value instanceof LayerCancelledError;
+}

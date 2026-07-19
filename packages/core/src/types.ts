@@ -29,6 +29,15 @@ export type BlockerFn = () => boolean | Promise<boolean>;
 /** Stack-scoped predicate — `true` allows dismissal. */
 export type StackBlockerFn = (layer: LayerState) => boolean | Promise<boolean>;
 
+/**
+ * How {@link LayerStack#dismissAll} treats blockers. All modes still
+ * **resolve** `open()` with the dismiss response — unlike {@link LayerStack#cancelAll},
+ * which rejects with {@link LayerCancelledError}.
+ *
+ * - `skipBlocked` — soft-dismiss each layer; leave blocked ones
+ * - `stopAtBlocked` — soft-dismiss until the first veto, then stop
+ * - `force` — bypass blockers; still completes with the response
+ */
 export type DismissAllMode = "skipBlocked" | "stopAtBlocked" | "force";
 
 export interface DismissOptions {
@@ -181,7 +190,10 @@ export interface LayerClientOptions {
   defaultStackOptions?: StackDefaults;
 }
 
-/** Coarse mutation label for devtools / {@link LayerClient#subscribeNotify}. */
+/**
+ * Coarse mutation label for devtools / {@link LayerClient#subscribeNotify}.
+ * `dismissAll` = bulk completion; `cancelAll` = teardown that rejects `open()`.
+ */
 export type StackNotifyAction =
   | "register"
   | "open"
@@ -192,6 +204,7 @@ export type StackNotifyAction =
   | "dismiss"
   | "dismissVetoed"
   | "dismissAll"
+  | "cancelAll"
   | "cancelQueued"
   | "phase"
   | "remove";

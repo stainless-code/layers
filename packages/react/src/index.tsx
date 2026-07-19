@@ -524,7 +524,8 @@ export interface LayerGroup {
 /**
  * Create a child stack scoped to the calling layer's lifetime.
  *
- * The child stack is disposed and dismissed when its parent layer unmounts.
+ * The child stack is disposed and cleared via `cancelAll` when its parent
+ * layer unmounts (`LayerCancelledError`).
  */
 export function useLayerGroup<P, R, RootProps = unknown>(
   call: LayerCallContext<P, R, RootProps>,
@@ -537,7 +538,7 @@ export function useLayerGroup<P, R, RootProps = unknown>(
     const group = createLayerGroup(client, call, options);
     return () => {
       group.dispose();
-      client.dismissAll(group.stackId);
+      client.cancelAll(group.stackId, { reason: "groupDispose" });
     };
   }, [client, stackId]);
 

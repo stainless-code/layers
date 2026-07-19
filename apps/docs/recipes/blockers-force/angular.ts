@@ -14,6 +14,7 @@ import {
   provideLayerClient,
   renderStack,
   injectLayer,
+  isLayerCancelledError,
   useLayerGroup,
 } from "@stainless-code/angular-layers";
 import type {
@@ -109,14 +110,18 @@ class EditDialogComponent {
       this.call.end(false);
       return;
     }
-    const discard = await this.group.open({
-      ...discardConfirm,
-      payload: {
-        title: "Discard changes?",
-        message: "You'll lose your unsaved edits.",
-      },
-    });
-    if (discard) this.call.end(false, { force: true });
+    try {
+      const discard = await this.group.open({
+        ...discardConfirm,
+        payload: {
+          title: "Discard changes?",
+          message: "You'll lose your unsaved edits.",
+        },
+      });
+      if (discard) this.call.end(false, { force: true });
+    } catch (error) {
+      if (!isLayerCancelledError(error)) throw error;
+    }
   }
 }
 

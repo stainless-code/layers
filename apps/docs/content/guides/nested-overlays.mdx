@@ -5,7 +5,7 @@ search:
   tags: ["guide"]
 ---
 
-A drawer that opens a sub-dialog needs its own stack — but tied to the parent layer's lifetime. Layer groups create a child stack on the same `LayerClient`; when the parent dismisses, children drain automatically.
+A drawer that opens a sub-dialog needs its own stack — but tied to the parent layer's lifetime. Layer groups create a child stack on the same `LayerClient`; when the parent dismisses, children are cleared with `cancelAll` and awaiting child `open()` promises reject with `LayerCancelledError` (not a completion response). Narrow with `isLayerCancelledError` — see [Error handling](/guides/error-handling). `void group.open(...)` is fine (core swallows cancel for fire-and-forget).
 
 ## Create a child stack
 
@@ -273,7 +273,7 @@ Store entry renders via `$childStack` + standalone `callFor` — same `group.ope
 | `stackId`                                                         | Derived id — `` `${parentStackId}~${parentLayerId}~${name}` `` |
 
 :::warning[Heads up]
-Child stacks cascade on parent dismiss — blockers on the parent are the right place to guard "close drawer with open sub-dialog?". Children are force-drained; see [Dismissal blockers](/guides/dismissal-blockers).
+Child stacks cascade on parent dismiss — blockers on the parent are the right place to guard "close drawer with open sub-dialog?". Children are cleared via `cancelAll` (`LayerCancelledError`); see [Dismissal blockers](/guides/dismissal-blockers).
 :::
 
 No second `LayerClient`, no manual cleanup. See [Lifecycle](/concepts/lifecycle) for how dismissal propagates.

@@ -350,7 +350,7 @@ Stores entry: same names (`createLayer`, `createLayerState`, `createQueuedStack`
 
 ## Nested stacks
 
-`useLayerGroup(call, options?)` creates a child stack scoped to the calling layer's lifetime. Returns `{ open, dismissAll, stack, stackId }`. The group is disposed and all child layers dismissed on `onDestroy`. Render child layers inline with the group's stack handle.
+`useLayerGroup(call, options?)` creates a child stack scoped to the calling layer's lifetime. Returns `{ open, dismissAll, stack, stackId }`. On `onDestroy`, the group `dispose`s and `cancelAll`s child layers (`LayerCancelledError`). Render child layers inline with the group's stack handle.
 
 ### Runes
 

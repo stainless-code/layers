@@ -171,7 +171,7 @@ call.addBlocker(async () =>
 );
 ```
 
-`dismissing` is `true` while blockers run, and `{ force: true }` bypasses them. `stack.dismissAll(response, { mode })` supports `skipBlocked`, `stopAtBlocked`, and `force`; the default is `skipBlocked`, configurable per stack with `dismissAllMode` in `defaultStackOptions`. Teardown, unmount, and parent-child cascade force dismissal.
+`dismissing` is `true` while blockers run, and `{ force: true }` bypasses them. `stack.dismissAll(response, { mode })` supports `skipBlocked`, `stopAtBlocked`, and `force`; the default is `skipBlocked`, configurable per stack with `dismissAllMode` in `defaultStackOptions`. System teardown uses `cancelAll` (parent-dismiss child drain, group dispose, host disconnect) and rejects `open()` with `LayerCancelledError` — narrow with `isLayerCancelledError`. Do not conflate that with user dismiss / `dismissAll(response)`, which still resolve with `R`.
 
 ## Payload validation
 
@@ -242,7 +242,7 @@ Serial scope allows only one occupying layer (`pending`, `active`, or `error` wh
 
 ## Nested layers
 
-`createLayerGroup(client, call, options?)` creates a child stack scoped to its parent layer. Parent dismissal force-drains the child stack; `dispose()` removes the lifetime binding when the owner unmounts.
+`createLayerGroup(client, call, options?)` creates a child stack scoped to its parent layer. Parent dismissal `cancelAll`s the child stack (`LayerCancelledError`, `reason: "parentDismiss"`); `dispose()` removes the lifetime binding when the owner unmounts.
 
 ```ts
 import { createLayerGroup } from "@stainless-code/layers";
@@ -260,7 +260,7 @@ group.dispose();
 
 ## Multi-stack
 
-Use `ensureStack(id, options?)` to materialize a configured surface, `getStackIds()` to enumerate materialized stacks, and `subscribeStacks(listener)` to observe newly created stacks. `LayerClient.dismissAll(stackId, response?, options?)` drains a named surface.
+Use `ensureStack(id, options?)` to materialize a configured surface, `getStackIds()` to enumerate materialized stacks, and `subscribeStacks(listener)` to observe newly created stacks. `LayerClient.dismissAll(stackId, response?, options?)` completes open callers with a response; `LayerClient.cancelAll(stackId?, { reason? })` force-clears and rejects with `LayerCancelledError`.
 
 ## Public API
 
@@ -272,6 +272,7 @@ The complete public API surface:
 | Infrastructure classes           | `Subscribable`, `ControlledPromise`                                                                                           |
 | Validation class                 | `PayloadValidationError`                                                                                                      |
 | Key errors                       | `LayerKeyError`, `isLayerKeyError`, `assertLayerKey`                                                                          |
+| Cancel errors                    | `LayerCancelledError`, `isLayerCancelledError`, `LayerCancelReason`                                                           |
 | Declaration and inference        | `layerOptions`, `layerKey`, `DataTag`, `InferDataTagResponse`, `InferDataTagError`, `ResponseOf`, `ErrorOf`                   |
 | Wired handles                    | `createLayer`, `LayerHandle`, `ValidatedLayerHandle`                                                                          |
 | Rendering seam                   | `createCallContext`, `LayerCallContext`, `LayerComponentProps`, `LayerComponent`                                              |

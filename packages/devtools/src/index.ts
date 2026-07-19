@@ -16,6 +16,7 @@ export type { LayersDevtoolsInit } from "./core";
 export {
   cancelQueuedHead,
   dismissAllWithMode,
+  forceClearStack,
   forceDismissTop,
   softDismissTop,
 } from "./live-actions";

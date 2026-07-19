@@ -81,8 +81,8 @@ Default mode is configurable via `StackOptions.dismissAllMode` or `LayerClientOp
 | `call.end` / `call.dismiss` | Honored |
 | `stack.dismiss` / `stack.dismissAll` | Honored |
 | `cancelQueued` (serial, never mounted) | Skipped |
-| Component/outlet unmount, route teardown | Skipped (force) |
-| Layer-group cascade on parent dismiss | Skipped (force) — guard the parent |
+| `cancelAll` / component unmount / host disconnect | Skipped — rejects `open()` with `LayerCancelledError` |
+| Layer-group cascade on parent dismiss | Skipped — child `cancelAll({ reason: "parentDismiss" })`; guard the parent |
 
 :::danger
 Predicate throw/reject is treated as a veto (fail-closed). Confirm UI for async blockers is always your responsibility — core never opens UI on your behalf.

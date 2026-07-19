@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  isLayerCancelledError,
   layerOptions,
   useLayerGroup,
   type LayerComponentProps,
@@ -20,17 +21,21 @@ const childConfirm = layerOptions<ChildPayload, ChildResponse>({
 const { call, payload } =
   defineProps<LayerComponentProps<ParentPayload, void>>();
 
-// Owns a child stack scoped to this parent's lifetime; auto-drains on dismiss.
+// Owns a child stack scoped to this parent's lifetime; parent dismiss cancelAlls it.
 const group = useLayerGroup(call);
 const childResult = ref<boolean | null>(null);
 
 async function openChild() {
   childResult.value = null;
-  const ok = await group.open({
-    ...childConfirm,
-    payload: { title: "Really delete this item?" },
-  });
-  childResult.value = ok;
+  try {
+    const ok = await group.open({
+      ...childConfirm,
+      payload: { title: "Really delete this item?" },
+    });
+    childResult.value = ok;
+  } catch (error) {
+    if (!isLayerCancelledError(error)) throw error;
+  }
 }
 </script>
 

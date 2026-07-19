@@ -1,4 +1,5 @@
 import {
+  isLayerCancelledError,
   layerOptions,
   StackOutlet,
   StackProvider,
@@ -45,14 +46,18 @@ function EditLayer({
       call.end(false);
       return;
     }
-    const discard = await group.open({
-      ...discardConfirm,
-      payload: {
-        title: "Discard changes?",
-        message: "You'll lose unsaved edits.",
-      },
-    });
-    if (discard) call.end(false, { force: true }); // force bypasses blockers
+    try {
+      const discard = await group.open({
+        ...discardConfirm,
+        payload: {
+          title: "Discard changes?",
+          message: "You'll lose unsaved edits.",
+        },
+      });
+      if (discard) call.end(false, { force: true }); // force bypasses blockers
+    } catch (error) {
+      if (!isLayerCancelledError(error)) throw error;
+    }
   };
 
   return (

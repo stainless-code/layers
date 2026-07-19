@@ -1,4 +1,5 @@
 import type { DataTag } from "./dataTag";
+import type { LayerCancelReason } from "./errors";
 import { LayerStack } from "./layerStack";
 import type {
   DefaultLayerError,
@@ -96,7 +97,11 @@ export class LayerClient {
       return;
     }
     for (const childId of childIds) {
-      void this.#stacks.get(childId)?.dismissAll(undefined, { mode: "force" });
+      // Swallow cancelAll rejection if onLayerDismiss throws mid-teardown.
+      void this.#stacks
+        .get(childId)
+        ?.cancelAll({ reason: "parentDismiss" })
+        .catch(() => {});
     }
     this.#childStacksByParent.delete(parentLayerId);
   }
@@ -190,6 +195,12 @@ export class LayerClient {
     }
   }
 
+  /**
+   * Bulk-dismisses a stack, completing every `open()` with `response`
+   * (including omitted/`undefined` for void layers). Honors
+   * {@link DismissAllMode}; does not reject — prefer {@link cancelAll} for
+   * teardown without a completion value.
+   */
   dismissAll(
     stackId = "default",
     response?: unknown,
@@ -198,5 +209,22 @@ export class LayerClient {
     return (
       this.#stack(stackId) as LayerStack<unknown, unknown, unknown, unknown>
     ).dismissAll(response, opts);
+  }
+
+  /**
+   * Force-clears a stack and rejects every open/queued caller with
+   * {@link LayerCancelledError}. System teardown — prefer {@link dismissAll}
+   * when completing with a response.
+   *
+   * @param opts.reason - Propagated on each rejection.
+   * @default opts.reason `"cancelAll"`
+   */
+  cancelAll(
+    stackId = "default",
+    opts?: { reason?: LayerCancelReason },
+  ): Promise<void> {
+    return (
+      this.#stack(stackId) as LayerStack<unknown, unknown, unknown, unknown>
+    ).cancelAll(opts);
   }
 }

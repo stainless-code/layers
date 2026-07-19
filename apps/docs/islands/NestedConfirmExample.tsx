@@ -1,6 +1,7 @@
 export const client = "visible";
 
 import {
+  isLayerCancelledError,
   layerOptions,
   StackProvider,
   StackOutlet,
@@ -157,11 +158,15 @@ function ParentDialog({
             kind="primary"
             onClick={async () => {
               setChildResult(null);
-              const ok = await group.open({
-                ...childConfirm,
-                payload: { title: "Really delete this item?" },
-              });
-              setChildResult(ok);
+              try {
+                const ok = await group.open({
+                  ...childConfirm,
+                  payload: { title: "Really delete this item?" },
+                });
+                setChildResult(ok);
+              } catch (error) {
+                if (!isLayerCancelledError(error)) throw error;
+              }
             }}
           >
             Open child

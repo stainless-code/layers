@@ -1,8 +1,10 @@
 import { describe, expect, it } from "bun:test";
 
 import {
+  isLayerCancelledError,
   isLayerKeyError,
   isPayloadValidationError,
+  LayerCancelledError,
   LayerKeyError,
   PayloadValidationError,
 } from "./errors";
@@ -325,6 +327,109 @@ describe("LayerStack — scope serial", () => {
     expect(await b.promise.promise).toBe(true);
     expect(stack.getSnapshot()).toHaveLength(0);
     expect(stack.getQueuedSnapshot()).toHaveLength(0);
+  });
+
+  it("cancelAll rejects active and queued open() promises", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s", {
+      scope: { strategy: "serial" },
+    });
+    const a = stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["b"], payload: { n: 2 } });
+    expect(stack.getQueuedSnapshot()).toHaveLength(1);
+    await stack.cancelAll({ reason: "cancelAll" });
+    await expect(a.promise.promise).rejects.toBeInstanceOf(LayerCancelledError);
+    await expect(b.promise.promise).rejects.toBeInstanceOf(LayerCancelledError);
+    expect(stack.getSnapshot()).toHaveLength(0);
+    expect(stack.getQueuedSnapshot()).toHaveLength(0);
+    try {
+      await a.promise.promise;
+    } catch (error) {
+      expect(isLayerCancelledError(error)).toBe(true);
+      if (isLayerCancelledError(error)) {
+        expect(error.reason).toBe("cancelAll");
+      }
+    }
+  });
+
+  it("cancelAll rejects every parallel active open()", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s");
+    const a = stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["b"], payload: { n: 2 } });
+    expect(stack.getSnapshot()).toHaveLength(2);
+    await stack.cancelAll({ reason: "groupDispose" });
+    await expect(a.promise.promise).rejects.toMatchObject({
+      name: "LayerCancelledError",
+      reason: "groupDispose",
+    });
+    await expect(b.promise.promise).rejects.toMatchObject({
+      name: "LayerCancelledError",
+      reason: "groupDispose",
+    });
+  });
+
+  it("cancelAll propagates stackDisconnect reason", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s");
+    const layer = stack.open({ key: ["a"], payload: { n: 1 } });
+    await stack.cancelAll({ reason: "stackDisconnect" });
+    try {
+      await layer.promise.promise;
+      expect.unreachable();
+    } catch (error) {
+      expect(isLayerCancelledError(error)).toBe(true);
+      if (isLayerCancelledError(error)) {
+        expect(error.reason).toBe("stackDisconnect");
+      }
+    }
+  });
+
+  it("cancelAll does not raise unhandledrejection for void open()", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s");
+    const unhandled: unknown[] = [];
+    const onUnhandled = (reason: unknown) => {
+      unhandled.push(reason);
+    };
+    process.on("unhandledRejection", onUnhandled);
+    try {
+      void stack.open({ key: ["a"], payload: { n: 1 } }).promise.promise;
+      await stack.cancelAll();
+      await Promise.resolve();
+      await Promise.resolve();
+      expect(unhandled).toHaveLength(0);
+    } finally {
+      process.off("unhandledRejection", onUnhandled);
+    }
+  });
+
+  it("cancelAll skips blockers", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s");
+    const layer = stack.open({ key: ["a"], payload: { n: 1 } });
+    stack.addBlocker(() => false);
+    await stack.cancelAll();
+    await expect(layer.promise.promise).rejects.toBeInstanceOf(
+      LayerCancelledError,
+    );
+    expect(stack.getSnapshot()).toHaveLength(0);
+  });
+
+  it("cancelAll rejects every open() even if onLayerDismiss throws", async () => {
+    const stack = new LayerStack<{ n: number }, boolean>("s");
+    stack.onLayerDismiss = () => {
+      throw new Error("hook boom");
+    };
+    const a = stack.open({ key: ["a"], payload: { n: 1 } });
+    const b = stack.open({ key: ["b"], payload: { n: 2 } });
+    await expect(stack.cancelAll()).rejects.toThrow("hook boom");
+    await expect(a.promise.promise).rejects.toBeInstanceOf(LayerCancelledError);
+    await expect(b.promise.promise).rejects.toBeInstanceOf(LayerCancelledError);
+    expect(stack.getSnapshot()).toHaveLength(0);
+  });
+
+  it("dismissAll(undefined) for void R still resolves (not cancel)", async () => {
+    const stack = new LayerStack<{ n: number }, void>("s");
+    const layer = stack.open({ key: ["a"], payload: { n: 1 } });
+    await stack.dismissAll(undefined);
+    await expect(layer.promise.promise).resolves.toBe(undefined);
+    expect(stack.getSnapshot()).toHaveLength(0);
   });
 
   it("onLoadError block (default): error occupies lane; queued waits; no leapfrog", async () => {

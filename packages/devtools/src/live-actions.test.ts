@@ -5,6 +5,7 @@ import { LayerClient } from "@stainless-code/layers";
 import {
   cancelQueuedHead,
   dismissAllWithMode,
+  forceClearStack,
   forceDismissTop,
   softDismissTop,
 } from "./live-actions";
@@ -74,7 +75,7 @@ describe("live-actions", () => {
     expect(stack.getSnapshot()).toHaveLength(0);
   });
 
-  it("dismissAllWithMode force clears active and queued", async () => {
+  it("dismissAllWithMode completes open callers with undefined", async () => {
     const client = new LayerClient();
     client.ensureStack("default", { scope: { strategy: "serial" } });
 
@@ -83,11 +84,52 @@ describe("live-actions", () => {
     await Promise.resolve();
 
     await dismissAllWithMode(client, "default", "force");
-    await Promise.all([a, b]);
+    expect(await a).toBeUndefined();
+    expect(await b).toBeUndefined();
 
     const stack = client.getStack("default");
     expect(stack.getSnapshot()).toHaveLength(0);
     expect(stack.getQueuedSnapshot()).toHaveLength(0);
+  });
+
+  it("forceClearStack rejects open callers with LayerCancelledError", async () => {
+    const client = new LayerClient();
+    client.ensureStack("default", { scope: { strategy: "serial" } });
+
+    const a = client.open({ key: ["a"], payload: {} });
+    const b = client.open({ key: ["b"], payload: {} });
+    await Promise.resolve();
+
+    await forceClearStack(client, "default");
+    await expect(a).rejects.toMatchObject({
+      name: "LayerCancelledError",
+      reason: "cancelAll",
+    });
+    await expect(b).rejects.toMatchObject({
+      name: "LayerCancelledError",
+      reason: "cancelAll",
+    });
+
+    const stack = client.getStack("default");
+    expect(stack.getSnapshot()).toHaveLength(0);
+    expect(stack.getQueuedSnapshot()).toHaveLength(0);
+  });
+
+  it("dismissAllWithMode skipBlocked leaves a blocked layer", async () => {
+    const client = new LayerClient();
+    const openPromise = client.open({ key: ["blocked"], payload: {} });
+    await Promise.resolve();
+
+    const stack = client.getStack("default");
+    const layer = stack.getSnapshot()[0];
+    expect(layer).toBeDefined();
+    stack.getLayer(layer!.id)!.addBlocker(() => false);
+
+    await dismissAllWithMode(client, "default", "skipBlocked");
+    expect(stack.getSnapshot()).toHaveLength(1);
+
+    expect(forceDismissTop(client, "default")).not.toBe(false);
+    await openPromise;
   });
 
   it("missing stackId does not materialize a stack", async () => {
@@ -98,6 +140,7 @@ describe("live-actions", () => {
     expect(cancelQueuedHead(client, "missing")).toBe(false);
     expect(forceDismissTop(client, "missing")).toBe(false);
     await dismissAllWithMode(client, "missing", "force");
+    await forceClearStack(client, "missing");
 
     expect(client.getStackIds()).toEqual([]);
   });

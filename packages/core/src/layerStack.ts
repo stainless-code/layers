@@ -1,3 +1,5 @@
+import { LayerCancelledError } from "./errors";
+import type { LayerCancelReason } from "./errors";
 import { Layer } from "./layer";
 import { createLayerGcCache } from "./layerGcCache";
 import { notifyManager } from "./notifyManager";
@@ -47,7 +49,7 @@ export class LayerStack<
   readonly id: string;
   readonly options: StackOptions;
 
-  /** @internal Allows LayerClient to drain child stacks on dismissal. */
+  /** @internal Allows LayerClient to `cancelAll` child stacks on parent dismissal. */
   onLayerDismiss?: (layer: Layer<P, R, E, D>) => void;
 
   /** @internal Fan-out hook for {@link LayerClient#subscribeNotify}. */
@@ -376,6 +378,12 @@ export class LayerStack<
     }
   }
 
+  /**
+   * Bulk-dismisses active and queued layers, completing every `open()` with
+   * `response` (including `undefined` when `R` is `void`). Honors
+   * {@link DismissAllMode}; does not reject — use {@link cancelAll} for
+   * teardown without a completion value.
+   */
   async dismissAll(response: R, opts?: DismissAllOptions): Promise<void> {
     const mode = opts?.mode ?? this.options.dismissAllMode ?? "skipBlocked";
     // Final labeled snapshot: active-only stacks only emit per-layer `"dismiss"`.
@@ -413,6 +421,64 @@ export class LayerStack<
         this.#emitNotify("dismissAll");
       }
     }
+  }
+
+  /**
+   * Force-clears the stack and rejects every open/queued caller with
+   * {@link LayerCancelledError}. Skips blockers. System teardown path —
+   * use {@link dismissAll} when completing with a response.
+   *
+   * @param opts.reason - Propagated on each rejection.
+   * @default opts.reason `"cancelAll"`
+   */
+  async cancelAll(opts?: { reason?: LayerCancelReason }): Promise<void> {
+    const error = new LayerCancelledError(opts?.reason ?? "cancelAll");
+    const shouldEmit = this.#scopeQueue.length > 0 || this.#layers.length > 0;
+    try {
+      notifyManager.batch(() => {
+        for (const entry of this.#scopeQueue) {
+          this.#rejectCancel(entry.layer, error);
+        }
+        this.#scopeQueue = [];
+        const mounted = [...this.#layers];
+        this.#layers = [];
+        // Reject + flush before hooks so a throwing onLayerDismiss cannot
+        // leave later open() pending or a stale non-empty snapshot.
+        for (const layer of mounted) {
+          this.#rejectCancel(layer, error);
+        }
+        this.#flush();
+        for (const layer of mounted) {
+          this.onLayerDismiss?.(layer);
+          this.#gcCache.maybeStore(layer);
+        }
+      });
+    } finally {
+      if (shouldEmit) {
+        this.#emitNotify("cancelAll");
+      }
+    }
+  }
+
+  /** Abort, reject open(), mark dismissed — no completion response. */
+  #rejectCancel(layer: Layer<P, R, E, D>, error: LayerCancelledError): void {
+    if (layer.enterTimer) {
+      clearTimeout(layer.enterTimer);
+      layer.enterTimer = undefined;
+    }
+    if (layer.exitTimer) {
+      clearTimeout(layer.exitTimer);
+      layer.exitTimer = undefined;
+    }
+    layer.abort();
+    layer.reject(error as E);
+    // Prevent unhandledrejection when callers used void open().
+    void layer.promise.promise.catch(() => {});
+    layer.setPartial({
+      phase: "dismissed",
+      transition: "settled",
+      ended: true,
+    });
   }
 
   /**

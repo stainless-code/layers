@@ -226,7 +226,7 @@ function CustomHost() {
 
 ## Nested layers
 
-Inside a layer component, `useLayerGroup(call)` owns a child stack scoped to the parent's lifetime — it auto-drains when the parent dismisses.
+Inside a layer component, `useLayerGroup(call)` owns a child stack scoped to the parent's lifetime — parent dismiss / unmount `cancelAll`s it (`LayerCancelledError`).
 
 ```tsx
 import {

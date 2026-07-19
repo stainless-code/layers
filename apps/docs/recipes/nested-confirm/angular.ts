@@ -13,6 +13,7 @@ import {
   provideLayerClient,
   renderStack,
   injectLayer,
+  isLayerCancelledError,
   useLayerGroup,
 } from "@stainless-code/angular-layers";
 import type {
@@ -85,11 +86,15 @@ class ParentDialogComponent {
 
   async deleteItem() {
     this.childResult.set(null);
-    const ok = await this.group.open({
-      ...childConfirm,
-      payload: { title: "Really delete this item?" },
-    });
-    this.childResult.set(ok);
+    try {
+      const ok = await this.group.open({
+        ...childConfirm,
+        payload: { title: "Really delete this item?" },
+      });
+      this.childResult.set(ok);
+    } catch (error) {
+      if (!isLayerCancelledError(error)) throw error;
+    }
   }
 }
 
