@@ -1,6 +1,7 @@
 export const client = "load";
 
 import {
+  isLayerCancelledError,
   layerOptions,
   LayerClient,
   StackOutlet,
@@ -411,17 +412,21 @@ function HeroNestedDrawer({
     setSettings((s) => ({ ...s, [k]: !s[k] }));
 
   const save = async () => {
-    const ok = await group.open({
-      key: ["hero-nested-confirm"],
-      component: HeroNestedConfirm,
-      enteringDelay: ENTER_MS,
-      exitingDelay: EXIT_MS,
-      payload: {
-        title: "Apply changes?",
-        message: "Update your account settings.",
-      },
-    });
-    if (ok) setSaved(true);
+    try {
+      const ok = await group.open({
+        key: ["hero-nested-confirm"],
+        component: HeroNestedConfirm,
+        enteringDelay: ENTER_MS,
+        exitingDelay: EXIT_MS,
+        payload: {
+          title: "Apply changes?",
+          message: "Update your account settings.",
+        },
+      });
+      if (ok) setSaved(true);
+    } catch (error) {
+      if (!isLayerCancelledError(error)) throw error;
+    }
   };
 
   return (
@@ -641,17 +646,21 @@ function HeroBlockerDialog({
       call.end(false);
       return;
     }
-    const discard = await group.open({
-      key: ["hero-discard"],
-      component: HeroDiscardConfirm,
-      enteringDelay: ENTER_MS,
-      exitingDelay: EXIT_MS,
-      payload: {
-        title: "Discard changes?",
-        message: "You'll lose your unsaved edits.",
-      },
-    });
-    if (discard) call.end(false, { force: true });
+    try {
+      const discard = await group.open({
+        key: ["hero-discard"],
+        component: HeroDiscardConfirm,
+        enteringDelay: ENTER_MS,
+        exitingDelay: EXIT_MS,
+        payload: {
+          title: "Discard changes?",
+          message: "You'll lose your unsaved edits.",
+        },
+      });
+      if (discard) call.end(false, { force: true });
+    } catch (error) {
+      if (!isLayerCancelledError(error)) throw error;
+    }
   };
 
   return (

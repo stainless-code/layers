@@ -9,6 +9,7 @@
     useLayerGroup,
     type LayerComponentProps,
   } from "@stainless-code/svelte-layers/store";
+  import { isLayerCancelledError } from "@stainless-code/layers";
 
   type ParentPayload = { title: string };
   type ChildPayload = { title: string };
@@ -32,11 +33,15 @@
 
   async function deleteItem() {
     childResult.set(null);
-    const ok = await group.open({
-      ...childConfirm,
-      payload: { title: "Really delete this item?" },
-    });
-    childResult.set(ok);
+    try {
+      const ok = await group.open({
+        ...childConfirm,
+        payload: { title: "Really delete this item?" },
+      });
+      childResult.set(ok);
+    } catch (error) {
+      if (!isLayerCancelledError(error)) throw error;
+    }
   }
 </script>
 

@@ -5,7 +5,7 @@ search:
   tags: ["guide"]
 ---
 
-A drawer that opens a sub-dialog needs its own stack — but tied to the parent layer's lifetime. Layer groups create a child stack on the same `LayerClient`; when the parent dismisses, children are cleared with `cancelAll` and awaiting child `open()` promises reject with `LayerCancelledError` (not a completion response).
+A drawer that opens a sub-dialog needs its own stack — but tied to the parent layer's lifetime. Layer groups create a child stack on the same `LayerClient`; when the parent dismisses, children are cleared with `cancelAll` and awaiting child `open()` promises reject with `LayerCancelledError` (not a completion response). Narrow with `isLayerCancelledError` — see [Error handling](/guides/error-handling). `void group.open(...)` is fine (core swallows cancel for fire-and-forget).
 
 ## Create a child stack
 

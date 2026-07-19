@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import {
+  isLayerCancelledError,
   layerOptions,
   useLayerGroup,
   type LayerComponentProps,
@@ -33,14 +34,18 @@ async function attemptClose() {
     call.end(false);
     return;
   }
-  const discard = await group.open({
-    ...discardConfirm,
-    payload: {
-      title: "Discard changes?",
-      message: "You'll lose your unsaved edits.",
-    },
-  });
-  if (discard) call.end(false, { force: true });
+  try {
+    const discard = await group.open({
+      ...discardConfirm,
+      payload: {
+        title: "Discard changes?",
+        message: "You'll lose your unsaved edits.",
+      },
+    });
+    if (discard) call.end(false, { force: true });
+  } catch (error) {
+    if (!isLayerCancelledError(error)) throw error;
+  }
 }
 </script>
 

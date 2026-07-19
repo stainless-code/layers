@@ -932,7 +932,7 @@ export class LayerGroupController<
         } else if (this.#client !== c) {
           this.#group.dispose();
           this.#client?.cancelAll(this.#stackId, {
-            reason: "stackDisconnect",
+            reason: "groupDispose",
           });
           this.#init(c);
         }

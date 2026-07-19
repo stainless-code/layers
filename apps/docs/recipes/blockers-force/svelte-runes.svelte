@@ -6,6 +6,7 @@
     useLayerGroup,
     type LayerComponentProps,
   } from "@stainless-code/svelte-layers";
+  import { isLayerCancelledError } from "@stainless-code/layers";
 
   type ParentPayload = { title: string };
   type ParentResponse = boolean;
@@ -39,14 +40,18 @@
       call.end(false);
       return;
     }
-    const discard = await group.open({
-      ...discardConfirm,
-      payload: {
-        title: "Discard changes?",
-        message: "You'll lose your unsaved edits.",
-      },
-    });
-    if (discard) call.end(false, { force: true });
+    try {
+      const discard = await group.open({
+        ...discardConfirm,
+        payload: {
+          title: "Discard changes?",
+          message: "You'll lose your unsaved edits.",
+        },
+      });
+      if (discard) call.end(false, { force: true });
+    } catch (error) {
+      if (!isLayerCancelledError(error)) throw error;
+    }
   }
 </script>
 

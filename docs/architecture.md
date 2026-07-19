@@ -147,10 +147,11 @@ Gate runs **before** exit transition (§ Transitions): allowed → resolve promi
 
 `open` returns `Promise<R>` (the await-the-response contract) — so error types are **not** carried on the promise (TypeScript can't type promise rejections). The promise **rejects** with:
 
-- the `loadFn`-thrown error (typed `E` at runtime), or
-- a `PayloadValidationError` when `validate` fails (see below).
+- the `loadFn`-thrown error (typed `E` at runtime),
+- a `PayloadValidationError` when `validate` fails (see below), or
+- a `LayerCancelledError` from system teardown (`cancelAll`, parent-dismiss child clear, group dispose, host disconnect).
 
-Narrow in a `catch` with the shipped guards (`isPayloadValidationError`) or the app's own error guards. A typed-error-on-await would require a `Result`-returning `open`, which we deliberately reject to keep the direct-`await` ergonomic; an opt-in `openSafe()` may come later.
+Narrow in a `catch` with the shipped guards (`isPayloadValidationError`, `isLayerCancelledError`) or the app's own error guards. A typed-error-on-await would require a `Result`-returning `open`, which we deliberately reject to keep the direct-`await` ergonomic; an opt-in `openSafe()` may come later.
 
 **Payload validation** — an optional `validate` (a [Standard Schema](https://standardschema.dev) or a sync `(input) => output` fn) on `open`/`layerOptions` parses untrusted input **synchronously at `open`, before mount**. It parses/transforms: `open`'s `payload` argument is the schema **input**, while the layer stores (and the component sees) the **output**. Invalid input rejects `open` with `PayloadValidationError` and mounts nothing; an async schema is a config error. No schema-library dependency — Standard Schema is the universal interface.
 

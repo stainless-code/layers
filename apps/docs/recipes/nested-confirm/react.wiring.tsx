@@ -1,4 +1,5 @@
 import {
+  isLayerCancelledError,
   layerOptions,
   StackOutlet,
   StackProvider,
@@ -32,10 +33,14 @@ function ParentLayer({
 }: LayerComponentProps<{ title: string }, void>) {
   const group = useLayerGroup(call, { name: "confirm" });
   const openChild = async () => {
-    await group.open({
-      ...childConfirm,
-      payload: { title: "Really delete this item?" },
-    });
+    try {
+      await group.open({
+        ...childConfirm,
+        payload: { title: "Really delete this item?" },
+      });
+    } catch (error) {
+      if (!isLayerCancelledError(error)) throw error;
+    }
   };
   return (
     <>

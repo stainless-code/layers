@@ -49,7 +49,7 @@ export class LayerStack<
   readonly id: string;
   readonly options: StackOptions;
 
-  /** @internal Allows LayerClient to drain child stacks on dismissal. */
+  /** @internal Allows LayerClient to `cancelAll` child stacks on parent dismissal. */
   onLayerDismiss?: (layer: Layer<P, R, E, D>) => void;
 
   /** @internal Fan-out hook for {@link LayerClient#subscribeNotify}. */

@@ -97,7 +97,11 @@ export class LayerClient {
       return;
     }
     for (const childId of childIds) {
-      void this.#stacks.get(childId)?.cancelAll({ reason: "parentDismiss" });
+      // Swallow cancelAll rejection if onLayerDismiss throws mid-teardown.
+      void this.#stacks
+        .get(childId)
+        ?.cancelAll({ reason: "parentDismiss" })
+        .catch(() => {});
     }
     this.#childStacksByParent.delete(parentLayerId);
   }

@@ -38,9 +38,9 @@ export function childStackId(
 }
 
 /**
- * Creates a child stack that drains automatically when its parent is dismissed.
- * Pass the {@link LayerClient} that owns `parent`; another client cannot observe
- * the parent's lifetime.
+ * Creates a child stack that is `cancelAll`'d (`LayerCancelledError`, reason
+ * `parentDismiss`) when its parent dismisses. Pass the {@link LayerClient} that
+ * owns `parent`; another client cannot observe the parent's lifetime.
  *
  * @example
  * ```ts

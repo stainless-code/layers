@@ -407,7 +407,7 @@ describe("useMutationFlow (lit)", () => {
 });
 
 describe("useLayerGroup (lit)", () => {
-  it("opens a child layer on the child stack and drains on dispose", async () => {
+  it("opens a child layer on the child stack and cancelAlls on disconnect", async () => {
     const client = new LayerClient();
     const harness = createHost();
     const call = makeCall(client);
@@ -440,7 +440,7 @@ describe("useLayerGroup (lit)", () => {
       );
     expect(await pending).toBe("done");
 
-    // disconnecting the group drains the child stack (layers dismissed)
+    // disconnecting the group cancelAlls the child stack
     harness.disconnect();
     expect(client.getStack(stackId).getSnapshot()).toHaveLength(0);
   });
