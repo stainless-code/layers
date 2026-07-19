@@ -276,7 +276,7 @@ The complete public API surface:
 | Wired handles                    | `createLayer`, `LayerHandle`, `ValidatedLayerHandle`                                                                          |
 | Rendering seam                   | `createCallContext`, `LayerCallContext`, `LayerComponentProps`, `LayerComponent`                                              |
 | Nested layers                    | `createLayerGroup`, `childStackId`, `LayerGroupOptions`, `LayerGroupHandle`                                                   |
-| Identity and notification values | `assertLayerKey`, `hashKey`, `keySignature`, `notifyManager`                                                                  |
+| Identity and notification values | `hashKey`, `keySignature`, `notifyManager`                                                                                    |
 | Validation API                   | `isPayloadValidationError`, `Validator`, `InferValidatorInput`, `InferValidatorOutput`, `StandardSchemaV1`, `ValidationIssue` |
 | Layer model types                | `LayerKey`, `LayerPhase`, `LayerTransition`, `LayerActionStatus`, `LayerState`, `LayerOptions`, `OpenLayerOptions`            |
 | Stack and client types           | `StackOptions`, `StackDefaults`, `LayerClientOptions`                                                                         |

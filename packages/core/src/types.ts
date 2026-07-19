@@ -1,12 +1,13 @@
 import type { Validator } from "./validators";
 
 /**
- * Stable identity for a layer instance.
+ * Logical identity for a layer (`find` / `upsert` / `gcTime`).
  *
  * Must be JSON-safe: `string` | `boolean` | `null` | finite `number`, or
  * plain objects / arrays of those. Compared via sorted `JSON.stringify` —
  * two keys with the same values in a different object-property order are equal.
- * Invalid keys throw {@link LayerKeyError} from {@link hashKey} / `open`.
+ * Invalid keys throw `LayerKeyError` from any path that hashes the key
+ * (`hashKey`, `open`, `find`, `cancelQueued`, `createLayer`).
  */
 export type LayerKey = ReadonlyArray<unknown>;
 

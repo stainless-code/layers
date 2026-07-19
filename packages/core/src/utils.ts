@@ -11,7 +11,8 @@ function isPlainObject(value: unknown): value is Record<string, unknown> {
 
 function sortedObject(value: Record<string, unknown>): Record<string, unknown> {
   const keys = Object.keys(value).sort();
-  const out: Record<string, unknown> = {};
+  // null prototype — own `__proto__` must not mutate [[Prototype]] / drop from hash
+  const out: Record<string, unknown> = Object.create(null);
   for (const k of keys) {
     out[k] = value[k];
   }
@@ -90,6 +91,7 @@ function walkLayerKey(
     for (let i = 0; i < value.length; i++) {
       walkLayerKey(value[i], [...path, i], seen);
     }
+    seen.delete(value);
     return;
   }
   if (!isPlainObject(value)) {
@@ -101,11 +103,20 @@ function walkLayerKey(
   for (const k of Object.keys(value)) {
     walkLayerKey(value[k], [...path, k], seen);
   }
+  seen.delete(value);
 }
 
 /**
  * Ensures a layer key is JSON-safe for {@link hashKey}.
  * Allowed: `string` | `boolean` | `null` | finite `number` | plain objects | arrays of those.
+ * Throws {@link LayerKeyError} when a segment is outside that domain.
+ *
+ * @example
+ * ```ts
+ * import { assertLayerKey } from "@stainless-code/layers";
+ *
+ * assertLayerKey(["confirm", filterId ?? "none"]);
+ * ```
  */
 export function assertLayerKey(key: unknown): asserts key is LayerKey {
   if (!Array.isArray(key)) {
@@ -114,7 +125,10 @@ export function assertLayerKey(key: unknown): asserts key is LayerKey {
   walkLayerKey(key, [], new WeakSet());
 }
 
-/** Serializes a key deterministically by sorting object properties recursively. */
+/**
+ * Serializes a key deterministically by sorting object properties recursively.
+ * Throws {@link LayerKeyError} when the key is not JSON-safe.
+ */
 export function hashKey(key: LayerKey): string {
   assertLayerKey(key);
   return JSON.stringify(key, (_unused, val) =>
@@ -122,7 +136,10 @@ export function hashKey(key: LayerKey): string {
   );
 }
 
-/** Produces the canonical identity used to compare layer keys. */
+/**
+ * Produces the canonical identity used to compare layer keys.
+ * Throws {@link LayerKeyError} when the key is not JSON-safe (via {@link hashKey}).
+ */
 export function keySignature(key: LayerKey): string {
   return hashKey(key);
 }

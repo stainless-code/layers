@@ -37,7 +37,7 @@ export function isPayloadValidationError(
   return value instanceof PayloadValidationError;
 }
 
-/** Thrown when a layer key is not JSON-safe (see {@link assertLayerKey}). */
+/** Thrown when a layer key is not JSON-safe (from `assertLayerKey` / `hashKey`). */
 export class LayerKeyError extends Error {
   readonly path: ReadonlyArray<PropertyKey>;
   constructor(message: string, path: ReadonlyArray<PropertyKey> = []) {
@@ -48,7 +48,7 @@ export class LayerKeyError extends Error {
 }
 
 /**
- * Narrows an unknown throw/rejection to {@link LayerKeyError}.
+ * Narrows an unknown synchronous throw to {@link LayerKeyError}.
  *
  * @example
  * ```ts

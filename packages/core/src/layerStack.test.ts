@@ -30,9 +30,31 @@ describe("hashKey / keySignature", () => {
     expect(() =>
       assertLayerKey(["modal", 1, true, null, { nested: ["a", 2] }]),
     ).not.toThrow();
+    expect(hashKey([])).toBe("[]");
+    expect(hashKey([["a"]])).toBe(JSON.stringify([["a"]]));
     expect(hashKey(["modal", 1, true, null])).toBe(
       JSON.stringify(["modal", 1, true, null]),
     );
+    const nullProto = Object.create(null) as Record<string, unknown>;
+    nullProto.id = 1;
+    expect(hashKey([nullProto])).toBe(JSON.stringify([{ id: 1 }]));
+  });
+  it("accepts shared object refs (DAGs), not only trees", () => {
+    const shared = { id: 1 };
+    expect(hashKey([{ x: shared, y: shared }])).toBe(
+      JSON.stringify([{ x: { id: 1 }, y: { id: 1 } }]),
+    );
+    expect(hashKey([shared, shared])).toBe(
+      JSON.stringify([{ id: 1 }, { id: 1 }]),
+    );
+  });
+  it("preserves own __proto__ keys in the hash (no prototype clobber)", () => {
+    const withProto = JSON.parse('{"__proto__":{"a":1}}') as Record<
+      string,
+      unknown
+    >;
+    expect(hashKey([withProto])).not.toBe(hashKey([{}]));
+    expect(hashKey([withProto])).toBe(JSON.stringify([withProto]));
   });
   it("rejects undefined, non-finite numbers, bigint, and non-plain objects", () => {
     const cases: Array<{ key: unknown; pathHint: string }> = [
@@ -42,6 +64,7 @@ describe("hashKey / keySignature", () => {
       { key: [Infinity], pathHint: "key[0]" },
       { key: [-Infinity], pathHint: "key[0]" },
       { key: [1n], pathHint: "key[0]" },
+      { key: [() => {}], pathHint: "key[0]" },
       { key: [new Date()], pathHint: "key[0]" },
       { key: [Symbol("x")], pathHint: "key[0]" },
     ];
@@ -78,7 +101,7 @@ describe("shallowArrayEqual", () => {
 });
 
 describe("LayerStack — basics", () => {
-  it("open throws LayerKeyError synchronously for non-JSON-safe keys", () => {
+  it("open/find/cancelQueued throw LayerKeyError synchronously for non-JSON-safe keys", () => {
     const stack = new LayerStack("s");
     expect(() =>
       stack.open({
@@ -86,6 +109,10 @@ describe("LayerStack — basics", () => {
         payload: {},
       }),
     ).toThrow(LayerKeyError);
+    expect(() => stack.find([undefined])).toThrow(LayerKeyError);
+    expect(() => stack.cancelQueued([undefined], undefined)).toThrow(
+      LayerKeyError,
+    );
   });
 
   it("open pushes, indexes, and goes active without loadFn", () => {

@@ -175,7 +175,7 @@ function isPayloadValidationError(
 
 ## Layer key errors
 
-Non-JSON-safe keys throw synchronously from `hashKey` / `open` / `find` / `cancelQueued` (not a Promise rejection). See [Identity & types](/concepts/identity-and-types).
+Non-JSON-safe keys throw `LayerKeyError` synchronously (not a Promise rejection). Throw sites: [Identity & types](/concepts/identity-and-types).
 
 ```ts
 class LayerKeyError extends Error {

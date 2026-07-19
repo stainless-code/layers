@@ -9,7 +9,7 @@ search:
 
 ## Sync throws vs Promise rejects
 
-A non-JSON-safe `key` throws `LayerKeyError` **synchronously** from `open` / `find` / `cancelQueued` (before a promise is returned). Narrow with `isLayerKeyError`. That path is distinct from the Promise rejection cases below — wrap the `open` call itself if keys may be untrusted.
+A non-JSON-safe `key` throws `LayerKeyError` **synchronously** (before any promise) — not a Promise rejection. Narrow with `isLayerKeyError`. Throw sites: [Identity & types](/concepts/identity-and-types). Wrap the call site when keys may be untrusted.
 
 ## What rejects
 

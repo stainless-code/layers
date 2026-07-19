@@ -20,12 +20,12 @@ Two opens with the same `key` share **logical identity**; each still gets a uniq
 
 ## JSON-safe key domain
 
-`hashKey` / `keySignature` serialize with sorted-object `JSON.stringify`. Keys must stay inside that domain or `open` / `find` / `cancelQueued` throw `LayerKeyError` synchronously (narrow with `isLayerKeyError`).
+`hashKey` / `keySignature` serialize with sorted-object `JSON.stringify`. Keys must stay inside that domain or `hashKey`, `open` / `find` / `cancelQueued`, and `createLayer` (eager `keySignature`) throw `LayerKeyError` synchronously (narrow with `isLayerKeyError`).
 
 | Allowed | Rejected |
 | ------- | -------- |
 | `string`, `boolean`, `null`, finite `number` | `undefined` (anywhere, including object props) |
-| Plain objects / arrays of the above | `NaN`, `±Infinity`, `bigint`, `symbol`, functions |
+| Plain objects / arrays of the above (shared refs / DAGs ok) | `NaN`, `±Infinity`, `bigint`, `symbol`, functions |
 | Property order in plain objects (sorted for equality) | Non-plain objects (`Date`, class instances), cycles |
 
 Prefer `null` or an explicit sentinel (`filterId ?? "none"`) over `undefined`. Omit optional object fields instead of setting them to `undefined`.
