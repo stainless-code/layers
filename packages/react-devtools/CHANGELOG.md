@@ -1,5 +1,13 @@
 # @stainless-code/react-layers-devtools
 
+## 0.2.4
+
+### Patch Changes
+
+- Updated dependencies [[`9d804c2`](https://github.com/stainless-code/layers/commit/9d804c20018d021ab6615b5b064801e6feff3edd)]:
+  - @stainless-code/react-layers@0.2.3
+  - @stainless-code/layers-devtools@0.2.4
+
 ## 0.2.3
 
 ### Patch Changes
