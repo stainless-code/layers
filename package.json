@@ -28,6 +28,7 @@
     "check:pack": "bun run --filter '*' check:pack",
     "clean": "git clean -xdf -e .env",
     "docs:api": "bun apps/docs/scripts/rewrite-api-links.ts --clean && typedoc && bun apps/docs/scripts/rewrite-api-links.ts",
+    "docs:audit": "bun run --filter '@stainless-code/layers-docs' audit",
     "docs:build": "bun run --filter '@stainless-code/layers-docs' build",
     "docs:check": "bun run --filter '@stainless-code/layers-docs' check",
     "docs:dev": "bun run --filter '@stainless-code/layers-docs' dev",

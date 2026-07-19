@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "audit": "blume audit --fail-on error --skip canonical_bad_target,non_canonical_in_sitemap,html_too_large",
     "build": "blume build",
     "check": "blume check",
     "dev": "blume dev",
@@ -21,7 +22,7 @@
   "dependencies": {
     "@stainless-code/layers": "workspace:*",
     "@stainless-code/react-layers": "workspace:*",
-    "blume": "1.0.4",
+    "blume": "1.1.0",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },

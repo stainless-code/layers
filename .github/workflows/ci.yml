@@ -218,6 +218,9 @@ jobs:
         run: bun run docs:check -- --isolated
       - name: Build docs site
         run: bun run docs:build
+      # Post-build; skips live in apps/docs `audit` script (+ lessons).
+      - name: Audit docs site
+        run: bun run docs:audit
 
   links:
     name: 🔗 Doc links
