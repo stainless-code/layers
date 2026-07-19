@@ -1,5 +1,5 @@
 ---
-"@stainless-code/layers": minor
+"@stainless-code/layers": patch
 ---
 
 Serial stacks: failed `loadFn` occupies the lane by default (`onLoadError: "block"`); opt into `onLoadError: "advance"` to remove the failed layer and drain the queue.
