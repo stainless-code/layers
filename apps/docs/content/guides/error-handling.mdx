@@ -91,6 +91,8 @@ try {
 
 The loaded `data` is available on the layer state when `loadFn` succeeds; on error the layer enters `phase: "error"`.
 
+On a **serial** stack, that error layer occupies the lane until dismiss (`onLoadError: "block"`, the default). Set `onLoadError: "advance"` to remove it and drain the queue instead — see [Serial queues](/guides/serial-queues).
+
 :::note
 A `Result`-returning `open` was deliberately rejected to preserve direct `await`. Narrow in `catch` instead. Bag-form `client.open({ …opts, payload })` rejects the same way.
 :::

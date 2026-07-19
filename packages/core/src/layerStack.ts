@@ -101,9 +101,13 @@ export class LayerStack<
     return this.options.scope?.strategy === "serial";
   }
 
+  /** Serial occupancy — pending, active, or mounted error (block policy). */
   #hasActive(): boolean {
     return this.#layers.some(
-      (l) => l.state.phase === "pending" || l.state.phase === "active",
+      (l) =>
+        l.state.phase === "pending" ||
+        l.state.phase === "active" ||
+        l.state.phase === "error",
     );
   }
 
@@ -225,6 +229,14 @@ export class LayerStack<
       }
       layer.setPartial({ error: error as E, phase: "error" });
       layer.reject(error as E);
+      if (
+        this.#serial &&
+        (this.options.scope?.onLoadError ?? "block") === "advance"
+      ) {
+        // Drop the failed occupant and drain — no lasting error UI on this stack.
+        this.#remove(layer);
+        return;
+      }
       this.#dispatch("phase", () => {
         this.#flush();
       });

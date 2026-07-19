@@ -238,7 +238,7 @@ stack.getQueuedSnapshot(); // inspect queued layers
 stack.cancelQueued(["confirm", "remove"], false); // FIFO head; pass `{ id }` for exact queued
 ```
 
-Serial scope allows only one `pending` or `active` layer; later opens remain unmounted until their turn. `cancelQueued` resolves a waiting caller without mounting (FIFO, or `{ id }` for exact). `gcTime` caches dismissed data after removal, so reopening the same key restores `data` without rerunning `loadFn`.
+Serial scope allows only one occupying layer (`pending`, `active`, or `error` when `onLoadError` is `"block"`, the default); later opens remain unmounted until their turn. With `onLoadError: "advance"`, a rejecting `loadFn` removes the failed layer and drains the next queued open. `cancelQueued` resolves a waiting caller without mounting (FIFO, or `{ id }` for exact). `gcTime` caches dismissed data after removal, so reopening the same key restores `data` without rerunning `loadFn`.
 
 ## Nested layers
 

@@ -240,6 +240,73 @@ describe("LayerStack — scope serial", () => {
     expect(stack.getQueuedSnapshot()).toHaveLength(0);
   });
 
+  it("onLoadError block (default): error occupies lane; queued waits; no leapfrog", async () => {
+    let rejectLoad!: (error: Error) => void;
+    const stack = new LayerStack<{ n: number }, boolean, Error>("s", {
+      scope: { strategy: "serial" },
+    });
+    const a = stack.open({
+      key: ["a"],
+      payload: { n: 1 },
+      loadFn: () =>
+        new Promise<never>((_, reject) => {
+          rejectLoad = reject;
+        }),
+    });
+    stack.open({ key: ["b"], payload: { n: 2 } });
+    expect(stack.getQueuedSnapshot()).toHaveLength(1);
+
+    rejectLoad(new Error("boom"));
+    await expect(a.promise.promise).rejects.toThrow("boom");
+    expect(stack.getSnapshot()).toEqual([
+      expect.objectContaining({ phase: "error", payload: { n: 1 } }),
+    ]);
+    expect(stack.getQueuedSnapshot()).toEqual([
+      expect.objectContaining({ phase: "queued", payload: { n: 2 } }),
+    ]);
+
+    const c = stack.open({ key: ["c"], payload: { n: 3 } });
+    expect(stack.getSnapshot()).toHaveLength(1);
+    expect(stack.getQueuedSnapshot().map((l) => l.payload.n)).toEqual([2, 3]);
+    expect(c.state.phase).toBe("queued");
+
+    await stack.dismiss(a, false);
+    expect(stack.getSnapshot()).toEqual([
+      expect.objectContaining({ phase: "active", payload: { n: 2 } }),
+    ]);
+    expect(stack.getQueuedSnapshot()).toEqual([
+      expect.objectContaining({ payload: { n: 3 } }),
+    ]);
+  });
+
+  it("onLoadError advance: reject removes layer and drains queue", async () => {
+    let rejectLoad!: (error: Error) => void;
+    const stack = new LayerStack<{ n: number }, boolean, Error>("s", {
+      scope: { strategy: "serial", onLoadError: "advance" },
+    });
+    const a = stack.open({
+      key: ["a"],
+      payload: { n: 1 },
+      loadFn: () =>
+        new Promise<never>((_, reject) => {
+          rejectLoad = reject;
+        }),
+    });
+    stack.open({ key: ["b"], payload: { n: 2 } });
+    expect(stack.getQueuedSnapshot()).toHaveLength(1);
+
+    rejectLoad(new Error("boom"));
+    await expect(a.promise.promise).rejects.toThrow("boom");
+    expect(stack.getSnapshot()).toEqual([
+      expect.objectContaining({ phase: "active", payload: { n: 2 } }),
+    ]);
+    expect(stack.getQueuedSnapshot()).toHaveLength(0);
+
+    const c = stack.open({ key: ["c"], payload: { n: 3 } });
+    expect(c.state.phase).toBe("queued");
+    expect(stack.getQueuedSnapshot().map((l) => l.payload.n)).toEqual([3]);
+  });
+
   it("cancelQueued resolves a queued layer without mounting it", async () => {
     const stack = new LayerStack<{ n: number }, boolean>("s", {
       scope: { strategy: "serial" },
