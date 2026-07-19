@@ -66,7 +66,7 @@ export default defineConfig({
   theme: { accent: "teal", radius: "md", mode: "system" },
   search: {
     provider: "orama",
-    // Keep Cmd+K empty-state in sync with custom Search + 404.
+    // Cmd+K empty-state + shared with 404 via CURATED_POPULAR.
     popular: CURATED_POPULAR.map(({ route, label }) => ({
       href: route,
       label,

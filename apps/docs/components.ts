@@ -1,7 +1,6 @@
 import { defineComponents } from "blume";
 
 import Pagination from "./components/blume/Pagination.astro";
-import Search from "./components/blume/Search.astro";
 import RecipeCodeBlock from "./components/RecipeCodeBlock.astro";
 
 export default defineComponents({
@@ -16,6 +15,5 @@ export default defineComponents({
     // Use the theme radius token (rounded-blume) instead of the built-in pills
     // (rounded-full) — softer corners that match the table/install cards.
     Pagination,
-    Search,
   },
 });
