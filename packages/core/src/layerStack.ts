@@ -227,23 +227,25 @@ export class LayerStack<
       if (layer.aborted) {
         return;
       }
-      layer.setPartial({ error: error as E, phase: "error" });
-      layer.reject(error as E);
-      if (
+      const isAdvance =
         this.#serial &&
-        (this.options.scope?.onLoadError ?? "block") === "advance"
-      ) {
-        // Drop the failed occupant and drain — no lasting error UI on this stack.
-        // Mirror #commitDismiss: notify before remove so child stacks tear down.
-        this.onLayerDismiss?.(layer);
+        (this.options.scope?.onLoadError ?? "block") === "advance";
+      if (isAdvance) {
+        // Drop the failed occupant and drain — no lasting error UI.
+        // Mirror #commitDismiss: mark dismissed, then onLayerDismiss, then remove.
+        layer.reject(error as E);
         layer.setPartial({
+          error: error as E,
           phase: "dismissed",
           transition: "settled",
           ended: true,
         });
+        this.onLayerDismiss?.(layer);
         this.#remove(layer);
         return;
       }
+      layer.setPartial({ error: error as E, phase: "error" });
+      layer.reject(error as E);
       this.#dispatch("phase", () => {
         this.#flush();
       });

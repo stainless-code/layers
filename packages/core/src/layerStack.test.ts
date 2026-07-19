@@ -325,11 +325,13 @@ describe("LayerStack — scope serial", () => {
 
   it("onLoadError advance: fires onLayerDismiss before remove", async () => {
     const dismissed: string[] = [];
+    let phaseAtHook: string | undefined;
     const stack = new LayerStack<{ n: number }, boolean, Error>("s", {
       scope: { strategy: "serial", onLoadError: "advance" },
     });
     stack.onLayerDismiss = (layer) => {
       dismissed.push(layer.id);
+      phaseAtHook = layer.state.phase;
     };
     const a = stack.open({
       key: ["a"],
@@ -340,6 +342,7 @@ describe("LayerStack — scope serial", () => {
     });
     await expect(a.promise.promise).rejects.toThrow("boom");
     expect(dismissed).toEqual([a.id]);
+    expect(phaseAtHook).toBe("dismissed");
   });
 
   it("onLoadError advance: dismiss on failed handle is a no-op for the next layer", async () => {
