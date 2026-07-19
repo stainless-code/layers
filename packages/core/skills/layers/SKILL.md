@@ -151,7 +151,7 @@ const ok = await client.open({
 
 `createCallContext` gives an active layer `end`, `dismiss`, `addBlocker`, `update`, `setRunning`, and `settle`, plus `ended`, `index`, `stackSize`, `root`, `stackId`, and `layerId`. `await call.end(response)` and `await call.dismiss(response)` request dismissal; when allowed, they resolve the caller and begin exit. Both return `Promise<boolean>`, with `false` meaning a blocker vetoed dismissal. `update` patches payload, `setRunning` controls `actionStatus`, and `settle` completes the current enter or exit transition.
 
-`key` is logical identity for `find`, `upsert`, and `gcTime`; every mount gets a unique instance `id` shaped as `${hashKey(key)}#<n>`. `hashKey` and its alias `keySignature` compare keys structurally. Parallel stacks may contain multiple same-key instances.
+`key` is logical identity for `find`, `upsert`, and `gcTime`; every mount gets a unique instance `id` shaped as `${hashKey(key)}#<n>`. Keys must be JSON-safe (`string` | `boolean` | `null` | finite `number` | plain objects/arrays of those); `hashKey` / `keySignature` assert that domain and throw `LayerKeyError` otherwise. Parallel stacks may contain multiple same-key instances.
 
 ## Lifecycle
 
@@ -271,6 +271,7 @@ The complete public API surface:
 | Engine classes                   | `LayerClient`, `LayerStack`, `Layer`                                                                                          |
 | Infrastructure classes           | `Subscribable`, `ControlledPromise`                                                                                           |
 | Validation class                 | `PayloadValidationError`                                                                                                      |
+| Key errors                       | `LayerKeyError`, `isLayerKeyError`, `assertLayerKey`                                                                          |
 | Declaration and inference        | `layerOptions`, `layerKey`, `DataTag`, `InferDataTagResponse`, `InferDataTagError`, `ResponseOf`, `ErrorOf`                   |
 | Wired handles                    | `createLayer`, `LayerHandle`, `ValidatedLayerHandle`                                                                          |
 | Rendering seam                   | `createCallContext`, `LayerCallContext`, `LayerComponentProps`, `LayerComponent`                                              |

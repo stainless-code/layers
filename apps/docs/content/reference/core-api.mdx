@@ -173,6 +173,20 @@ function isPayloadValidationError(
 ): value is PayloadValidationError;
 ```
 
+## Layer key errors
+
+Non-JSON-safe keys throw `LayerKeyError` synchronously (not a Promise rejection). Throw sites: [Identity & types](/concepts/identity-and-types).
+
+```ts
+class LayerKeyError extends Error {
+  readonly path: ReadonlyArray<PropertyKey>;
+}
+
+function isLayerKeyError(value: unknown): value is LayerKeyError;
+
+function assertLayerKey(key: unknown): asserts key is LayerKey;
+```
+
 ## createLayer
 
 Wire `layerOptions` + a `LayerClient` into a headless handle. Adapters wrap this in reactive `useLayer` / `injectLayer` / `createLayer`.

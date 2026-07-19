@@ -9,7 +9,7 @@ Ubiquitous language for the `@stainless-code/layers` domain. Keep terms stable a
 - **StackNotifyEvent** — JSON-safe record of one observable stack transition (`action` + `active`/`queued` views + optional projected `payload`). Emitted by core; Devtools bridges to TanStack `EventClient`.
 - **subscribeNotify** — `LayerClient`: `(listener) => unsubscribe` for `StackNotifyEvent`s. Distinct from `subscribe` / `subscribeStacks` (snapshot / stack-created).
 - **seedNotify** — `LayerClient`: re-emit a `register` `StackNotifyEvent` for one stack, or all when omitted (Devtools attach / late subscribers).
-- **Key** — the **logical** identity of a layer (`find`/`upsert`/`gcTime` operate on `keySignature(key)`); multiple live layers may share a key in a `parallel` stack.
+- **Key** — the **logical** identity of a layer (`find`/`upsert`/`gcTime` operate on `keySignature(key)`). Must be JSON-safe (`string` \| `boolean` \| `null` \| finite `number` \| plain objects/arrays of those); invalid segments throw `LayerKeyError`. Multiple live layers may share a key in a `parallel` stack.
 - **Instance id** (`LayerState.id`) — the **physical**, unique id of one `Layer` instance (`` `${hashKey(key)}#n` ``); used for rendering keys and instance lookup/removal (`getLayer`, `#remove`).
 - **Phase** — resolution lifecycle axis: `pending` → `active` → `dismissed`; or `queued` (serial-waiting, not mounted); or `error`. Does **not** include `exiting` — animation is on `transition`. Distinct from `actionStatus` and `transition`.
 - **Transition** — animation axis (`entering` | `settled` | `exiting`), orthogonal to `phase` (like `actionStatus`). `dismissed + exiting` = playing exit anim; `dismissed + settled` = cached/done.

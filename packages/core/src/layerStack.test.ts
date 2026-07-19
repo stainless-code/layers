@@ -1,11 +1,21 @@
 import { describe, expect, it } from "bun:test";
 
-import { isPayloadValidationError, PayloadValidationError } from "./errors";
+import {
+  isLayerKeyError,
+  isPayloadValidationError,
+  LayerKeyError,
+  PayloadValidationError,
+} from "./errors";
 import { LayerClient } from "./layerClient";
 import { layerOptions } from "./layerOptions";
 import { LayerStack } from "./layerStack";
 import { notifyManager } from "./notifyManager";
-import { hashKey, keySignature, shallowArrayEqual } from "./utils";
+import {
+  assertLayerKey,
+  hashKey,
+  keySignature,
+  shallowArrayEqual,
+} from "./utils";
 
 describe("hashKey / keySignature", () => {
   it("is stable across key-object key order", () => {
@@ -15,6 +25,69 @@ describe("hashKey / keySignature", () => {
     expect(keySignature(["confirm", "x"])).not.toBe(
       keySignature(["confirm", "y"]),
     );
+  });
+  it("accepts JSON-safe primitives, arrays, and plain objects", () => {
+    expect(() =>
+      assertLayerKey(["modal", 1, true, null, { nested: ["a", 2] }]),
+    ).not.toThrow();
+    expect(hashKey([])).toBe("[]");
+    expect(hashKey([["a"]])).toBe(JSON.stringify([["a"]]));
+    expect(hashKey(["modal", 1, true, null])).toBe(
+      JSON.stringify(["modal", 1, true, null]),
+    );
+    const nullProto = Object.create(null) as Record<string, unknown>;
+    nullProto.id = 1;
+    expect(hashKey([nullProto])).toBe(JSON.stringify([{ id: 1 }]));
+  });
+  it("accepts shared object refs (DAGs), not only trees", () => {
+    const shared = { id: 1 };
+    expect(hashKey([{ x: shared, y: shared }])).toBe(
+      JSON.stringify([{ x: { id: 1 }, y: { id: 1 } }]),
+    );
+    expect(hashKey([shared, shared])).toBe(
+      JSON.stringify([{ id: 1 }, { id: 1 }]),
+    );
+  });
+  it("preserves own __proto__ keys in the hash (no prototype clobber)", () => {
+    const withProto = JSON.parse('{"__proto__":{"a":1}}') as Record<
+      string,
+      unknown
+    >;
+    expect(hashKey([withProto])).not.toBe(hashKey([{}]));
+    expect(hashKey([withProto])).toBe(JSON.stringify([withProto]));
+  });
+  it("rejects undefined, non-finite numbers, bigint, and non-plain objects", () => {
+    const cases: Array<{ key: unknown; pathHint: string }> = [
+      { key: [undefined], pathHint: "key[0]" },
+      { key: [{ a: undefined }], pathHint: "key[0].a" },
+      { key: [NaN], pathHint: "key[0]" },
+      { key: [Infinity], pathHint: "key[0]" },
+      { key: [-Infinity], pathHint: "key[0]" },
+      { key: [1n], pathHint: "key[0]" },
+      { key: [() => {}], pathHint: "key[0]" },
+      { key: [new Date()], pathHint: "key[0]" },
+      { key: [Symbol("x")], pathHint: "key[0]" },
+    ];
+    for (const { key, pathHint } of cases) {
+      expect(() => hashKey(key as never)).toThrow(LayerKeyError);
+      try {
+        hashKey(key as never);
+      } catch (error) {
+        expect(isLayerKeyError(error)).toBe(true);
+        if (isLayerKeyError(error)) {
+          expect(error.message).toContain(pathHint);
+        }
+      }
+    }
+  });
+  it("rejects cyclic structures", () => {
+    const cyclic: Record<string, unknown> = {};
+    cyclic.self = cyclic;
+    expect(() => hashKey([cyclic])).toThrow(LayerKeyError);
+  });
+  it("null is accepted; undefined throws (no longer collide)", () => {
+    expect(hashKey([null])).toBe(JSON.stringify([null]));
+    expect(() => hashKey([undefined])).toThrow(LayerKeyError);
   });
 });
 
@@ -28,6 +101,20 @@ describe("shallowArrayEqual", () => {
 });
 
 describe("LayerStack — basics", () => {
+  it("open/find/cancelQueued throw LayerKeyError synchronously for non-JSON-safe keys", () => {
+    const stack = new LayerStack("s");
+    expect(() =>
+      stack.open({
+        key: [undefined],
+        payload: {},
+      }),
+    ).toThrow(LayerKeyError);
+    expect(() => stack.find([undefined])).toThrow(LayerKeyError);
+    expect(() => stack.cancelQueued([undefined], undefined)).toThrow(
+      LayerKeyError,
+    );
+  });
+
   it("open pushes, indexes, and goes active without loadFn", () => {
     const stack = new LayerStack<{ n: number }, void>("s");
     stack.open({ key: ["a"], payload: { n: 1 } });
