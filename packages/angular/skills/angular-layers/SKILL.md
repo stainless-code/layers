@@ -279,7 +279,7 @@ The package is compiler-free — no shipped Angular components. Call `renderStac
 
 ## Nested layers
 
-Use `useLayerGroup(call, options?)` inside a layer component (injection context). The child stack is disposed and dismissed when the parent layer unmounts.
+Use `useLayerGroup(call, options?)` inside a layer component (injection context). Parent dismiss / unmount `cancelAll`s the child stack (`LayerCancelledError`); `dispose()` unbinds the lifetime hook.
 
 ```ts
 import {

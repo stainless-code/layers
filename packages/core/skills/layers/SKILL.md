@@ -242,7 +242,7 @@ Serial scope allows only one occupying layer (`pending`, `active`, or `error` wh
 
 ## Nested layers
 
-`createLayerGroup(client, call, options?)` creates a child stack scoped to its parent layer. Parent dismissal force-drains the child stack; `dispose()` removes the lifetime binding when the owner unmounts.
+`createLayerGroup(client, call, options?)` creates a child stack scoped to its parent layer. Parent dismissal `cancelAll`s the child stack (`LayerCancelledError`, `reason: "parentDismiss"`); `dispose()` removes the lifetime binding when the owner unmounts.
 
 ```ts
 import { createLayerGroup } from "@stainless-code/layers";

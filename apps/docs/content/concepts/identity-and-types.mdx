@@ -114,7 +114,7 @@ declare module "@stainless-code/layers" {
 }
 ```
 
-`DefaultLayerError` defaults to `Error` unless augmented. `open` returns `Promise<R>` — rejections are not typed on the promise (a TypeScript limitation); narrow at runtime with guards like `isPayloadValidationError`.
+`DefaultLayerError` defaults to `Error` unless augmented. `open` returns `Promise<R>` — rejections are not typed on the promise (a TypeScript limitation); narrow at runtime with guards like `isPayloadValidationError` and `isLayerCancelledError`.
 
 ## Payload validation
 

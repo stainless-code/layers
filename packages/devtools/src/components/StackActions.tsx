@@ -5,6 +5,7 @@ import { createSignal } from "solid-js";
 import {
   cancelQueuedHead,
   dismissAllWithMode,
+  forceClearStack,
   forceDismissTop,
   softDismissTop,
 } from "../live-actions";
@@ -84,7 +85,7 @@ export function StackActions(props: {
         Force dismiss
       </Button>
       <Select
-        label="dismissAll"
+        label="dismissAll mode"
         options={DISMISS_ALL_MODES.map((mode) => ({
           value: mode,
           label: mode,
@@ -94,13 +95,32 @@ export function StackActions(props: {
       />
       <Button
         variant="primary"
+        disabled={!props.hasActive && !props.hasQueued}
         onClick={() =>
           withClient((client) => {
             void dismissAllWithMode(client, props.stackId, dismissAllMode());
           })
         }
       >
-        Run
+        Dismiss all
+      </Button>
+      <Button
+        variant="danger"
+        disabled={!props.hasActive && !props.hasQueued}
+        onClick={() =>
+          withClient((client) => {
+            if (
+              !globalThis.confirm(
+                "Force clear this stack? Open callers reject with LayerCancelledError (not a dismiss response).",
+              )
+            ) {
+              return;
+            }
+            void forceClearStack(client, props.stackId);
+          })
+        }
+      >
+        Force clear
       </Button>
     </div>
   );

@@ -20,7 +20,7 @@ const childConfirm = layerOptions<ChildPayload, ChildResponse>({
 const { call, payload } =
   defineProps<LayerComponentProps<ParentPayload, void>>();
 
-// Owns a child stack scoped to this parent's lifetime; auto-drains on dismiss.
+// Owns a child stack scoped to this parent's lifetime; parent dismiss cancelAlls it.
 const group = useLayerGroup(call);
 const childResult = ref<boolean | null>(null);
 

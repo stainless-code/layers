@@ -95,12 +95,48 @@ describe("createLayerGroup — nesting", () => {
     await drawer.dismiss(parentLayer, false);
     expect(childStack.getSnapshot()).toHaveLength(0);
     expect(grandchildStack.getSnapshot()).toHaveLength(0);
-    await expect(childPending).rejects.toBeInstanceOf(LayerCancelledError);
-    await expect(grandchildPending).rejects.toBeInstanceOf(LayerCancelledError);
+    await expect(childPending).rejects.toMatchObject({
+      name: "LayerCancelledError",
+      reason: "parentDismiss",
+    });
+    await expect(grandchildPending).rejects.toMatchObject({
+      name: "LayerCancelledError",
+      reason: "parentDismiss",
+    });
   });
 });
 
 describe("createLayerGroup — dispose", () => {
+  it("adapter-style dispose + cancelAll rejects with groupDispose", async () => {
+    const client = new LayerClient();
+    client.open({
+      key: ["parent"],
+      payload: { title: "Parent" },
+      stack: "drawer",
+    });
+    const drawer = client.getStack("drawer") as unknown as LayerStack<
+      { title: string },
+      boolean
+    >;
+    const parentLayer = drawer.find(["parent"])!;
+    const parent = { stackId: drawer.id, layerId: parentLayer.id };
+
+    const group = createLayerGroup(client, parent);
+    const childPending = group.open({
+      key: ["child"],
+      payload: { label: "Child" },
+    });
+    expect(client.getStack(group.stackId).getSnapshot()).toHaveLength(1);
+
+    group.dispose();
+    await client.cancelAll(group.stackId, { reason: "groupDispose" });
+    await expect(childPending).rejects.toMatchObject({
+      name: "LayerCancelledError",
+      reason: "groupDispose",
+    });
+    expect(client.getStack(group.stackId).getSnapshot()).toHaveLength(0);
+  });
+
   it("does not drain the child stack after dispose unbinds the parent", async () => {
     const client = new LayerClient();
     client.open({

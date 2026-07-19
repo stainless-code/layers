@@ -16,7 +16,7 @@ import nestedSvelteRunesSrc from "../../recipes/nested-confirm/svelte-runes.svel
 import nestedSvelteStoreSrc from "../../recipes/nested-confirm/svelte-store.svelte?raw";
 import nestedAngularSrc from "../../recipes/nested-confirm/angular.ts?raw";
 
-Delete inside an open parent dialog. `useLayer(parent)` opens the parent; `group.open` scopes the confirm to that stack and auto-drains when the parent dismisses.
+Delete inside an open parent dialog. `useLayer(parent)` opens the parent; `group.open` scopes the confirm to that stack. Parent dismiss runs `cancelAll` on the child stack (`LayerCancelledError`).
 
 :::note[Live]
 This demo runs the real `@stainless-code/react-layers` in your browser (React).
@@ -61,5 +61,5 @@ One complete recipe per framework adapter (live demo above is React).
 
 ## Learn more
 
-- [Nested overlays](/guides/nested-overlays) — child stacks, `Outlet`, and auto-drain
+- [Nested overlays](/guides/nested-overlays) — child stacks, `Outlet`, and parent-dismiss `cancelAll`
 - [Confirm dialog](/examples/confirm-dialog) — typed `await confirm.open(...)` basics

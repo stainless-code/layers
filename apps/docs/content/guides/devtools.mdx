@@ -60,7 +60,8 @@ Buttons call the live `LayerClient` — not bus commands:
 | Soft dismiss | Top active layer — respects blockers |
 | Cancel queued | FIFO head of the serial queue |
 | Force dismiss | Top active layer with `{ force: true }` after confirm |
-| Dismiss all | Modes: `skipBlocked` / `stopAtBlocked` / `force` |
+| Dismiss all | Modes: `skipBlocked` / `stopAtBlocked` / `force` — open callers **resolve** with the dismiss response (void → `undefined`) |
+| Force clear | `cancelAll` after confirm — open callers **reject** with `LayerCancelledError` |
 
 ## Subscribe without the panel
 

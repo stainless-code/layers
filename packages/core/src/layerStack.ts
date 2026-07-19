@@ -378,6 +378,12 @@ export class LayerStack<
     }
   }
 
+  /**
+   * Bulk-dismisses active and queued layers, completing every `open()` with
+   * `response` (including `undefined` when `R` is `void`). Honors
+   * {@link DismissAllMode}; does not reject — use {@link cancelAll} for
+   * teardown without a completion value.
+   */
   async dismissAll(response: R, opts?: DismissAllOptions): Promise<void> {
     const mode = opts?.mode ?? this.options.dismissAllMode ?? "skipBlocked";
     // Final labeled snapshot: active-only stacks only emit per-layer `"dismiss"`.
@@ -421,6 +427,9 @@ export class LayerStack<
    * Force-clears the stack and rejects every open/queued caller with
    * {@link LayerCancelledError}. Skips blockers. System teardown path —
    * use {@link dismissAll} when completing with a response.
+   *
+   * @param opts.reason - Propagated on each rejection.
+   * @default opts.reason `"cancelAll"`
    */
   async cancelAll(opts?: { reason?: LayerCancelReason }): Promise<void> {
     const error = new LayerCancelledError(opts?.reason ?? "cancelAll");
@@ -433,12 +442,16 @@ export class LayerStack<
         this.#scopeQueue = [];
         const mounted = [...this.#layers];
         this.#layers = [];
+        // Reject + flush before hooks so a throwing onLayerDismiss cannot
+        // leave later open() pending or a stale non-empty snapshot.
         for (const layer of mounted) {
           this.#rejectCancel(layer, error);
+        }
+        this.#flush();
+        for (const layer of mounted) {
           this.onLayerDismiss?.(layer);
           this.#gcCache.maybeStore(layer);
         }
-        this.#flush();
       });
     } finally {
       if (shouldEmit) {

@@ -879,7 +879,8 @@ export interface LayerGroup {
 /**
  * Reactive controller for a child stack scoped to the calling layer's lifetime.
  *
- * The child stack is disposed and dismissed when its parent layer unmounts.
+ * The child stack is disposed and cleared via `cancelAll` when its parent
+ * layer unmounts (`LayerCancelledError`).
  * {@link LayerGroupController.outlet} returns a `TemplateResult` that renders the
  * child stack inline (router `Routes.outlet()`-shaped) — share the render helper
  * with `StackOutlet`.
@@ -996,7 +997,8 @@ export class LayerGroupController<
 /**
  * Create a child stack scoped to the calling layer's lifetime.
  *
- * The child stack is disposed and dismissed when its parent layer unmounts.
+ * The child stack is disposed and cleared via `cancelAll` when its parent
+ * layer unmounts (`LayerCancelledError`).
  */
 export function useLayerGroup<P, R, RootProps = unknown>(
   host: ReactiveControllerHost,

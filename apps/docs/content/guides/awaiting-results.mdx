@@ -225,4 +225,5 @@ Both payload and response are optional. A layer with `R = void` and no payload i
 
 - **`loadFn` errors** reject the promise — see [Error handling](/guides/error-handling).
 - **Validation failures** reject with `PayloadValidationError` before mount — see [Payload validation](/guides/payload-validation).
+- **System teardown** (`cancelAll`, parent-dismiss child drain, group dispose, host disconnect) rejects with `LayerCancelledError` — narrow with `isLayerCancelledError`; see [Error handling](/guides/error-handling).
 - **Serial stacks** queue later opens; the promise resolves only when the layer activates and ends — see [Serial queues](/guides/serial-queues).

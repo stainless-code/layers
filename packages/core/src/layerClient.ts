@@ -191,6 +191,12 @@ export class LayerClient {
     }
   }
 
+  /**
+   * Bulk-dismisses a stack, completing every `open()` with `response`
+   * (including omitted/`undefined` for void layers). Honors
+   * {@link DismissAllMode}; does not reject — prefer {@link cancelAll} for
+   * teardown without a completion value.
+   */
   dismissAll(
     stackId = "default",
     response?: unknown,
@@ -205,6 +211,9 @@ export class LayerClient {
    * Force-clears a stack and rejects every open/queued caller with
    * {@link LayerCancelledError}. System teardown — prefer {@link dismissAll}
    * when completing with a response.
+   *
+   * @param opts.reason - Propagated on each rejection.
+   * @default opts.reason `"cancelAll"`
    */
   cancelAll(
     stackId = "default",

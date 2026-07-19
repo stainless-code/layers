@@ -11,4 +11,4 @@
 "@stainless-code/layers-devtools": patch
 ---
 
-Add `cancelAll` and `LayerCancelledError`: system teardown (parent-dismiss child drain, layer-group dispose, host disconnect) now **rejects** `open()` instead of resolving `undefined`. User `dismiss` / `dismissAll(response)` still complete with `R`. Narrow with `isLayerCancelledError`.
+Add `cancelAll` and `LayerCancelledError`: system teardown (parent-dismiss child drain, layer-group dispose, host disconnect) now **rejects** `open()` instead of resolving `undefined`. User `dismiss` / `dismissAll(response)` still complete with `R`. Narrow with `isLayerCancelledError`. Devtools: **Dismiss all** still calls `dismissAll` (resolves); **Force clear** calls `cancelAll` (rejects).

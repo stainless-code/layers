@@ -445,6 +445,31 @@ describe("useLayerGroup (lit)", () => {
     expect(client.getStack(stackId).getSnapshot()).toHaveLength(0);
   });
 
+  it("hostDisconnected cancelAlls pending child open() with stackDisconnect", async () => {
+    const client = new LayerClient();
+    const harness = createHost();
+    const call = makeCall(client);
+    const group = useLayerGroup<unknown, unknown>(
+      harness.host,
+      call,
+      undefined,
+      client,
+    );
+    const stackId = group.stackId;
+    const pending = group.open({
+      key: ["child"],
+      payload: { label: "c" },
+    });
+    expect(client.getStack(stackId).getSnapshot()).toHaveLength(1);
+
+    harness.disconnect();
+    await expect(pending).rejects.toMatchObject({
+      name: "LayerCancelledError",
+      reason: "stackDisconnect",
+    });
+    expect(client.getStack(stackId).getSnapshot()).toHaveLength(0);
+  });
+
   it("outlet() returns a TemplateResult-shaped object", () => {
     const client = new LayerClient();
     const { host } = createHost();

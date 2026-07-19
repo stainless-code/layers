@@ -273,7 +273,7 @@ Store entry renders via `$childStack` + standalone `callFor` — same `group.ope
 | `stackId`                                                         | Derived id — `` `${parentStackId}~${parentLayerId}~${name}` `` |
 
 :::warning[Heads up]
-Child stacks cascade on parent dismiss — blockers on the parent are the right place to guard "close drawer with open sub-dialog?". Children are force-drained; see [Dismissal blockers](/guides/dismissal-blockers).
+Child stacks cascade on parent dismiss — blockers on the parent are the right place to guard "close drawer with open sub-dialog?". Children are cleared via `cancelAll` (`LayerCancelledError`); see [Dismissal blockers](/guides/dismissal-blockers).
 :::
 
 No second `LayerClient`, no manual cleanup. See [Lifecycle](/concepts/lifecycle) for how dismissal propagates.
