@@ -1,6 +1,6 @@
 import { defineConfig } from "blume";
 
-import { CURATED_POPULAR } from "./components/curated-popular.ts";
+import { CURATED_POPULAR } from "./components/curated-popular";
 
 export default defineConfig({
   title: "Layers",
