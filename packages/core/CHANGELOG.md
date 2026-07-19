@@ -1,5 +1,15 @@
 # @stainless-code/layers
 
+## 0.2.3
+
+### Patch Changes
+
+- [#29](https://github.com/stainless-code/layers/pull/29) [`de3bd7b`](https://github.com/stainless-code/layers/commit/de3bd7bfced94ce91606388c4cfe921782f949bc) Thanks [@SutuSebastian](https://github.com/SutuSebastian)! - Reject non-JSON-safe layer key segments with `LayerKeyError` from `hashKey` (before stringify). Previously `JSON.stringify` could collide `[undefined]` / `[null]` / `[NaN]` as `"[null]"`.
+
+- [#30](https://github.com/stainless-code/layers/pull/30) [`9d804c2`](https://github.com/stainless-code/layers/commit/9d804c20018d021ab6615b5b064801e6feff3edd) Thanks [@SutuSebastian](https://github.com/SutuSebastian)! - Add `cancelAll` and `LayerCancelledError`: system teardown (parent-dismiss child drain, layer-group dispose, host disconnect) now **rejects** `open()` instead of resolving `undefined`. User `dismiss` / `dismissAll(response)` still complete with `R`. Narrow with `isLayerCancelledError`. Devtools: **Dismiss all** still calls `dismissAll` (resolves); **Force clear** calls `cancelAll` (rejects).
+
+- [#27](https://github.com/stainless-code/layers/pull/27) [`323be82`](https://github.com/stainless-code/layers/commit/323be82c2a6a7fc575099021a4441e71fec29943) Thanks [@SutuSebastian](https://github.com/SutuSebastian)! - Serial stacks: failed `loadFn` occupies the lane by default (`onLoadError: "block"`), fixing leapfrog where a later open could mount while an error layer stayed up. Opt into `onLoadError: "advance"` to remove the failed layer and drain the queue.
+
 ## 0.2.2
 
 ### Patch Changes

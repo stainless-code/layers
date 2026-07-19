@@ -1,6 +1,6 @@
 {
   "name": "@stainless-code/angular-layers",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Angular adapter for @stainless-code/layers — call a layer like an async function and await its response.",
   "keywords": [
     "angular",

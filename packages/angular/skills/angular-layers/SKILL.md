@@ -11,7 +11,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/angular-layers"
-  library_version: "0.2.2"
+  library_version: "0.2.3"
   framework: "angular"
 sources:
   - https://stainless-code.com/layers/adapters/angular
