@@ -19,6 +19,8 @@ By-design or false-positive findings — do not re-raise.
 - **[correctness]** `packages/alpine/src/index.ts` multi-child `x-layer-outlet` template — by-design; Alpine `<template>` loops (`x-for`/`x-if`) require a single root element; outlet matches that contract (document in alpine.mdx).
 - **[docs]** `apps/docs/content/adapters/index.mdx` Alpine footnote `⁷` vs `docs/architecture.md` `⁸` — by-design; each matrix numbers footnotes for its own footnote set (architecture also has Lit `⁷`).
 - **[correctness]** `void group.open(...)` samples after Option C — false positive for unhandledrejection; `#rejectCancel` already `void layer.promise.promise.catch(() => {})`. Awaiters still need `isLayerCancelledError`.
+- **[correctness]** `apps/docs` `docs:build` without prior `docs:api` — pre-existing; generated API MDX is gitignored; CI/deploy always run `docs:api` first (unchanged by Blume 1.1.0 bump).
+- **[ship-readiness]** `llms.txt` → `/changelog/rss.xml` — false positive; feed exists at `dist/changelog/rss.xml`; Blume 1.1.0 audit `llms_txt_stale_entry` does not treat RSS files as served pages (warning only; `--fail-on error` still green).
 
 ## Deferred
 
