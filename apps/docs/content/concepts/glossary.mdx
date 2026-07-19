@@ -44,7 +44,7 @@ From `LayerClient` down to `keySignature` — every term in code, docs, and issu
   </AccordionItem>
   <AccordionItem title="Scoping & caching">
     - **upsert** — with `upsert: true` (or handle `.upsert`), reusing an active key updates its payload instead of stacking (singleton toasts/progress).
-    - **scope** — per-stack queueing on `StackOptions`: `scope: { strategy: "serial" | "parallel" }` (`parallel` when omitted); `serial` = one active layer at a time, `parallel` = stack freely.
+    - **scope** — per-stack queueing on `StackOptions`: `scope: { strategy: "serial" | "parallel", onLoadError?: "block" | "advance" }` (`parallel` / `block` when omitted); `serial` = one occupying layer at a time, `parallel` = stack freely.
     - **gcTime** — keep dismissed layers in a cache so re-opening the same key restores `data` without re-running `loadFn`. One slot per key (last-dismissed-wins); evicted after `gcTime` with explicit teardown.
     - **loadFn** — optional async load run on `open`; cancelable via `AbortController`; `pending` → `active` with `data` on success, `error` on throw.
   </AccordionItem>

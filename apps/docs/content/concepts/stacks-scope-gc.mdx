@@ -23,7 +23,7 @@ scope: {
 | `parallel` (default) | Layers stack freely; multiple `pending`/`active` layers at once. |
 | `serial` | One occupying layer at a time (`pending` / `active` / `error`); later opens queue as `phase: "queued"` (not in `getSnapshot()`). |
 
-Queued layers are visible via `getQueuedSnapshot()`. When the occupant dismisses (or `onLoadError: "advance"` clears a failed `loadFn`), the next queued layer activates. `dismissAll` drains the queue, resolving queued callers without mounting them.
+Queued layers are visible via `getQueuedSnapshot()`. The next queued layer activates when the occupant leaves — dismiss, or `onLoadError: "advance"` after a failed `loadFn`. `dismissAll` drains the queue without mounting queued callers.
 
 :::tip
 Use serial scope for one-at-a-time flows — onboarding steps, queued confirms, or any surface that must not show two layers simultaneously.
