@@ -103,7 +103,7 @@ Delay `0` (default) flips the axis synchronously — no transition frame observe
 
 Layers are client-only today (React/Preact `getServerSnapshot` returns `[]`); when SSR hydration lands, initial `transition` must be `"settled"`.
 
-**Identity:** each layer has a unique **instance id** (`LayerState.id`, `` `${hashKey(key)}#n` ``) for rendering keys and instance lookup/removal. The **key** is the logical identity (`find`/`upsert`/`gcTime` use `keySignature(key)`); multiple live layers may share a key in a `parallel` stack.
+**Identity:** each layer has a unique **instance id** (`LayerState.id`, `` `${hashKey(key)}#n` ``) for rendering keys and instance lookup/removal. The **key** is the logical identity (`find`/`upsert`/`gcTime` use `keySignature(key)`); keys must be JSON-safe or `hashKey` throws `LayerKeyError`. Multiple live layers may share a key in a `parallel` stack.
 
 ## Blockers
 

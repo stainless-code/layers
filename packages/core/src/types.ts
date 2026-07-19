@@ -1,6 +1,13 @@
 import type { Validator } from "./validators";
 
-/** Structurally comparable layer identity. */
+/**
+ * Stable identity for a layer instance.
+ *
+ * Must be JSON-safe: `string` | `boolean` | `null` | finite `number`, or
+ * plain objects / arrays of those. Compared via sorted `JSON.stringify` —
+ * two keys with the same values in a different object-property order are equal.
+ * Invalid keys throw {@link LayerKeyError} from {@link hashKey} / `open`.
+ */
 export type LayerKey = ReadonlyArray<unknown>;
 
 export type LayerPhase =

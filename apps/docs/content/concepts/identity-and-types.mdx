@@ -11,11 +11,27 @@ Two opens with the same `key` share **logical identity**; each still gets a uniq
 
 | Concept | Role |
 | ------- | ---- |
-| **Key** | Logical identity. `find`, `upsert`, and `gcTime` operate on `keySignature(key)`. Multiple live layers may share a key in a `parallel` stack. |
+| **Key** | Logical identity. Must be **JSON-safe** (see below). `find`, `upsert`, and `gcTime` operate on `keySignature(key)`. Multiple live layers may share a key in a `parallel` stack. |
 | **Instance id** (`LayerState.id`) | Physical, unique id of one `Layer` instance (`` `${hashKey(key)}#n` ``). Used for rendering keys and instance lookup/removal (`getLayer`, `#remove`). |
 
 :::note[`find` returns the topmost match]
 `LayerStack.find(key)` walks the stack and returns the **last** layer with that key signature — the topmost instance when several share a key in a `parallel` stack. Wired handles route `dismiss`/`update` without `{ id }` through this same lookup.
+:::
+
+## JSON-safe key domain
+
+`hashKey` / `keySignature` serialize with sorted-object `JSON.stringify`. Keys must stay inside that domain or `open` / `find` / `cancelQueued` throw `LayerKeyError` synchronously (narrow with `isLayerKeyError`).
+
+| Allowed | Rejected |
+| ------- | -------- |
+| `string`, `boolean`, `null`, finite `number` | `undefined` (anywhere, including object props) |
+| Plain objects / arrays of the above | `NaN`, `±Infinity`, `bigint`, `symbol`, functions |
+| Property order in plain objects (sorted for equality) | Non-plain objects (`Date`, class instances), cycles |
+
+Prefer `null` or an explicit sentinel (`filterId ?? "none"`) over `undefined`. Omit optional object fields instead of setting them to `undefined`.
+
+:::note[Earlier collision behavior]
+Before this assert, `JSON.stringify` made `[undefined]`, `[null]`, and `[NaN]` collide as `"[null]"`; object `undefined` props were omitted; BigInt/cycles threw opaque `TypeError`s from `JSON.stringify`. Invalid segments now fail closed as `LayerKeyError` before hash.
 :::
 
 ## Wired handle path

@@ -1,7 +1,12 @@
+import { LayerKeyError } from "./errors";
 import type { LayerKey } from "./types";
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return false;
+  }
+  const proto = Object.getPrototypeOf(value);
+  return proto === Object.prototype || proto === null;
 }
 
 function sortedObject(value: Record<string, unknown>): Record<string, unknown> {
@@ -13,8 +18,105 @@ function sortedObject(value: Record<string, unknown>): Record<string, unknown> {
   return out;
 }
 
+function formatKeyPath(path: ReadonlyArray<PropertyKey>): string {
+  if (path.length === 0) {
+    return "key";
+  }
+  let out = "key";
+  for (const segment of path) {
+    if (typeof segment === "number") {
+      out += `[${segment}]`;
+    } else {
+      out += `.${String(segment)}`;
+    }
+  }
+  return out;
+}
+
+function walkLayerKey(
+  value: unknown,
+  path: PropertyKey[],
+  seen: WeakSet<object>,
+): void {
+  if (value === undefined) {
+    throw new LayerKeyError(
+      `${formatKeyPath(path)}: undefined is not JSON-safe`,
+      path,
+    );
+  }
+  if (typeof value === "number") {
+    if (!Number.isFinite(value)) {
+      throw new LayerKeyError(
+        `${formatKeyPath(path)}: non-finite number is not JSON-safe`,
+        path,
+      );
+    }
+    return;
+  }
+  if (
+    typeof value === "string" ||
+    typeof value === "boolean" ||
+    value === null
+  ) {
+    return;
+  }
+  if (typeof value === "bigint") {
+    throw new LayerKeyError(
+      `${formatKeyPath(path)}: bigint is not JSON-safe`,
+      path,
+    );
+  }
+  if (typeof value === "symbol" || typeof value === "function") {
+    throw new LayerKeyError(
+      `${formatKeyPath(path)}: ${typeof value} is not JSON-safe`,
+      path,
+    );
+  }
+  if (typeof value !== "object") {
+    throw new LayerKeyError(
+      `${formatKeyPath(path)}: unsupported key segment`,
+      path,
+    );
+  }
+  if (seen.has(value)) {
+    throw new LayerKeyError(
+      `${formatKeyPath(path)}: cyclic structure is not JSON-safe`,
+      path,
+    );
+  }
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    for (let i = 0; i < value.length; i++) {
+      walkLayerKey(value[i], [...path, i], seen);
+    }
+    return;
+  }
+  if (!isPlainObject(value)) {
+    throw new LayerKeyError(
+      `${formatKeyPath(path)}: only plain objects are JSON-safe`,
+      path,
+    );
+  }
+  for (const k of Object.keys(value)) {
+    walkLayerKey(value[k], [...path, k], seen);
+  }
+}
+
+/**
+ * Ensures a layer key is JSON-safe for {@link hashKey}.
+ * Allowed: `string` | `boolean` | `null` | finite `number` | plain objects | arrays of those.
+ */
+export function assertLayerKey(key: unknown): asserts key is LayerKey {
+  if (!Array.isArray(key)) {
+    throw new LayerKeyError("key: must be an array", []);
+  }
+  walkLayerKey(key, [], new WeakSet());
+}
+
 /** Serializes a key deterministically by sorting object properties recursively. */
 export function hashKey(key: LayerKey): string {
+  assertLayerKey(key);
   return JSON.stringify(key, (_unused, val) =>
     isPlainObject(val) ? sortedObject(val) : val,
   );

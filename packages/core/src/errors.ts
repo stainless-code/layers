@@ -36,3 +36,33 @@ export function isPayloadValidationError(
 ): value is PayloadValidationError {
   return value instanceof PayloadValidationError;
 }
+
+/** Thrown when a layer key is not JSON-safe (see {@link assertLayerKey}). */
+export class LayerKeyError extends Error {
+  readonly path: ReadonlyArray<PropertyKey>;
+  constructor(message: string, path: ReadonlyArray<PropertyKey> = []) {
+    super(message);
+    this.name = "LayerKeyError";
+    this.path = path;
+  }
+}
+
+/**
+ * Narrows an unknown throw/rejection to {@link LayerKeyError}.
+ *
+ * @example
+ * ```ts
+ * import { isLayerKeyError } from "@stainless-code/layers";
+ *
+ * try {
+ *   client.open({ key: [maybeId], payload });
+ * } catch (error) {
+ *   if (isLayerKeyError(error)) {
+ *     console.error(error.path, error.message);
+ *   }
+ * }
+ * ```
+ */
+export function isLayerKeyError(value: unknown): value is LayerKeyError {
+  return value instanceof LayerKeyError;
+}

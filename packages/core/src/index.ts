@@ -1,5 +1,10 @@
 export * from "./types";
-export { hashKey, keySignature, shallowArrayEqual } from "./utils";
+export {
+  assertLayerKey,
+  hashKey,
+  keySignature,
+  shallowArrayEqual,
+} from "./utils";
 export { Subscribable } from "./subscribable";
 export { notifyManager } from "./notifyManager";
 export { ControlledPromise } from "./controlledPromise";
@@ -28,5 +33,10 @@ export type {
   InferValidatorOutput,
   OpenValidatePayload,
 } from "./validators";
-export { PayloadValidationError, isPayloadValidationError } from "./errors";
+export {
+  PayloadValidationError,
+  isPayloadValidationError,
+  LayerKeyError,
+  isLayerKeyError,
+} from "./errors";
 export type { ValidationIssue } from "./errors";

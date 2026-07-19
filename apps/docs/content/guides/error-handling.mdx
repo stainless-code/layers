@@ -7,6 +7,10 @@ search:
 
 `open()` returns `Promise<R>` — the direct-`await` contract. Resolution types flow through `DataTag`; **rejections do not** (a TypeScript limitation). Narrow errors in `catch` with runtime guards.
 
+## Sync throws vs Promise rejects
+
+A non-JSON-safe `key` throws `LayerKeyError` **synchronously** from `open` / `find` / `cancelQueued` (before a promise is returned). Narrow with `isLayerKeyError`. That path is distinct from the Promise rejection cases below — wrap the `open` call itself if keys may be untrusted.
+
 ## What rejects
 
 The promise rejects when:
