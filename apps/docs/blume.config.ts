@@ -1,5 +1,7 @@
 import { defineConfig } from "blume";
 
+import { CURATED_POPULAR } from "./components/curated-popular.ts";
+
 export default defineConfig({
   title: "Layers",
   description:
@@ -62,7 +64,14 @@ export default defineConfig({
   },
 
   theme: { accent: "teal", radius: "md", mode: "system" },
-  search: { provider: "orama" },
+  search: {
+    provider: "orama",
+    // Same curated empty-state list as custom Search + 404 (CURATED_POPULAR).
+    popular: CURATED_POPULAR.map(({ route, label }) => ({
+      href: route,
+      label,
+    })),
+  },
 
   markdown: {
     code: { icons: true },

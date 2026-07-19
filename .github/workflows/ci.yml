@@ -218,6 +218,12 @@ jobs:
         run: bun run docs:check -- --isolated
       - name: Build docs site
         run: bun run docs:build
+      # Post-build SEO/site-health. validate stays pre-build.
+      # Skips (see apps/docs package.json `audit`): Blume 1.1.0 false-positives
+      # canonical pathname vs base-stripped page.url under deployment.base=/layers;
+      # html_too_large on typedoc Lit API (~7MB) until that page is split.
+      - name: Audit docs site
+        run: bun run docs:audit
 
   links:
     name: 🔗 Doc links
