@@ -111,7 +111,11 @@ export default defineConfig({
   },
 
   seo: {
-    og: { enabled: true },
+    og: {
+      enabled: true,
+      // Custom home has no frontmatter — avoid humanized "/" → site-title card.
+      titles: { "/": "Layers — open any layer from anywhere" },
+    },
     rss: { enabled: true, types: ["changelog"] },
     sitemap: true,
     robots: true,
