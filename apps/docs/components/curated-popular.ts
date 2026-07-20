@@ -1,4 +1,4 @@
-/** Shared Cmd+K (`search.popular`) + 404 destinations — not sidebar order. */
+/** Cmd+K empty-state + 404 destinations — not sidebar order. */
 export const CURATED_POPULAR = [
   { route: "/guides/getting-started", label: "Getting started" },
   { route: "/guides/install", label: "Install" },
