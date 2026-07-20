@@ -3,8 +3,9 @@ import { defineConfig } from "blume";
 import { CURATED_POPULAR } from "./components/curated-popular";
 
 const title = "Layers";
-/** Matches `pages/index.astro` pageTitle — custom home has no frontmatter for OG. */
+/** Custom `.astro` pages have no frontmatter — name OG cards (else humanized segment). */
 const homeTitle = `${title} — open any layer from anywhere`;
+const notFoundTitle = "Page not found";
 
 export default defineConfig({
   title,
@@ -116,7 +117,7 @@ export default defineConfig({
   seo: {
     og: {
       enabled: true,
-      titles: { "/": homeTitle },
+      titles: { "/": homeTitle, "/404": notFoundTitle },
     },
     rss: { enabled: true, types: ["changelog"] },
     sitemap: true,
