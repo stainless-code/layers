@@ -2,8 +2,13 @@ import { defineConfig } from "blume";
 
 import { CURATED_POPULAR } from "./components/curated-popular";
 
+const title = "Layers";
+/** Custom `.astro` pages have no frontmatter — name OG cards (else humanized segment). */
+const homeTitle = `${title} — open any layer from anywhere`;
+const notFoundTitle = "Page not found";
+
 export default defineConfig({
-  title: "Layers",
+  title,
   description:
     "Headless modal/dialog/drawer/popover/toast manager — open any layer from anywhere. Zero-dep core + React, Preact, Solid, Angular, Vue, Lit, Alpine, and Svelte adapters.",
 
@@ -66,7 +71,6 @@ export default defineConfig({
   theme: { accent: "teal", radius: "md", mode: "system" },
   search: {
     provider: "orama",
-    // Cmd+K empty-state + shared with 404 via CURATED_POPULAR.
     popular: CURATED_POPULAR.map(({ route, label }) => ({
       href: route,
       label,
@@ -111,7 +115,10 @@ export default defineConfig({
   },
 
   seo: {
-    og: { enabled: true },
+    og: {
+      enabled: true,
+      titles: { "/": homeTitle, "/404": notFoundTitle },
+    },
     rss: { enabled: true, types: ["changelog"] },
     sitemap: true,
     robots: true,
