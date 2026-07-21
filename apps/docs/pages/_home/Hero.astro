@@ -55,7 +55,6 @@ const defaultFramework = "vanilla";
         <button
           class={`inline-flex items-center gap-1.5 ${pillBase} ${snippet.framework === defaultFramework ? pillActive : pillMuted}`}
           data-framework={snippet.framework}
-          data-install-command={snippet.installCommand}
           type="button"
         >
           {/* size-* beats global img { height: auto } so non-square brand SVGs don't drift pill height */}
@@ -83,7 +82,18 @@ const defaultFramework = "vanilla";
     }
   </div>
 
-  <div class="mt-9"><InstallBox /></div>
+  <div class="mt-9">
+    {
+      adapterSnippets.map((snippet) => (
+        <div
+          class={snippet.framework === defaultFramework ? undefined : "hidden"}
+          data-install={snippet.framework}
+        >
+          <InstallBox command={snippet.installCommand} />
+        </div>
+      ))
+    }
+  </div>
 
   <div class="mt-7 flex items-center justify-center gap-6 text-sm">
     <a
@@ -149,7 +159,6 @@ const defaultFramework = "vanilla";
 <script is:inline>
   (() => {
     const pillContainer = document.querySelector("[data-framework-pills]");
-    const installBox = document.querySelector("[data-blume-install-box]");
     if (!pillContainer) return;
 
     const ACTIVE = ["border-accent", "bg-accent/10", "font-medium", "text-accent"];
@@ -165,7 +174,6 @@ const defaultFramework = "vanilla";
       if (!pill) return;
 
       const framework = pill.dataset.framework;
-      const installCommand = pill.dataset.installCommand;
 
       pillContainer.querySelectorAll("[data-framework]").forEach((p) => {
         const isActive = p.dataset.framework === framework;
@@ -181,12 +189,13 @@ const defaultFramework = "vanilla";
         }
       });
 
-      if (installBox && installCommand) {
-        const codeEl = installBox.querySelector("code");
-        const copyBtn = installBox.querySelector("[data-blume-copy-install]");
-        if (codeEl) codeEl.textContent = installCommand;
-        if (copyBtn) copyBtn.dataset.command = installCommand;
-      }
+      document.querySelectorAll("[data-install]").forEach((box) => {
+        if (box.dataset.install === framework) {
+          box.classList.remove("hidden");
+        } else {
+          box.classList.add("hidden");
+        }
+      });
     });
   })();
 </script>
