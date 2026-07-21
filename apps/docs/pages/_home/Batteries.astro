@@ -2,6 +2,10 @@
 import Card from "blume/components/content/Card.astro";
 import CardGroup from "blume/components/content/CardGroup.astro";
 import { contentHref } from "blume/components/content/base-href.ts";
+
+/** Card is `not-prose` — Blume chips don't apply; style explicitly. */
+const codeChip =
+  "rounded bg-muted px-1 font-mono text-xs text-foreground";
 ---
 
 <section>
@@ -34,7 +38,7 @@ import { contentHref } from "blume/components/content/base-href.ts";
         title="Open and update from anywhere"
       >
         Push, replace singletons, patch live payloads, and dismiss from anywhere
-        — no lifted <code>isOpen</code> state.
+        — no lifted <code class={codeChip}>isOpen</code> state.
       </Card>
       <Card
         arrow
@@ -42,8 +46,8 @@ import { contentHref } from "blume/components/content/base-href.ts";
         icon="tag"
         title="Await a result — no call-site generics"
       >
-        <code>{"await confirm.open({ title })"}</code> on a wired handle —{" "}
-        <code>R</code> flows from the key brand.
+        <code class={codeChip}>{"await confirm.open({ title })"}</code> on a
+        wired handle — <code class={codeChip}>R</code> flows from the key brand.
       </Card>
       <Card
         arrow
@@ -52,8 +56,8 @@ import { contentHref } from "blume/components/content/base-href.ts";
         title="Run flows one at a time"
       >
         One-at-a-time flows with{" "}
-        <code>scope: {"{ strategy: 'serial' }"}</code> and a snapshot of what's
-        waiting.
+        <code class={codeChip}>{"scope: { strategy: 'serial' }"}</code> and a
+        snapshot of what's waiting.
       </Card>
       <Card
         arrow
@@ -61,8 +65,9 @@ import { contentHref } from "blume/components/content/base-href.ts";
         icon="git-branch"
         title="Nest overlays without prop-drilling"
       >
-        Nested stacks for drawer → sub-dialog flows via
-        <code>useLayerGroup</code> / <code>createLayerGroup</code>.
+        Nested stacks for drawer → sub-dialog flows via{" "}
+        <code class={codeChip}>useLayerGroup</code> /{" "}
+        <code class={codeChip}>createLayerGroup</code>.
       </Card>
       <Card
         arrow
@@ -70,8 +75,8 @@ import { contentHref } from "blume/components/content/base-href.ts";
         icon="sparkles"
         title="Animate enter and exit"
       >
-        Enter/exit phases with delay timers and <code>call.settle()</code> for
-        animated overlays.
+        Enter/exit phases with delay timers and{" "}
+        <code class={codeChip}>call.settle()</code> for animated overlays.
       </Card>
       <Card
         arrow
@@ -79,8 +84,10 @@ import { contentHref } from "blume/components/content/base-href.ts";
         icon="shield"
         title="Guard against accidental close"
       >
-        Gate user-intent dismissal with <code>addBlocker</code>,
-        <code>dismissing</code>, and <code>dismissAll</code> modes.
+        Gate user-intent dismissal with{" "}
+        <code class={codeChip}>addBlocker</code>,{" "}
+        <code class={codeChip}>dismissing</code>, and{" "}
+        <code class={codeChip}>dismissAll</code> modes.
       </Card>
       <Card
         arrow
@@ -88,8 +95,9 @@ import { contentHref } from "blume/components/content/base-href.ts";
         icon="check-circle"
         title="Validate payloads at open"
       >
-        Parse untrusted payloads at <code>open</code> with Standard Schema or a
-        sync function — rejects with <code>PayloadValidationError</code>.
+        Parse untrusted payloads at <code class={codeChip}>open</code> with
+        Standard Schema or a sync function — rejects with{" "}
+        <code class={codeChip}>PayloadValidationError</code>.
       </Card>
       <Card
         arrow
@@ -97,8 +105,8 @@ import { contentHref } from "blume/components/content/base-href.ts";
         icon="box"
         title="No framework in the core"
       >
-        UI-agnostic <code>LayerClient</code> engine — framework adapters subscribe
-        via their native reactivity primitives.
+        UI-agnostic <code class={codeChip}>LayerClient</code> engine — framework
+        adapters subscribe via their native reactivity primitives.
       </Card>
     </CardGroup>
   </div>
