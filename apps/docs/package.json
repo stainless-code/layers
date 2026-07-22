@@ -22,7 +22,7 @@
   "dependencies": {
     "@stainless-code/layers": "workspace:*",
     "@stainless-code/react-layers": "workspace:*",
-    "blume": "1.1.2",
+    "blume": "1.1.3",
     "react": "19.2.7",
     "react-dom": "19.2.7"
   },
