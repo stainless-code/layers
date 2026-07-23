@@ -8,6 +8,8 @@ Modals are just async functions you forgot to `await`.
 
 Lit adapter — open any layer from anywhere and `await` a typed result. State coordination, not UI ownership: you own rendering, focus, portals, and a11y.
 
+[![bundle size](https://deno.bundlejs.com/?q=@stainless-code/lit-layers&config=%7B%22esbuild%22%3A%7B%22external%22%3A%5B%22lit%22%2C%22%40lit/context%22%5D%7D%7D&badge=detailed)](https://bundlejs.com/?q=@stainless-code/lit-layers&config=%7B%22esbuild%22%3A%7B%22external%22%3A%5B%22lit%22%2C%22%40lit/context%22%5D%7D%7D)
+
 > Experimental — the API may change between minor releases. Pin your version.
 
 ## Install

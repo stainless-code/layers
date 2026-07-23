@@ -8,7 +8,7 @@ Modals are just async functions you forgot to `await`.
 
 Headless layer/stack manager — modals, dialogs, drawers, popovers, toasts are **layers in named stacks**. Open any layer from anywhere and `await` a typed result. A zero-dependency core plus React, Preact, Solid, Angular, Vue, Lit, Alpine, and Svelte adapters. State coordination, not UI ownership: Layers owns ordering, keys, transitions, blockers, and the `await client.open(...)` contract; you own rendering, focus, portals, and a11y.
 
-[![bundle size](https://deno.bundlejs.com/?q=@stainless-code/layers&badge=detailed)](https://bundlejs.com/?q=@stainless-code/layers)
+[![core bundle size](https://deno.bundlejs.com/?q=@stainless-code/layers&badge=detailed)](https://bundlejs.com/?q=@stainless-code/layers)
 
 > Experimental — the API may change between minor releases. Pin your version. ([Stability & versioning](https://stainless-code.com/layers/concepts/stability))
 

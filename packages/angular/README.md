@@ -8,6 +8,8 @@ Modals are just async functions you forgot to `await`.
 
 The Angular adapter for Layers — open any layer from anywhere and `await` a typed result. State coordination, not UI ownership: Layers owns the stack/keys/transitions/await contract; you own rendering, focus, portals, and a11y.
 
+[![bundle size](https://deno.bundlejs.com/?q=@stainless-code/angular-layers&config=%7B%22esbuild%22%3A%7B%22external%22%3A%5B%22%40angular/core%22%2C%22%40angular/common%22%2C%22rxjs%22%5D%7D%7D&badge=detailed)](https://bundlejs.com/?q=@stainless-code/angular-layers&config=%7B%22esbuild%22%3A%7B%22external%22%3A%5B%22%40angular/core%22%2C%22%40angular/common%22%2C%22rxjs%22%5D%7D%7D)
+
 > Experimental — the API may change between minor releases. Pin your version.
 
 ## Install

@@ -8,6 +8,8 @@ Modals are just async functions you forgot to `await`.
 
 The zero-dependency, framework-agnostic core of Layers — the layer/stack engine every adapter wraps. State coordination, not UI ownership: it owns ordering, keys, transitions, blockers, and the `await client.open(...)` contract; you own rendering, focus, portals, and a11y.
 
+[![bundle size](https://deno.bundlejs.com/?q=@stainless-code/layers&badge=detailed)](https://bundlejs.com/?q=@stainless-code/layers)
+
 > Experimental — the API may change between minor releases. Pin your version.
 
 ## Install

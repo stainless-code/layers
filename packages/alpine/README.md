@@ -8,6 +8,8 @@ Modals are just async functions you forgot to `await`.
 
 Alpine.js adapter — open any layer from anywhere and `await` a typed result. State coordination, not UI ownership: you own markup, focus (`@alpinejs/focus`), portals (`x-teleport`), and a11y.
 
+[![bundle size](https://deno.bundlejs.com/?q=@stainless-code/alpine-layers&config=%7B%22esbuild%22%3A%7B%22external%22%3A%5B%22alpinejs%22%5D%7D%7D&badge=detailed)](https://bundlejs.com/?q=@stainless-code/alpine-layers&config=%7B%22esbuild%22%3A%7B%22external%22%3A%5B%22alpinejs%22%5D%7D%7D)
+
 > Experimental — the API may change between minor releases. Pin your version.
 
 ## Install

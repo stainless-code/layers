@@ -2,6 +2,8 @@
 
 React doorbell for `@stainless-code/layers-devtools` — one plugin line into `<TanStackDevtools />`.
 
+[![bundle size](https://deno.bundlejs.com/?q=@stainless-code/react-layers-devtools&config=%7B%22esbuild%22%3A%7B%22external%22%3A%5B%22react%22%2C%22react-dom%22%2C%22%40tanstack/react-devtools%22%2C%22%40stainless-code/react-layers%22%2C%22solid-js%22%5D%7D%7D&badge=detailed)](https://bundlejs.com/?q=@stainless-code/react-layers-devtools&config=%7B%22esbuild%22%3A%7B%22external%22%3A%5B%22react%22%2C%22react-dom%22%2C%22%40tanstack/react-devtools%22%2C%22%40stainless-code/react-layers%22%2C%22solid-js%22%5D%7D%7D)
+
 > Experimental — the API may change between minor releases. Pin your version.
 
 ## Install
