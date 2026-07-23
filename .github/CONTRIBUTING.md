@@ -51,6 +51,13 @@ Match Oxfmt/Oxlint; prefer **straight-line code** and extracted helpers over lon
 
 [@changesets/cli](https://github.com/changesets/changesets) — run **`bunx changeset`** when your PR should bump the version, and commit the `.changeset/*.md` file. The Release workflow opens a "Version packages" PR and publishes to npm on merge via trusted publishing (GitHub OIDC; no `NPM_TOKEN`); Sigstore provenance is auto-generated.
 
+Release git uses a **GitHub App** install token so tag push works after workflow edits — reuse org App `stainless-code-release`.
+
+**One-time setup** (org owner):
+
+1. Add `layers` to the [existing App install](https://github.com/organizations/stainless-code/settings/installations).
+2. Repo **`release` environment**: variable `RELEASE_APP_CLIENT_ID`; secret `RELEASE_APP_PRIVATE_KEY` (same values as persist).
+
 ### Issues
 
 Use the [GitHub issue templates](https://github.com/stainless-code/layers/issues/new/choose) — **Bug** vs **Feature / adapter proposal** (see `.github/ISSUE_TEMPLATE/`).
