@@ -24,7 +24,7 @@
     "@stainless-code/react-layers": "workspace:*",
     "blume": "1.2.0",
     "react": "19.2.7",
-    "react-dom": "19.2.7"
+    "react-dom": "19.2.8"
   },
   "devDependencies": {
     "@analogjs/astro-angular": "2.6.3",
