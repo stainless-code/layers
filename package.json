@@ -85,6 +85,7 @@
     "typescript": "6.0.3"
   },
   "overrides": {
+    "brace-expansion": "5.0.8",
     "path-to-regexp": "6.3.0",
     "yuku-parser": "0.6.5"
   },
