@@ -22,7 +22,7 @@
     "build:core": "bun run --filter '@stainless-code/layers' build",
     "changeset": "changeset",
     "check": "bun run build && bun run --parallel format:check lint:ci test test:dom typecheck",
-    "check-updates": "bun update -i --latest",
+    "check-updates": "bun update -i --latest -r",
     "check:deps": "sherif --fail-on-warnings",
     "check:links": "lychee --config lychee.toml \"**/*.md\"",
     "check:pack": "bun run --filter '*' check:pack",

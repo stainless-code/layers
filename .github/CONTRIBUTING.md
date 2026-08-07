@@ -16,7 +16,7 @@ bun run lint           # oxlint
 bun run format         # oxfmt
 bun run build          # per-package tsdown → packages/*/dist
 bun run check          # build, then format:check + lint:ci + test + test:dom + typecheck (in parallel)
-bun run check-updates  # interactive dependency updates (bun update -i --latest)
+bun run check-updates  # interactive dependency updates across workspaces (bun update -i --latest -r)
 bun run clean          # remove untracked/ignored build artifacts (keeps .env)
 ```
 
