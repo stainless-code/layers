@@ -14,13 +14,13 @@
     "@stainless-code/react-layers-devtools": "workspace:*",
     "@tanstack/react-devtools": "0.10.8",
     "react": "19.2.7",
-    "react-dom": "19.2.7",
+    "react-dom": "19.2.8",
     "solid-js": "1.9.14"
   },
   "devDependencies": {
     "@tailwindcss/vite": "4.3.3",
     "@types/react": "19.2.17",
-    "@types/react-dom": "19.2.3",
+    "@types/react-dom": "19.2.4",
     "@vitejs/plugin-react": "6.0.3",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
