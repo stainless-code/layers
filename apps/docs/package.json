@@ -23,7 +23,7 @@
     "@stainless-code/layers": "workspace:*",
     "@stainless-code/react-layers": "workspace:*",
     "blume": "1.3.1",
-    "react": "19.2.7",
+    "react": "19.2.8",
     "react-dom": "19.2.7"
   },
   "devDependencies": {
@@ -42,7 +42,7 @@
     "@stainless-code/solid-layers": "workspace:*",
     "@stainless-code/svelte-layers": "workspace:*",
     "@stainless-code/vue-layers": "workspace:*",
-    "@types/react": "19.2.17",
+    "@types/react": "19.2.18",
     "@types/react-dom": "19.2.3",
     "lit": "3.3.3",
     "preact": "10.29.7",
