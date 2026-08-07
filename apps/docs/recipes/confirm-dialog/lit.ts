@@ -76,9 +76,11 @@ export class ExampleTrigger extends LitElement {
       >
         Delete file
       </button>
-      ${this._result !== null
-        ? html`<span>Result: ${String(this._result)}</span>`
-        : null}
+      ${
+        this._result !== null
+          ? html`<span>Result: ${String(this._result)}</span>`
+          : null
+      }
     </div>`;
   }
 }
