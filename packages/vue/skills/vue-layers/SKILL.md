@@ -11,7 +11,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/vue-layers"
-  library_version: "0.2.4"
+  library_version: "0.2.5"
   framework: "vue"
 sources:
   - https://stainless-code.com/layers/adapters/vue

@@ -1,5 +1,13 @@
 # @stainless-code/react-layers-devtools
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies []:
+  - @stainless-code/layers-devtools@0.2.5
+  - @stainless-code/react-layers@0.2.4
+
 ## 0.2.4
 
 ### Patch Changes

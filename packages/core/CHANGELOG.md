@@ -1,5 +1,11 @@
 # @stainless-code/layers
 
+## 0.2.4
+
+### Patch Changes
+
+- [#51](https://github.com/stainless-code/layers/pull/51) [`4d41e57`](https://github.com/stainless-code/layers/commit/4d41e577e4148568644bf6cf1cd1b6d5c44817b6) Thanks [@SutuSebastian](https://github.com/SutuSebastian)! - `EndArgs`: omit dismiss/end response when `undefined extends R` (twin of `PayloadArg`). Applies to `call.end`/`dismiss`, stack `dismiss`/`dismissAll`/`cancelQueued`, and handle `dismiss`/`cancelQueued`. **Type tighten:** handle dismiss/cancelQueued are no longer always-optional — bare omit errors when `R` does not admit `undefined`. Adapter skills note void omit.
+
 ## 0.2.3
 
 ### Patch Changes
