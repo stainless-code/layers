@@ -2,7 +2,7 @@ import type { Layer } from "./layer";
 import { LayerStack } from "./layerStack";
 import type {
   DefaultLayerError,
-  DismissOptions,
+  EndArgs,
   LayerCallContext,
   LayerState,
 } from "./types";
@@ -18,10 +18,14 @@ export function createCallContext<P, R, RootProps = unknown>(
   rootProps?: RootProps,
 ): LayerCallContext<P, R, RootProps> {
   return {
-    end: (response: R, opts?: DismissOptions) =>
-      stack.dismiss(layer, response, opts),
-    dismiss: (response: R, opts?: DismissOptions) =>
-      stack.dismiss(layer, response, opts),
+    end: (...args: EndArgs<R>) => {
+      const [response, opts] = args;
+      return stack.dismiss(layer, response as R, opts);
+    },
+    dismiss: (...args: EndArgs<R>) => {
+      const [response, opts] = args;
+      return stack.dismiss(layer, response as R, opts);
+    },
     addBlocker: (fn) => layer.addBlocker(fn),
     update: (patch: Partial<P>) => stack.update(layer, patch),
     setRunning: (running: boolean) => stack.setRunning(layer, running),

@@ -80,6 +80,20 @@ On `LayerStack`: `cancelQueued(key, response, opts?: { id? })`. Omit `id` → fi
 | Queued stack    | `useQueuedStack`                   | `injectQueuedStack`              | `useQueuedStack`         | `createQueuedStack`      |
 | Queued per-key  | `useLayerQueuedState`              | `injectLayerQueuedState`         | `createLayerQueuedState` | `createLayerQueuedState` |
 
+## 0.x — omit dismiss response when void
+
+Toasts and other void-result layers no longer need `call.end(undefined)`. Omit the response whenever `undefined extends R` — same rule as omitting `.open()`'s payload (`PayloadArg` / `EndArgs`). Applies to `call.end`/`dismiss`, stack `dismiss`/`dismissAll`/`cancelQueued`, and handle `dismiss`/`cancelQueued`.
+
+<Diff
+  lang="ts"
+  old={`await call.end(undefined); // void toast`}
+  new={`await call.end();`}
+/>
+
+**Type tighten:** `LayerHandle.dismiss` / `cancelQueued` used to accept a missing response for every `R`. Bare `handle.dismiss()` is now an error when `R` does not admit `undefined` (pass `true`/`false` for confirms).
+
+`LayerClient.dismissAll` / `LayerGroup.dismissAll` stay loosely typed (`response?: unknown`) — stacks on a client are heterogeneous.
+
 :::note[Pin in production]
 Lock `@stainless-code/layers` and your adapter package in `package.json`. Review the changelog before upgrading.
 :::

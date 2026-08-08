@@ -43,7 +43,7 @@
       c.stack.update(layer, { percent });
       if (percent >= 100) {
         clearInterval(interval);
-        void c.stack.dismiss(layer, undefined as void).then(() => {
+        void c.stack.dismiss(layer).then(() => {
           status = "complete";
         });
       }

@@ -77,4 +77,15 @@ describe("createCallContext", () => {
     expect(await dismissResult).toBe(true);
     expect(stack.getSnapshot()).toHaveLength(0);
   });
+
+  it("end() with no args resolves void-R layers", async () => {
+    const stack = new LayerStack<{ n: number }, void>("s");
+    const layer = stack.open({ key: ["a"], payload: { n: 1 } });
+    const state = stack.getSnapshot()[0]!;
+    const call = createCallContext(stack, layer, state);
+
+    await expect(call.end()).resolves.toBe(true);
+    await expect(layer.promise.promise).resolves.toBe(undefined);
+    expect(stack.getSnapshot()).toHaveLength(0);
+  });
 });

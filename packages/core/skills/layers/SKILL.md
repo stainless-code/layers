@@ -149,7 +149,7 @@ const ok = await client.open({
 
 ## The `call` context
 
-`createCallContext` gives an active layer `end`, `dismiss`, `addBlocker`, `update`, `setRunning`, and `settle`, plus `ended`, `index`, `stackSize`, `root`, `stackId`, and `layerId`. `await call.end(response)` and `await call.dismiss(response)` request dismissal; when allowed, they resolve the caller and begin exit. Both return `Promise<boolean>`, with `false` meaning a blocker vetoed dismissal. `update` patches payload, `setRunning` controls `actionStatus`, and `settle` completes the current enter or exit transition.
+`createCallContext` gives an active layer `end`, `dismiss`, `addBlocker`, `update`, `setRunning`, and `settle`, plus `ended`, `index`, `stackSize`, `root`, `stackId`, and `layerId`. `await call.end(response)` and `await call.dismiss(response)` request dismissal; when allowed, they resolve the caller and begin exit. Both return `Promise<boolean>`, with `false` meaning a blocker vetoed dismissal. When `undefined extends R` (e.g. `R = void`), omit the response — `call.end()` / `call.dismiss()` — same gate as `PayloadArg` / `.open()` (`EndArgs`). `update` patches payload, `setRunning` controls `actionStatus`, and `settle` completes the current enter or exit transition.
 
 `key` is logical identity for `find`, `upsert`, and `gcTime`; every mount gets a unique instance `id` shaped as `${hashKey(key)}#<n>`. Keys must be JSON-safe (`string` | `boolean` | `null` | finite `number` | plain objects/arrays of those); `hashKey` / `keySignature` assert that domain and throw `LayerKeyError` otherwise. Parallel stacks may contain multiple same-key instances.
 
@@ -171,7 +171,7 @@ call.addBlocker(async () =>
 );
 ```
 
-`dismissing` is `true` while blockers run, and `{ force: true }` bypasses them. `stack.dismissAll(response, { mode })` supports `skipBlocked`, `stopAtBlocked`, and `force`; the default is `skipBlocked`, configurable per stack with `dismissAllMode` in `defaultStackOptions`. System teardown uses `cancelAll` (parent-dismiss child drain, group dispose, host disconnect) and rejects `open()` with `LayerCancelledError` — narrow with `isLayerCancelledError`. Do not conflate that with user dismiss / `dismissAll(response)`, which still resolve with `R`.
+`dismissing` is `true` while blockers run, and `{ force: true }` bypasses them. `stack.dismissAll(...args)` supports `skipBlocked`, `stopAtBlocked`, and `force`; the default is `skipBlocked`, configurable per stack with `dismissAllMode` in `defaultStackOptions`. Omit the response when `undefined extends R` (`EndArgs` gate). System teardown uses `cancelAll` (parent-dismiss child drain, group dispose, host disconnect) and rejects `open()` with `LayerCancelledError` — narrow with `isLayerCancelledError`. Do not conflate that with user dismiss / `dismissAll`, which complete `open()` with `R` (resolve, not reject).
 
 ## Payload validation
 
@@ -220,7 +220,7 @@ const completion = client.open({
 const layer = toast.find(["toast", "export"])!;
 toast.update(layer, { msg: "Done" });
 
-await toast.dismiss(layer, undefined);
+await toast.dismiss(layer);
 await completion;
 ```
 
@@ -282,7 +282,7 @@ The complete public API surface:
 | Layer model types                | `LayerKey`, `LayerPhase`, `LayerTransition`, `LayerActionStatus`, `LayerState`, `LayerOptions`, `OpenLayerOptions`            |
 | Stack and client types           | `StackOptions`, `StackDefaults`, `LayerClientOptions`                                                                         |
 | Dismissal types                  | `BlockerFn`, `StackBlockerFn`, `DismissOptions`, `DismissAllOptions`, `DismissAllMode`                                        |
-| Utility and configuration types  | `Resolve`, `Reject`, `PayloadArg`, `OmitKeyof`, `Register`, `DefaultLayerError`                                               |
+| Utility and configuration types  | `Resolve`, `Reject`, `PayloadArg`, `EndArgs`, `OmitKeyof`, `Register`, `DefaultLayerError`                                    |
 
 ## Agnostic contract
 

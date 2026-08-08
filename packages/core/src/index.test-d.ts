@@ -7,9 +7,13 @@ import { LayerClient, createLayer, layerKey, layerOptions } from "./index";
 import type {
   DataTag,
   DefaultLayerError,
+  DismissAllArgs,
+  EndArgs,
   InferDataTagError,
   InferDataTagResponse,
+  LayerCallContext,
   LayerKey,
+  LayerStack,
   OmitKeyof,
   StandardSchemaV1,
 } from "./index";
@@ -265,5 +269,117 @@ export type _CreateLayerCurrentPayload = Expect<
   Equal<
     NonNullable<(typeof confirmHandle)["current"]>["state"]["payload"],
     { title: string }
+  >
+>;
+
+// EndArgs — response optional iff `undefined extends R` (twin of PayloadArg).
+declare const voidCall: LayerCallContext<unknown, void>;
+function endVoidOmitted() {
+  return voidCall.end();
+}
+void endVoidOmitted;
+function endVoidUndefined() {
+  return voidCall.end(undefined);
+}
+void endVoidUndefined;
+function endVoidForce() {
+  return voidCall.end(undefined, { force: true });
+}
+void endVoidForce;
+function endVoidOptsOnly() {
+  // @ts-expect-error opts-only — pass response (or undefined) before force
+  return voidCall.end({ force: true });
+}
+void endVoidOptsOnly;
+function endVoidTrue() {
+  // @ts-expect-error void response is not boolean
+  return voidCall.end(true);
+}
+void endVoidTrue;
+
+declare const boolCall: LayerCallContext<unknown, boolean>;
+function endBoolOmitted() {
+  // @ts-expect-error boolean response is required
+  return boolCall.end();
+}
+void endBoolOmitted;
+function endBoolTrue() {
+  return boolCall.end(true);
+}
+void endBoolTrue;
+
+declare const optCall: LayerCallContext<unknown, boolean | undefined>;
+function endOptOmitted() {
+  return optCall.end();
+}
+void endOptOmitted;
+function endOptTrue() {
+  return optCall.end(true);
+}
+void endOptTrue;
+
+export type _EndArgsVoidOptional = Expect<
+  Equal<EndArgs<void>, [response?: void, opts?: { force?: boolean }]>
+>;
+export type _EndArgsBoolRequired = Expect<
+  Equal<EndArgs<boolean>, [response: boolean, opts?: { force?: boolean }]>
+>;
+
+// Handle dismiss — same gate (closes always-optional hole).
+const voidDismissHandle = createLayer(
+  layerOptions<{ n: number }, void>({ key: ["void-dismiss"] }),
+  confirmClient,
+);
+function dismissVoidHandleOmitted() {
+  return voidDismissHandle.dismiss();
+}
+void dismissVoidHandleOmitted;
+
+const boolDismissHandle = createLayer(
+  layerOptions<{ n: number }, boolean>({ key: ["bool-dismiss"] }),
+  confirmClient,
+);
+function dismissBoolHandleOmitted() {
+  // @ts-expect-error boolean response is required on the handle
+  return boolDismissHandle.dismiss();
+}
+void dismissBoolHandleOmitted;
+function dismissBoolHandleTrue() {
+  return boolDismissHandle.dismiss(true);
+}
+void dismissBoolHandleTrue;
+
+function cancelQueuedVoidHandleOmitted() {
+  return voidDismissHandle.cancelQueued();
+}
+void cancelQueuedVoidHandleOmitted;
+function cancelQueuedBoolHandleOmitted() {
+  // @ts-expect-error boolean response is required on cancelQueued
+  return boolDismissHandle.cancelQueued();
+}
+void cancelQueuedBoolHandleOmitted;
+function cancelQueuedBoolHandleFalse() {
+  return boolDismissHandle.cancelQueued(false);
+}
+void cancelQueuedBoolHandleFalse;
+
+declare const voidStack: LayerStack<{ n: number }, void>;
+function dismissAllVoidOmitted() {
+  return voidStack.dismissAll();
+}
+void dismissAllVoidOmitted;
+declare const boolStack: LayerStack<{ n: number }, boolean>;
+function dismissAllBoolOmitted() {
+  // @ts-expect-error boolean response is required on dismissAll
+  return boolStack.dismissAll();
+}
+void dismissAllBoolOmitted;
+export type _DismissAllArgsVoidOptional = Expect<
+  Equal<
+    DismissAllArgs<void>,
+    [
+      response?: void,
+      opts?: { mode?: "skipBlocked" | "stopAtBlocked" | "force" },
+    ]
   >
 >;

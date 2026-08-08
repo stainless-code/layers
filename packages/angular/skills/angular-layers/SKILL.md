@@ -170,7 +170,7 @@ When `P` is `void`, `unknown`, `undefined`, or a union containing `undefined`, o
 
 ## The `call` context
 
-Each mounted layer gets a `LayerCallContext` from `createCallContext(stack, layer, state)` (or via `useStackHandles().getCall(state)` / `renderStack`'s `call` input). It provides `end`, `dismiss`, `update`, `setRunning`, `settle`, `ended`, `index`, `stackSize`, `root`, `stackId`, `layerId`, and `addBlocker`; the `LayerState` snapshot provides `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, and `dismissing`. Use `await call.end(response)` to resolve the caller's `await` and dismiss the layer (`Promise<boolean>`; `false` when a blocker vetoes).
+Each mounted layer gets a `LayerCallContext` from `createCallContext(stack, layer, state)` (or via `useStackHandles().getCall(state)` / `renderStack`'s `call` input). It provides `end`, `dismiss`, `update`, `setRunning`, `settle`, `ended`, `index`, `stackSize`, `root`, `stackId`, `layerId`, and `addBlocker`; the `LayerState` snapshot provides `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, and `dismissing`. Use `await call.end(response)` to resolve the caller's `await` and dismiss the layer (`Promise<boolean>`; `false` when a blocker vetoes). When `undefined extends R` (e.g. void toasts), omit the arg — `call.end()` / `call.dismiss()`.
 
 **Key vs id:** `key` is the logical identity used by `find`, `upsert`, and `gcTime`; each mount gets a unique instance `id`. Track `s.id` in `@for` because parallel stacks may contain multiple layers with the same key.
 

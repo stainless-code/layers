@@ -5,9 +5,10 @@ import { createLayerGcCache } from "./layerGcCache";
 import { notifyManager } from "./notifyManager";
 import { Subscribable } from "./subscribable";
 import type {
+  CancelQueuedArgs,
   DefaultLayerError,
-  DismissAllOptions,
-  DismissOptions,
+  DismissAllArgs,
+  EndArgs,
   LayerKey,
   LayerNotifyView,
   LayerState,
@@ -257,20 +258,19 @@ export class LayerStack<
   /**
    * Resolves the caller and aborts in-flight loading.
    * Exiting layers remain mounted until their transition settles.
+   * Response may be omitted when `undefined extends R` ({@link EndArgs}).
    */
-  dismiss(
-    layer: Layer<P, R, E, D>,
-    response: R,
-    opts?: DismissOptions,
-  ): Promise<boolean> {
+  dismiss(layer: Layer<P, R, E, D>, ...args: EndArgs<R>): Promise<boolean> {
+    const [response, opts] = args;
+    const r = response as R;
     if (opts?.force) {
-      this.#commitDismiss(layer, response);
+      this.#commitDismiss(layer, r);
       return Promise.resolve(true);
     }
     if (layer.dismissPending) {
       return layer.dismissPending;
     }
-    layer.dismissPending = this.#guardedDismiss(layer, response).finally(() => {
+    layer.dismissPending = this.#guardedDismiss(layer, r).finally(() => {
       layer.dismissPending = undefined;
     });
     return layer.dismissPending;
@@ -380,11 +380,14 @@ export class LayerStack<
 
   /**
    * Bulk-dismisses active and queued layers, completing every `open()` with
-   * `response` (including `undefined` when `R` is `void`). Honors
-   * {@link DismissAllMode}; does not reject — use {@link cancelAll} for
+   * `response` (including omitted/`undefined` when `undefined extends R` —
+   * {@link DismissAllArgs} / {@link EndArgs} gate).
+   * Honors {@link DismissAllMode}; does not reject — use {@link cancelAll} for
    * teardown without a completion value.
    */
-  async dismissAll(response: R, opts?: DismissAllOptions): Promise<void> {
+  async dismissAll(...args: DismissAllArgs<R>): Promise<void> {
+    const [response, opts] = args;
+    const r = response as R;
     const mode = opts?.mode ?? this.options.dismissAllMode ?? "skipBlocked";
     // Final labeled snapshot: active-only stacks only emit per-layer `"dismiss"`.
     const shouldEmit = this.#scopeQueue.length > 0 || this.#layers.length > 0;
@@ -395,12 +398,12 @@ export class LayerStack<
         // without ever mounting.
         for (const entry of this.#scopeQueue) {
           entry.layer.abort();
-          entry.layer.resolve(response);
+          entry.layer.resolve(r);
           entry.layer.setPartial({
             phase: "dismissed",
             transition: "settled",
             ended: true,
-            response,
+            response: r,
           });
         }
         this.#scopeQueue = [];
@@ -408,10 +411,10 @@ export class LayerStack<
       });
       for (const l of this.#layers) {
         if (mode === "force") {
-          await this.dismiss(l, response, { force: true });
+          await this.dismiss(l, r, { force: true });
           continue;
         }
-        const ok = await this.dismiss(l, response);
+        const ok = await this.dismiss(l, r);
         if (!ok && mode === "stopAtBlocked") {
           return;
         }
@@ -484,8 +487,12 @@ export class LayerStack<
   /**
    * Resolves and removes a serially queued layer without mounting it (skips blockers).
    * No `id` → FIFO head for the key; `{ id }` → exact queued match.
+   * Response may be omitted when `undefined extends R` ({@link CancelQueuedArgs} /
+   * {@link EndArgs} gate).
    */
-  cancelQueued(key: LayerKey, response: R, opts?: { id?: string }): boolean {
+  cancelQueued(key: LayerKey, ...args: CancelQueuedArgs<R>): boolean {
+    const [response, opts] = args;
+    const r = response as R;
     return notifyManager.batch(() => {
       return this.#dispatch("cancelQueued", () => {
         const sig = keySignature(key);
@@ -499,12 +506,12 @@ export class LayerStack<
         }
         const entry = this.#scopeQueue[idx]!;
         entry.layer.abort();
-        entry.layer.resolve(response);
+        entry.layer.resolve(r);
         entry.layer.setPartial({
           phase: "dismissed",
           transition: "settled",
           ended: true,
-          response,
+          response: r,
         });
         this.#scopeQueue.splice(idx, 1);
         this.#flush();

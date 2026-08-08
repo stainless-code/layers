@@ -19,6 +19,7 @@ By-design or false-positive findings — do not re-raise.
 - **[correctness]** `packages/alpine/src/index.ts` multi-child `x-layer-outlet` template — by-design; Alpine `<template>` loops (`x-for`/`x-if`) require a single root element; outlet matches that contract (document in alpine.mdx).
 - **[docs]** `apps/docs/content/adapters/index.mdx` Alpine footnote `⁷` vs `docs/architecture.md` `⁸` — by-design; each matrix numbers footnotes for its own footnote set (architecture also has Lit `⁷`).
 - **[correctness]** `void group.open(...)` samples after Option C — false positive for unhandledrejection; `#rejectCancel` already `void layer.promise.promise.catch(() => {})`. Awaiters still need `isLayerCancelledError`.
+- **[docs]** `packages/core/skills/layers/SKILL.md` omit listing `ResponseArgTuple`/`DismissAllArgs`/… in the public utility row — by-design; cite `EndArgs` only (lean advertise).
 
 ## Deferred
 

@@ -75,7 +75,7 @@ export class AppComponent {
       this.c.stack.update(layer, { percent });
       if (percent >= 100) {
         clearInterval(interval);
-        void this.c.stack.dismiss(layer, undefined as void).then(() => {
+        void this.c.stack.dismiss(layer).then(() => {
           this.status.set("complete");
         });
       }
