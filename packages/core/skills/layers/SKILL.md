@@ -171,7 +171,7 @@ call.addBlocker(async () =>
 );
 ```
 
-`dismissing` is `true` while blockers run, and `{ force: true }` bypasses them. `stack.dismissAll(...args)` supports `skipBlocked`, `stopAtBlocked`, and `force`; the default is `skipBlocked`, configurable per stack with `dismissAllMode` in `defaultStackOptions`. Omit the response when `undefined extends R` (`EndArgs` gate). System teardown uses `cancelAll` (parent-dismiss child drain, group dispose, host disconnect) and rejects `open()` with `LayerCancelledError` — narrow with `isLayerCancelledError`. Do not conflate that with user dismiss / `dismissAll`, which still resolve with `R`.
+`dismissing` is `true` while blockers run, and `{ force: true }` bypasses them. `stack.dismissAll(...args)` supports `skipBlocked`, `stopAtBlocked`, and `force`; the default is `skipBlocked`, configurable per stack with `dismissAllMode` in `defaultStackOptions`. Omit the response when `undefined extends R` (`EndArgs` gate). System teardown uses `cancelAll` (parent-dismiss child drain, group dispose, host disconnect) and rejects `open()` with `LayerCancelledError` — narrow with `isLayerCancelledError`. Do not conflate that with user dismiss / `dismissAll`, which complete the caller's `open()` with `R` (`dismiss` returns `Promise<boolean>`; `dismissAll` returns `Promise<void>`).
 
 ## Payload validation
 

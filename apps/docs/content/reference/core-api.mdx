@@ -195,7 +195,7 @@ function assertLayerKey(key: unknown): asserts key is LayerKey;
 
 ## Layer cancel errors
 
-System teardown (`cancelAll`, parent-dismiss child drain, group dispose, host disconnect) rejects `open()` with `LayerCancelledError`. User `dismiss` / `dismissAll` still resolve with `R`. See [Error handling](/guides/error-handling).
+System teardown (`cancelAll`, parent-dismiss child drain, group dispose, host disconnect) rejects `open()` with `LayerCancelledError`. A permitted user dismissal completes the layer's `open()` with `R` (`dismiss` returns `Promise<boolean>`; `dismissAll` returns `Promise<void>`). See [Error handling](/guides/error-handling).
 
 ```ts
 type LayerCancelReason =

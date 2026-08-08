@@ -19,7 +19,7 @@ The promise rejects when:
 2. **`validate` fails** — `PayloadValidationError`
 3. **System teardown** — `LayerCancelledError` from `cancelAll` (parent dismiss drain, layer-group dispose, host disconnect)
 
-User dismiss / `dismissAll(response)` still **resolves** with `R` (including `undefined` for `R = void`). Narrow cancel with `isLayerCancelledError` — do not treat it as the user choosing a falsy response.
+A permitted user dismissal / `dismissAll` completes `open()` with `R` (including `undefined` for `R = void`) — not the return value of `dismiss` itself (`Promise<boolean>`). Narrow cancel with `isLayerCancelledError` — do not treat it as the user choosing a falsy response.
 
 Dismissal during `pending` resolves with the dismissal response (the in-flight `loadFn` is aborted via `AbortController`); it does not reject.
 
