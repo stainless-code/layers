@@ -4,7 +4,7 @@ import { join } from "node:path";
 
 // Pack with Bun (resolves workspace:*) then npm-publish the tarball — Bun can't do npm OIDC/provenance.
 // Build first and assert `exports` dist paths exist (CI checkout has no dist/).
-// After publish: annotated `name@version` tag + `New tag:` line for changesets/action (push + GitHub Release).
+// Tag after publish and on skip (partial retry): annotated `name@version` + `New tag:` for changesets/action.
 // Skip versions already on the registry so partial releases can retry.
 import { $ } from "bun";
 
@@ -26,12 +26,23 @@ async function isAlreadyPublished(
   return res.exitCode === 0;
 }
 
-async function ensureReleaseTag(tag: string): Promise<void> {
+// `git tag -a` needs an identity; changesets/action `commitMode: github-api` does not set one.
+async function ensureGitIdentity(): Promise<void> {
+  const name = await $`git config user.name`.quiet().nothrow();
+  if (name.exitCode === 0 && name.text().trim()) return;
+  await $`git config user.name ${"github-actions[bot]"}`;
+  await $`git config user.email ${"41898282+github-actions[bot]@users.noreply.github.com"}`;
+}
+
+/** @returns whether a new local tag was created */
+async function ensureReleaseTag(tag: string): Promise<boolean> {
   const exists = await $`git rev-parse -q --verify ${`refs/tags/${tag}`}`
     .quiet()
     .nothrow();
-  if (exists.exitCode === 0) return;
+  if (exists.exitCode === 0) return false;
+  await ensureGitIdentity();
   await $`git tag -a ${tag} -m ${tag}`;
+  return true;
 }
 
 function distExportPaths(exportsField: unknown): string[] {
@@ -64,10 +75,14 @@ function assertDistReady(dir: string, pkg: PackageJson): void {
 console.log("release: building packages…");
 await $`bun run build`;
 
+const packageDirs = readdirSync(PACKAGES_DIR, { withFileTypes: true })
+  .filter((entry) => entry.isDirectory())
+  .map((entry) => entry.name)
+  .sort();
+
 let published = 0;
-for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
-  if (!entry.isDirectory()) continue;
-  const dir = join(PACKAGES_DIR, entry.name);
+for (const name of packageDirs) {
+  const dir = join(PACKAGES_DIR, name);
 
   let pkg: PackageJson;
   try {
@@ -77,8 +92,11 @@ for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
   }
   if (pkg.private || !pkg.name || !pkg.version) continue;
 
+  const tag = `${pkg.name}@${pkg.version}`;
+
   if (await isAlreadyPublished(pkg.name, pkg.version)) {
     console.log(`Skipping ${pkg.name}@${pkg.version} (already on registry)`);
+    if (await ensureReleaseTag(tag)) console.log(`New tag: ${tag}`);
     continue;
   }
 
@@ -95,9 +113,7 @@ for (const entry of readdirSync(PACKAGES_DIR, { withFileTypes: true })) {
   }
 
   await $`npm publish ${tarball} --provenance --access public`.cwd(dir);
-  const tag = `${pkg.name}@${pkg.version}`;
-  await ensureReleaseTag(tag);
-  console.log(`New tag: ${tag}`);
+  if (await ensureReleaseTag(tag)) console.log(`New tag: ${tag}`);
   published++;
 }
 

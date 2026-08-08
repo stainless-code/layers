@@ -58,6 +58,12 @@ jobs:
           node-version: "24"
           registry-url: "https://registry.npmjs.org"
 
+      # `git tag -a` needs identity; `commitMode: github-api` does not set one.
+      - name: Configure git identity for release tags
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
       # Opens/updates the Version PR when `.changeset/*.md` exist; otherwise publishes
       # unpublished versions. Failures: step log (App credentials, OIDC, registry).
       - name: Create Release Pull Request or Publish to npm
