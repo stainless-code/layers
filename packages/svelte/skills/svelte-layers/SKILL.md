@@ -230,7 +230,7 @@ Each layer component receives:
 - `call`: `end`, `dismiss`, `update`, `setRunning`, `settle`, `ended`, `index`, `stackSize`, `root`, `stackId`, `layerId`, and `addBlocker`
 - state props: `payload`, `data`, `error`, `phase`, `transition`, `actionStatus`, and `dismissing`
 
-`await call.end(response)` resolves the caller's `await` and dismisses the layer. It returns `Promise<boolean>`; `false` means a blocker vetoed dismissal.
+`await call.end(response)` resolves the caller's `await` and dismisses the layer. It returns `Promise<boolean>`; `false` means a blocker vetoed dismissal. When `undefined extends R` (e.g. void toasts), omit the arg — `call.end()` / `call.dismiss()`.
 
 `key` is logical identity for operations such as `find`, `upsert`, and `gcTime`; every mount gets a unique `id`. Key `{#each}` blocks with `s.id`, because parallel stacks may contain multiple same-key layers.
 
