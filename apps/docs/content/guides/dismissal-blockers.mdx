@@ -44,6 +44,7 @@ Bypass blockers with `{ force: true }`:
 ```ts
 await call.end(response, { force: true });
 await call.dismiss(response, { force: true });
+// void-R: await call.end(undefined, { force: true });
 ```
 
 While blockers evaluate, `dismissing` is `true` on the layer state — disable close buttons during async confirm:

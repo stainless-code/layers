@@ -151,14 +151,16 @@ export type PayloadArg<P> = undefined extends P
   ? { payload?: P }
   : { payload: P };
 
-/** Rest-tuple factory: response optional iff `undefined extends R`. */
+/** Rest-tuple factory used by {@link EndArgs} and stack/handle variants. */
 export type ResponseArgTuple<R, Opts> = undefined extends R
   ? [response?: R, opts?: Opts]
   : [response: R, opts?: Opts];
 
 /**
- * Rest-args for `call.end` / `call.dismiss`.
+ * Rest-args for `call.end` / `call.dismiss` / `LayerStack.dismiss`.
  * Response is optional only when `R` admits `undefined` — twin of {@link PayloadArg}.
+ * When response is optional, pass opts as the second arg (`end(undefined, { force: true })`);
+ * a lone object is treated as the response (not as opts).
  */
 export type EndArgs<R> = ResponseArgTuple<R, DismissOptions>;
 

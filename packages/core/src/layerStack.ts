@@ -258,7 +258,7 @@ export class LayerStack<
   /**
    * Resolves the caller and aborts in-flight loading.
    * Exiting layers remain mounted until their transition settles.
-   * Response may be omitted when `undefined extends R` (see {@link EndArgs}).
+   * Response may be omitted when `undefined extends R` ({@link EndArgs}).
    */
   dismiss(layer: Layer<P, R, E, D>, ...args: EndArgs<R>): Promise<boolean> {
     const [response, opts] = args;
@@ -380,7 +380,8 @@ export class LayerStack<
 
   /**
    * Bulk-dismisses active and queued layers, completing every `open()` with
-   * `response` (including omitted/`undefined` when `undefined extends R`).
+   * `response` (including omitted/`undefined` when `undefined extends R` —
+   * {@link DismissAllArgs} / {@link EndArgs} gate).
    * Honors {@link DismissAllMode}; does not reject — use {@link cancelAll} for
    * teardown without a completion value.
    */
@@ -486,7 +487,8 @@ export class LayerStack<
   /**
    * Resolves and removes a serially queued layer without mounting it (skips blockers).
    * No `id` → FIFO head for the key; `{ id }` → exact queued match.
-   * Response may be omitted when `undefined extends R`.
+   * Response may be omitted when `undefined extends R` ({@link CancelQueuedArgs} /
+   * {@link EndArgs} gate).
    */
   cancelQueued(key: LayerKey, ...args: CancelQueuedArgs<R>): boolean {
     const [response, opts] = args;

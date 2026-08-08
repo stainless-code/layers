@@ -42,14 +42,16 @@ export interface LayerHandle<P, R, E, D, RP> {
   upsert: (payload: PayloadArg<P>["payload"]) => Promise<R>;
   /**
    * Dismiss the bound instance (or `{ id }`).
-   * Response optional iff `undefined extends R` — see {@link HandleDismissArgs}.
+   * Response optional iff `undefined extends R` ({@link HandleDismissArgs} /
+   * {@link EndArgs} gate).
    */
   dismiss: (...args: HandleDismissArgs<R>) => Promise<boolean>;
   update: (patch: Partial<P>, opts?: { id?: string }) => void;
   /**
    * Resolves and removes a serially queued layer without mounting (skips blockers).
    * No `id` → FIFO head for this key; `{ id }` → exact queued match.
-   * Response may be omitted when `undefined extends R`.
+   * Response may be omitted when `undefined extends R` ({@link CancelQueuedArgs} /
+   * {@link EndArgs} gate).
    */
   cancelQueued: (...args: CancelQueuedArgs<R>) => boolean;
   readonly client: LayerClient;

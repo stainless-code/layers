@@ -115,9 +115,41 @@ describe("createLayer — control surface", () => {
     await handle.dismiss(true);
     expect(await pending).toBe(true);
   });
+
+  it("dismiss() omits response for void R", async () => {
+    const client = new LayerClient();
+    const handle = createLayer(
+      layerOptions<{ n: number }, void>({ key: ["void-r"] }),
+      client,
+    );
+    const pending = handle.open({ n: 1 });
+    await expect(handle.dismiss()).resolves.toBe(true);
+    await expect(pending).resolves.toBe(undefined);
+  });
 });
 
 describe("createLayer — cancelQueued", () => {
+  it("cancelQueued() omits response for void R", async () => {
+    const client = new LayerClient({
+      defaultStackOptions: {
+        default: { scope: { strategy: "serial" } },
+      },
+    });
+    const handleA = createLayer(
+      layerOptions<{ n: number }, void>({ key: ["a"] }),
+      client,
+    );
+    const handleB = createLayer(
+      layerOptions<{ n: number }, void>({ key: ["b"] }),
+      client,
+    );
+    void handleA.open({ n: 1 });
+    const pending = handleB.open({ n: 2 });
+    expect(handleB.cancelQueued()).toBe(true);
+    await expect(pending).resolves.toBe(undefined);
+    await handleA.dismiss();
+  });
+
   it("cancelQueued resolves a queued layer without mounting it", async () => {
     const client = new LayerClient({
       defaultStackOptions: {
