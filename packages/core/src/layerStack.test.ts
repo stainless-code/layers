@@ -432,6 +432,14 @@ describe("LayerStack — scope serial", () => {
     expect(stack.getSnapshot()).toHaveLength(0);
   });
 
+  it("dismissAll() omits response for void R", async () => {
+    const stack = new LayerStack<{ n: number }, void>("s");
+    const layer = stack.open({ key: ["a"], payload: { n: 1 } });
+    await stack.dismissAll();
+    await expect(layer.promise.promise).resolves.toBe(undefined);
+    expect(stack.getSnapshot()).toHaveLength(0);
+  });
+
   it("onLoadError block (default): error occupies lane; queued waits; no leapfrog", async () => {
     let rejectLoad!: (error: Error) => void;
     const stack = new LayerStack<{ n: number }, boolean, Error>("s", {

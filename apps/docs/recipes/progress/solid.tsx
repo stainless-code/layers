@@ -54,11 +54,9 @@ function Trigger() {
             progressLayer.stack.update(layer, { percent });
             if (percent >= 100) {
               clearInterval(interval);
-              void progressLayer.stack
-                .dismiss(layer, undefined as void)
-                .then(() => {
-                  setStatus("complete");
-                });
+              void progressLayer.stack.dismiss(layer).then(() => {
+                setStatus("complete");
+              });
             }
           }, 150);
         }}

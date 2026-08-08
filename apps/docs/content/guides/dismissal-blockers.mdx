@@ -33,7 +33,7 @@ Both return a disposer. Predicates may be async; `dismiss` awaits them.
 `call.end` and `call.dismiss` return `Promise<boolean>` — `true` if dismissed, `false` if vetoed:
 
 ```tsx
-const didDismiss = await call.dismiss(undefined);
+const didDismiss = await call.dismiss(); // void-R: omit the response
 if (!didDismiss) {
   // show confirm UI — your own layer, not opened by core
 }
@@ -60,7 +60,7 @@ function Editor({ call, dismissing }: LayerComponentProps<void, void>) {
 
 ## dismissAll modes
 
-`stack.dismissAll(response, opts?)` is async:
+`stack.dismissAll(...args)` is async (omit response for void-R):
 
 | Mode | Behavior |
 | ---- | -------- |
@@ -70,6 +70,7 @@ function Editor({ call, dismissing }: LayerComponentProps<void, void>) {
 
 ```ts
 await stack.dismissAll(undefined, { mode: "stopAtBlocked" });
+// void-R + default mode: await stack.dismissAll();
 ```
 
 Default mode is configurable via `StackOptions.dismissAllMode` or `LayerClientOptions.defaultStackOptions`.

@@ -23,11 +23,11 @@ stack.addBlocker(fn: (layer: LayerState) => boolean | Promise<boolean>): () => v
 Predicates may be async; `dismiss` awaits them. A veto **rejects** the attempt (layer stays open; caller re-issues after confirming) rather than deferring the caller's `Promise<R>`. Confirm UI is the consumer's own layer — core never opens UI.
 
 ```ts
-call.end(response, opts?: { force?: boolean }): Promise<boolean>;   // return = "did it dismiss?"
-call.dismiss(response, opts?: { force?: boolean }): Promise<boolean>;
+call.end(...args: EndArgs<R>): Promise<boolean>; // return = "did it dismiss?"
+call.dismiss(...args: EndArgs<R>): Promise<boolean>;
 ```
 
-Return value = "did it dismiss?". `{ force: true }` bypasses blockers. Repeat `end`/`dismiss` while `dismissing` dedupes to the in-flight promise; `force` wins immediately. Predicate throw/reject = veto (fail-closed; dev warning).
+Omit the response when `undefined extends R` (e.g. void toasts). Return value = "did it dismiss?". `{ force: true }` bypasses blockers — pass `end(response, { force: true })` or `end(undefined, { force: true })` when the response is optional. Repeat `end`/`dismiss` while `dismissing` dedupes to the in-flight promise; `force` wins immediately. Predicate throw/reject = veto (fail-closed; dev warning).
 
 ## dismissing flag
 
@@ -37,7 +37,7 @@ Gate runs **before** exit transition: allowed → resolve promise, `phase: "dism
 
 ## dismissAll modes
 
-`stack.dismissAll(response, opts?: { mode? })` is async:
+`stack.dismissAll(...args: DismissAllArgs<R>)` is async (omit response when `undefined extends R`):
 
 | mode                      | behavior                                          |
 | ------------------------- | ------------------------------------------------- |

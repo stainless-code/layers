@@ -3,8 +3,9 @@ import type { Layer } from "./layer";
 import type { LayerClient } from "./layerClient";
 import type { LayerStack } from "./layerStack";
 import type {
+  CancelQueuedArgs,
   DefaultLayerError,
-  DismissOptions,
+  HandleDismissArgs,
   LayerKey,
   LayerOptions,
   PayloadArg,
@@ -39,16 +40,18 @@ type NoValidateOptions<Opts> = Opts extends { validate: Validator<unknown> }
 export interface LayerHandle<P, R, E, D, RP> {
   open: (payload: PayloadArg<P>["payload"]) => Promise<R>;
   upsert: (payload: PayloadArg<P>["payload"]) => Promise<R>;
-  dismiss: (
-    response?: R,
-    opts?: DismissOptions & { id?: string },
-  ) => Promise<boolean>;
+  /**
+   * Dismiss the bound instance (or `{ id }`).
+   * Response optional iff `undefined extends R` — see {@link HandleDismissArgs}.
+   */
+  dismiss: (...args: HandleDismissArgs<R>) => Promise<boolean>;
   update: (patch: Partial<P>, opts?: { id?: string }) => void;
   /**
    * Resolves and removes a serially queued layer without mounting (skips blockers).
    * No `id` → FIFO head for this key; `{ id }` → exact queued match.
+   * Response may be omitted when `undefined extends R`.
    */
-  cancelQueued: (response?: R, opts?: { id?: string }) => boolean;
+  cancelQueued: (...args: CancelQueuedArgs<R>) => boolean;
   readonly client: LayerClient;
   readonly stack: LayerStack<P, R, E, D>;
   readonly options: LayerOptions<P, R, E, D, RP> & {
@@ -156,7 +159,8 @@ export function createLayer<
       mine = stack.open({ ...toOpenOpts(payload as P), upsert: true });
       return mine.promise.promise as Promise<R>;
     },
-    dismiss: (response, o) => {
+    dismiss: (...args) => {
+      const [response, o] = args;
       const l = target(o?.id);
       return l
         ? stack.dismiss(l, response as R, { force: o?.force })
@@ -166,8 +170,10 @@ export function createLayer<
       const l = target(o?.id);
       if (l) stack.update(l, patch);
     },
-    cancelQueued: (response, o) =>
-      stack.cancelQueued(opts.key, response ?? (undefined as R), o),
+    cancelQueued: (...args) => {
+      const [response, o] = args;
+      return stack.cancelQueued(opts.key, response as R, o);
+    },
     client,
     stack,
     options: opts,

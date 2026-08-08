@@ -121,15 +121,15 @@ stack.addBlocker(fn: (layer: LayerState) => boolean | Promise<boolean>): () => v
 **Async + reject** — predicates may be async; `dismiss` awaits them. A veto **rejects** the attempt (layer stays open; caller re-issues after confirming) rather than deferring the caller's `Promise<R>`. Confirm UI is the consumer's own layer — core never opens UI.
 
 ```ts
-call.end(response, opts?: { force?: boolean }): Promise<boolean>;   // was void
-call.dismiss(response, opts?: { force?: boolean }): Promise<boolean>;
+call.end(...args: EndArgs<R>): Promise<boolean>;
+call.dismiss(...args: EndArgs<R>): Promise<boolean>;
 ```
 
-Return value = "did it dismiss?". `{ force: true }` bypasses blockers. Repeat `end`/`dismiss` while `dismissing` dedupes to the in-flight promise; `force` wins immediately. Predicate throw/reject = veto (fail-closed; dev warning).
+Response optional when `undefined extends R` (same gate as `PayloadArg`). Return value = "did it dismiss?". `{ force: true }` bypasses blockers. Repeat `end`/`dismiss` while `dismissing` dedupes to the in-flight promise; `force` wins immediately. Predicate throw/reject = veto (fail-closed; dev warning).
 
 **Paths** — honor blockers: `end`/`dismiss` (user intent). Skip: `cancelQueued` (serial, never mounted), `cancelAll` (system teardown). **Layer-group cascade** (`onLayerDismiss` → `#drainChildStacks` → `cancelAll`) rejects child `open()` with `LayerCancelledError` — guard the parent instead.
 
-**`dismissAll` modes** — `stack.dismissAll(response, opts?: { mode? })` is async:
+**`dismissAll` modes** — `stack.dismissAll(...args: DismissAllArgs<R>)` is async:
 
 | mode                      | behavior                                          |
 | ------------------------- | ------------------------------------------------- |

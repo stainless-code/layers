@@ -73,8 +73,10 @@ export interface LayerState<
 
 /** Imperative controls available to a rendered layer. */
 export interface LayerCallContext<P, R, RootProps = unknown> {
-  end: (response: R, opts?: DismissOptions) => Promise<boolean>;
-  dismiss: (response: R, opts?: DismissOptions) => Promise<boolean>;
+  /** Resolve and dismiss — response optional iff `undefined extends R` ({@link EndArgs}). */
+  end: (...args: EndArgs<R>) => Promise<boolean>;
+  /** Alias of {@link LayerCallContext.end}. */
+  dismiss: (...args: EndArgs<R>) => Promise<boolean>;
   addBlocker: (fn: BlockerFn) => () => void;
   update: (patch: Partial<P>) => void;
   setRunning: (running: boolean) => void;
@@ -148,6 +150,29 @@ export interface LayerOptions<
 export type PayloadArg<P> = undefined extends P
   ? { payload?: P }
   : { payload: P };
+
+/** Rest-tuple factory: response optional iff `undefined extends R`. */
+export type ResponseArgTuple<R, Opts> = undefined extends R
+  ? [response?: R, opts?: Opts]
+  : [response: R, opts?: Opts];
+
+/**
+ * Rest-args for `call.end` / `call.dismiss`.
+ * Response is optional only when `R` admits `undefined` — twin of {@link PayloadArg}.
+ */
+export type EndArgs<R> = ResponseArgTuple<R, DismissOptions>;
+
+/** `LayerStack.dismissAll` rest-args (same gate as {@link EndArgs}). */
+export type DismissAllArgs<R> = ResponseArgTuple<R, DismissAllOptions>;
+
+/** `cancelQueued` rest-args (same gate as {@link EndArgs}). */
+export type CancelQueuedArgs<R> = ResponseArgTuple<R, { id?: string }>;
+
+/** `LayerHandle.dismiss` rest-args (same gate as {@link EndArgs}; opts may include `id`). */
+export type HandleDismissArgs<R> = ResponseArgTuple<
+  R,
+  DismissOptions & { id?: string }
+>;
 
 export type OpenLayerOptions<
   P = unknown,

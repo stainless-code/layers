@@ -69,11 +69,11 @@ class LayerStack {
 
   find(key: LayerKey): Layer | undefined; // topmost same-key (findLast)
   getLayer(id: string): Layer | undefined;
-  dismiss(layer, response?, opts?: DismissOptions): Promise<boolean>;
-  dismissAll(response?, opts?: DismissAllOptions): Promise<void>;
+  dismiss(layer, ...args: EndArgs<R>): Promise<boolean>;
+  dismissAll(...args: DismissAllArgs<R>): Promise<void>;
   cancelAll(opts?: { reason?: LayerCancelReason }): Promise<void>;
   addBlocker(fn: StackBlockerFn): () => void;
-  cancelQueued(key: LayerKey, response, opts?: { id?: string }): boolean;
+  cancelQueued(key: LayerKey, ...args: CancelQueuedArgs<R>): boolean;
   settle(layer): void;
   setRunning(layer, running: boolean): void;
   update(layer, patch: Partial<P>): void;
@@ -86,8 +86,8 @@ class LayerStack {
 | `getQueuedSnapshot` | Serial-scope queue — layers waiting behind the occupying layer                                                            |
 | `subscribe`         | Register for snapshot changes (batched via `notifyManager`)                                                               |
 | `find`              | Topmost mounted layer for a logical key (key signature; `findLast`)                                                       |
-| `dismiss`           | Resolve one layer; returns whether dismissal succeeded (blockers may veto)                                                |
-| `cancelQueued`      | Resolve a serial `queued` layer without mounting; omit `{ id }` → FIFO head for the key, `{ id }` → exact queued instance |
+| `dismiss`           | Resolve one layer; response optional when `undefined extends R` (`EndArgs`); blockers may veto                            |
+| `cancelQueued`      | Resolve a serial `queued` layer without mounting; same response gate; omit `{ id }` → FIFO, `{ id }` → exact match      |
 | `addBlocker`        | Stack-scoped dismiss gate; returns a disposer                                                                             |
 
 ## StackNotifyEvent
@@ -195,7 +195,7 @@ function assertLayerKey(key: unknown): asserts key is LayerKey;
 
 ## Layer cancel errors
 
-System teardown (`cancelAll`, parent-dismiss child drain, group dispose, host disconnect) rejects `open()` with `LayerCancelledError`. User `dismiss` / `dismissAll(response)` still resolve with `R`. See [Error handling](/guides/error-handling).
+System teardown (`cancelAll`, parent-dismiss child drain, group dispose, host disconnect) rejects `open()` with `LayerCancelledError`. User `dismiss` / `dismissAll` still resolve with `R`. See [Error handling](/guides/error-handling).
 
 ```ts
 type LayerCancelReason =
@@ -228,10 +228,10 @@ function createLayer<V extends Validator<unknown>, R, …>(
 ```
 
 ```ts
-const confirm = createLayer(confirmOptions, client);
+const confirm = createLayer(confirmOptions, client); // R = boolean
 const ok = await confirm.open({ title: "Remove?" });
 confirm.dismiss(false);
-confirm.cancelQueued(undefined, { id: "queued-id" }); // optional exact match
+confirm.cancelQueued(false, { id: "queued-id" }); // response required for boolean R
 ```
 
 <AutoTypeTable
@@ -254,7 +254,9 @@ function createCallContext<P, R, RootProps = unknown>(
 ): LayerCallContext<P, R, RootProps>;
 ```
 
-`LayerCallContext` exposes `end`, `dismiss`, `addBlocker`, `update`, `setRunning`, `settle`, plus read-only `ended`, `index`, `stackSize`, `root`, `stackId`, and `layerId`.
+`LayerCallContext` exposes `end`, `dismiss`, `addBlocker`, `update`, `setRunning`, `settle`, plus read-only `ended`, `index`, `stackSize`, `root`, `stackId`, and `layerId`. Omit the response on `end`/`dismiss` when `undefined extends R` (`EndArgs` — same gate as `PayloadArg` / `.open()`).
+
+<AutoTypeTable path="../../packages/core/src/types.ts" name="EndArgs" />
 
 <AutoTypeTable
   path="../../packages/core/src/types.ts"
