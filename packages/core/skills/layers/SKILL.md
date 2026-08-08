@@ -11,7 +11,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/layers"
-  library_version: "0.2.3"
+  library_version: "0.2.4"
   framework: "framework-agnostic"
 sources:
   - https://stainless-code.com/layers/adapters/core

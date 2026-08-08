@@ -11,7 +11,7 @@ keywords:
   - typescript
 metadata:
   library: "@stainless-code/solid-layers"
-  library_version: "0.2.3"
+  library_version: "0.2.4"
   framework: "solid"
 sources:
   - https://stainless-code.com/layers/adapters/solid

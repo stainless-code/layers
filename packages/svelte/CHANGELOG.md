@@ -1,5 +1,12 @@
 # @stainless-code/svelte-layers
 
+## 0.2.5
+
+### Patch Changes
+
+- Updated dependencies [[`4d41e57`](https://github.com/stainless-code/layers/commit/4d41e577e4148568644bf6cf1cd1b6d5c44817b6)]:
+  - @stainless-code/layers@0.2.4
+
 ## 0.2.4
 
 ### Patch Changes
