@@ -27,13 +27,13 @@
     "react-dom": "19.2.7"
   },
   "devDependencies": {
-    "@analogjs/astro-angular": "2.6.3",
-    "@angular/core": "22.0.7",
-    "@astrojs/preact": "6.0.1",
-    "@astrojs/solid-js": "7.0.1",
+    "@analogjs/astro-angular": "2.6.4",
+    "@angular/core": "22.1.1",
+    "@astrojs/preact": "6.0.2",
+    "@astrojs/solid-js": "7.0.2",
     "@astrojs/svelte": "9.0.1",
-    "@astrojs/vue": "7.0.1",
-    "@base-ui/react": "1.6.0",
+    "@astrojs/vue": "7.0.2",
+    "@base-ui/react": "1.7.0",
     "@lit/context": "1.1.6",
     "@stainless-code/alpine-layers": "workspace:*",
     "@stainless-code/angular-layers": "workspace:*",
@@ -45,12 +45,12 @@
     "@types/react": "19.2.17",
     "@types/react-dom": "19.2.3",
     "lit": "3.3.3",
-    "preact": "10.29.7",
-    "react-aria-components": "1.19.0",
+    "preact": "10.29.8",
+    "react-aria-components": "1.20.0",
     "solid-js": "1.9.14",
-    "svelte": "5.56.6",
-    "svelte-check": "4.7.3",
-    "vue": "3.5.40",
-    "vue-tsc": "3.3.7"
+    "svelte": "5.56.8",
+    "svelte-check": "4.7.5",
+    "vue": "3.5.41",
+    "vue-tsc": "3.3.9"
   }
 }
