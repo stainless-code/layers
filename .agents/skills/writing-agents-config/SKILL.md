@@ -58,7 +58,7 @@ find .agents/skills -name SKILL.md -exec sh -c 'n=$(wc -l < "$1"); [ "$n" -gt 12
 
 ## Layers-specific tradeoffs
 
-- **Tier-2 attach** — `agents-tier-system` (`.agents/rules/**`, `.agents/skills/**`, `.cursor/rules/**`, `.cursor/skills/**`); `docs-governance-priming` (`docs/**`, `.agents/**`, `.cursor/**`).
+- **Tier-2 attach** — `agents-tier-system` (`.agents/rules/**`, `.agents/skills/**`, `.cursor/rules/**`); `docs-governance-priming` (`docs/**`, `.agents/**`, `.cursor/**`).
 - **Intent-only skills** — `improve-codebase-architecture`, `domain-modeling`, `docs-lifecycle-sweep`, `diagnosing-bugs`, `tdd`, `pr-comment-fact-check`, `harden-pr`. No glob (no per-file tax).
 - **Cross-skill links** — relative `../skill/SKILL.md` and sibling files resolve reliably in Cursor agents. Relative links inside `.agents/` are an **intentional delta**, not drift.
 - **Small-lib surface** — no per-feature `docs/` subtrees, no UI-component skills, no API-client/codegen skills. Don't add a skill governing tooling this repo lacks (a rule referencing a nonexistent script is worse than no rule).
