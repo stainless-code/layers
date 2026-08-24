@@ -1,10 +1,11 @@
 #!/usr/bin/env bun
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 // Pack with Bun (resolves workspace:*) then npm-publish the tarball — Bun can't do npm OIDC/provenance.
 // Build first and assert `exports` dist paths exist (CI checkout has no dist/).
-// Tag after publish and on skip (partial retry): annotated `name@version` + `New tag:` for changesets/action.
+// Tag after publish and on skip (partial retry): annotated `name@version` plus
+// a CHANGESETS_OUTPUT `git-tag` event so action v2 can push tags / GH releases.
 // Skip versions already on the registry so partial releases can retry.
 import { $ } from "bun";
 
@@ -32,6 +33,15 @@ async function ensureGitIdentity(): Promise<void> {
   if (name.exitCode === 0 && name.text().trim()) return;
   await $`git config user.name ${"github-actions[bot]"}`;
   await $`git config user.email ${"41898282+github-actions[bot]@users.noreply.github.com"}`;
+}
+
+function recordGitTag(packageName: string, tag: string): void {
+  const out = process.env.CHANGESETS_OUTPUT;
+  if (!out) return;
+  appendFileSync(
+    out,
+    `${JSON.stringify({ type: "git-tag", tag, packageName })}\n`,
+  );
 }
 
 /** @returns whether a new local tag was created */
@@ -96,7 +106,10 @@ for (const name of packageDirs) {
 
   if (await isAlreadyPublished(pkg.name, pkg.version)) {
     console.log(`Skipping ${pkg.name}@${pkg.version} (already on registry)`);
-    if (await ensureReleaseTag(tag)) console.log(`New tag: ${tag}`);
+    if (await ensureReleaseTag(tag)) {
+      recordGitTag(pkg.name, tag);
+      console.log(`New tag: ${tag}`);
+    }
     continue;
   }
 
@@ -113,7 +126,10 @@ for (const name of packageDirs) {
   }
 
   await $`npm publish ${tarball} --provenance --access public`.cwd(dir);
-  if (await ensureReleaseTag(tag)) console.log(`New tag: ${tag}`);
+  if (await ensureReleaseTag(tag)) {
+    recordGitTag(pkg.name, tag);
+    console.log(`New tag: ${tag}`);
+  }
   published++;
 }
 
