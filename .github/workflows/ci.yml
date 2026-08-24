@@ -111,6 +111,11 @@ jobs:
       - name: Run unit tests with coverage gate
         run: bun run test:coverage
 
+      # Workspace `test:coverage` is per-package `src/` only. Root
+      # `scripts/upgrade-packages` is on `bun run test`, not the coverage gate.
+      - name: Run upgrade-packages tests
+        run: bun test --isolate scripts/upgrade-packages
+
   test-dom:
     name: 🌐 Test (DOM)
     needs: skip-ci

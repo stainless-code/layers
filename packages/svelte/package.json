@@ -56,7 +56,7 @@
   "scripts": {
     "build": "tsdown",
     "check:pack": "attw --pack . --profile esm-only && publint --strict",
-    "test": "bun test ./src",
+    "test": "bun test --isolate ./src",
     "test:coverage": "bun test ./src --coverage --coverage-threshold=0.75",
     "test:dom": "vitest run",
     "typecheck": "tsc --noEmit"
