@@ -19,7 +19,7 @@ The core (`@stainless-code/layers`) is pulled in automatically and re-exported f
 
 Name the contract once — payload in, response out — with `layerOptions`:
 
-```tsx
+```tsx ts2js
 import {
   layerOptions,
   type LayerComponentProps,
@@ -65,7 +65,7 @@ A typical layout keeps layer declarations in one folder so any component can imp
 
 Wrap your app with `StackProvider` and render active layers with `StackOutlet`:
 
-```tsx
+```tsx ts2js
 import { StackProvider, StackOutlet } from "@stainless-code/react-layers";
 
 function App() {
@@ -81,7 +81,7 @@ function App() {
 
 Wire the declaration with `useLayer(options)` — payload-only `open`, inferred `R`, plus reactive `state`/`queued`/`top`:
 
-```tsx
+```tsx ts2js
 import { useLayer } from "@stainless-code/react-layers";
 
 function RemoveButton() {

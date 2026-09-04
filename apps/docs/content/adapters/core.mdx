@@ -36,7 +36,7 @@ The core also exports `Layer`, `Subscribable`, `ControlledPromise`, `PayloadVali
 
 Declare once, observe the stack, wire `call` in your renderer:
 
-```ts
+```ts ts2js
 import {
   LayerClient,
   layerOptions,
@@ -83,13 +83,7 @@ const ok = await c.open({ title: "Remove item?" });
 
 Augment `Register` once to set `DefaultLayerError`:
 
-```ts
-declare module "@stainless-code/layers" {
-  interface Register {
-    defaultError: AppError;
-  }
-}
-```
+<include>/_snippets/error-register.ts</include>
 
 ## When to use the core directly
 

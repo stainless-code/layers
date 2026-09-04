@@ -157,13 +157,7 @@ interface Register {}
 type DefaultLayerError = Register extends { defaultError: infer E } ? E : Error;
 ```
 
-```ts
-declare module "@stainless-code/layers" {
-  interface Register {
-    defaultError: AppError;
-  }
-}
-```
+<include>/_snippets/error-register.ts</include>
 
 ## Payload validation errors
 
