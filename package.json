@@ -93,5 +93,5 @@
     "bun": ">=1.4.0",
     "node": "^20.19.0 || >=22.12.0"
   },
-  "packageManager": "bun@1.4.0"
+  "packageManager": "bun@1.4.1"
 }
