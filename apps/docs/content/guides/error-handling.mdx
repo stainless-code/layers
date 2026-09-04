@@ -76,13 +76,7 @@ try {
 
 Augment `Register` once to set `DefaultLayerError` for every layer's `E` default:
 
-```ts
-declare module "@stainless-code/layers" {
-  interface Register {
-    defaultError: AppError;
-  }
-}
-```
+<include>/_snippets/error-register.ts</include>
 
 `DefaultLayerError` resolves to `Error` when unaugmented. Per-layer error types can still be set on `layerOptions<P, R, E>()`.
 

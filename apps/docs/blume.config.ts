@@ -14,14 +14,6 @@ export default defineConfig({
 
   logo: { image: "/logo.svg", text: "Layers" },
 
-  banner: {
-    content:
-      "Experimental — the API may change between minor releases. Pin your version.",
-    link: { text: "Stability & versioning", href: "/concepts/stability" },
-    dismissible: true,
-    id: "experimental-2026",
-  },
-
   github: {
     owner: "stainless-code",
     repo: "layers",

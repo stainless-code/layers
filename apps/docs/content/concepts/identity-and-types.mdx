@@ -106,13 +106,7 @@ void c.open(); // fire-and-forget
 
 Augment `Register` once to set the app-wide error type:
 
-```ts
-declare module "@stainless-code/layers" {
-  interface Register {
-    defaultError: AppError;
-  }
-}
-```
+<include>/_snippets/error-register.ts</include>
 
 `DefaultLayerError` defaults to `Error` unless augmented. `open` returns `Promise<R>` — rejections are not typed on the promise (a TypeScript limitation); narrow at runtime with guards like `isPayloadValidationError` and `isLayerCancelledError`.
 
