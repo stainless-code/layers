@@ -3,6 +3,10 @@ title: When to use Layers
 description: Use-case matrix — when a headless layer stack fits, and when a plain component is simpler.
 search:
   tags: ["concept"]
+related:
+  - /concepts/overview
+  - /concepts/comparison
+  - /examples/confirm-dialog
 ---
 
 Overlay UI is cross-cutting, but component models push its state local. You end up prop-drilling `isOpen`, lifting state, threading `onConfirm`/`onCancel`, duplicating modal boilerplate, and hand-rolling z-order and one-at-a-time logic. Layers moves overlay state into a headless `LayerClient` you invoke imperatively: declare a layer once, open it from anywhere.

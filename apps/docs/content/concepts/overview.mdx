@@ -3,6 +3,10 @@ title: Overview
 description: Overlay state is cross-cutting; a zero-dep headless engine plus framework adapters split it from UI rendering.
 search:
   tags: ["concept"]
+related:
+  - /concepts/when-to-use
+  - /guides/getting-started
+  - /reference/core-api
 ---
 
 A confirm, toast, or drawer rarely stays where it started — prop-drilled `isOpen` and threaded callbacks don't scale. Layers moves that into a **headless client**: declare once, mount an outlet, `await confirm.open(...)` from any call site (wired handle or bag-form). Zero-dep core; thin adapters bind each framework's reactivity.
@@ -42,7 +46,7 @@ Zero runtime dependencies; `sideEffects: false`.
 
 ### Adapters (`@stainless-code/<fw>-layers`)
 
-Each adapter peers its framework, depends on `@stainless-code/layers` (re-exported), and ships client context + `useStack` / wired-handle hooks plus a render surface (`StackOutlet` or the imperative/primitive equivalent — convenience, not required). Install one adapter package; core comes transitively. Svelte: `.` (runes, 5.7+) and `./store` (stores, 3+).
+Each adapter peers its framework, depends on `@stainless-code/layers` (re-exported), and ships client context + `useStack` / wired-handle hooks plus a render surface (`StackOutlet` or the imperative/primitive equivalent — convenience, not required). Install one adapter package; core comes transitively. Svelte: `.` (runes, {{svelte-runes-min}}) and `./store` (stores, 3+).
 
 ## Subscription model
 

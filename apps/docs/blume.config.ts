@@ -1,4 +1,6 @@
 import { defineConfig } from "blume";
+import { orama } from "blume/search";
+import { filesystem, githubReleases } from "blume/sources";
 
 import { CURATED_POPULAR } from "./components/curated-popular";
 
@@ -21,33 +23,31 @@ export default defineConfig({
     dir: "apps/docs",
   },
 
-  lastModified: true,
+  lastModified: "git",
 
   content: {
     sources: [
-      { type: "filesystem", root: "content" },
-      {
-        type: "github-releases",
+      filesystem({ root: "content" }),
+      githubReleases({
         prefix: "changelog",
         owner: "stainless-code",
         repo: "layers",
         limit: 100,
-      },
+      }),
     ],
   },
 
   navigation: {
     tabs: [
-      { label: "Guides", path: "/guides", icon: "book-open" },
-      { label: "Examples", path: "/examples", icon: "rocket" },
+      { label: "Guides", path: "/guides" },
+      { label: "Examples", path: "/examples" },
       {
         label: "Integrations",
         path: "/integrations",
-        icon: "blocks",
       },
-      { label: "Concepts", path: "/concepts", icon: "layers" },
-      { label: "Adapters", path: "/adapters", icon: "plug" },
-      { label: "Reference", path: "/reference", icon: "code" },
+      { label: "Concepts", path: "/concepts" },
+      { label: "Adapters", path: "/adapters" },
+      { label: "Reference", path: "/reference" },
     ],
     featured: [
       { label: "Changelog", href: "/changelog", icon: "sparkles" },
@@ -60,9 +60,20 @@ export default defineConfig({
     sidebar: { display: "flat" },
   },
 
+  footer: {
+    links: [
+      { label: "Getting started", href: "/guides/getting-started" },
+      { label: "Core API", href: "/reference/core-api" },
+      { label: "Changelog", href: "/changelog" },
+    ],
+    socials: {
+      github: "https://github.com/stainless-code/layers",
+    },
+  },
+
   theme: { accent: "teal", radius: "md", mode: "system" },
   search: {
-    provider: "orama",
+    provider: orama(),
     popular: CURATED_POPULAR.map(({ route, label }) => ({
       href: route,
       label,
@@ -70,16 +81,24 @@ export default defineConfig({
   },
 
   markdown: {
-    code: { icons: true },
-    codeBlocks: { theme: { light: "github-light", dark: "github-dark" } },
+    externalLinks: true,
+    code: {
+      icons: true,
+      theme: { light: "github-light", dark: "github-dark" },
+    },
+  },
+
+  variables: {
+    "svelte-runes-min": "5.7+",
   },
 
   toc: { minHeadingLevel: 2, maxHeadingLevel: 3 },
 
   export: { epub: true, pdf: true },
 
-  ai: {
+  agents: {
     llmsTxt: true,
+    agentReadability: true,
     markdownComponents: {
       HeroDemo: () =>
         "_Live hero demo: interactive confirm, toast, serial queue, and nested-confirm scenarios running the real React adapter. See the page for the rendered demo._",
@@ -115,11 +134,9 @@ export default defineConfig({
     sitemap: true,
     robots: true,
     structuredData: true,
-    agentReadability: true,
   },
 
   deployment: {
-    output: "static",
     site: "https://stainless-code.com",
     base: "/layers",
   },

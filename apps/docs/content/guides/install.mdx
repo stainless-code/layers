@@ -3,6 +3,12 @@ title: Install
 description: npm package names, install commands, and peer dependencies for Layers.
 search:
   tags: ["guide"]
+  keywords: [npm, setup, adapter, peer dependency]
+  boost: 4
+related:
+  - /guides/getting-started
+  - /concepts/overview
+  - /adapters/react
 ---
 
 Install **one adapter** for your framework. It depends on `@stainless-code/layers` and re-exports the core — import both adapter wiring and core APIs from that one package. Provider shape differs by adapter (`StackProvider` on React/Preact; `provideLayerClient` / `setLayerClient` / `LayerClientContext` elsewhere) plus `useLayerClient`.
@@ -75,7 +81,7 @@ npm i @stainless-code/alpine-layers
 
 Peer: `svelte` (≥3). Two package entries in one npm package:
 
-- `@stainless-code/svelte-layers` — runes API (Svelte 5.7+)
+- `@stainless-code/svelte-layers` — runes API (Svelte {{svelte-runes-min}})
 - `@stainless-code/svelte-layers/store` — stores API (Svelte 3+)
 
 ```package-install

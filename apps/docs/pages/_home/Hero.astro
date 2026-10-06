@@ -15,7 +15,8 @@ const pillMuted =
 const defaultFramework = "vanilla";
 ---
 
-<section class="text-center">
+<section class="landing-gutter pt-16 pb-14 text-center sm:pt-24 sm:pb-24">
+  <div class="mx-auto max-w-[1160px]">
   <h1
     class="mx-auto max-w-3xl text-balance font-medium text-4xl tracking-tight sm:text-5xl lg:text-6xl"
   >
@@ -140,7 +141,7 @@ const defaultFramework = "vanilla";
     </a>
   </div>
 
-  <div class="mx-auto mt-12 max-w-6xl text-left">
+  <div class="mx-auto mt-12 max-w-[1160px] text-left">
     <div class="mx-auto mb-6 max-w-2xl text-center">
       <h2 class="font-medium text-3xl tracking-tight sm:text-4xl">
         Try it live.
@@ -154,12 +155,13 @@ const defaultFramework = "vanilla";
     </div>
     <HeroDemo client:load />
   </div>
+  </div>
 </section>
 
 <script is:inline>
   (() => {
-    const pillContainer = document.querySelector("[data-framework-pills]");
-    if (!pillContainer) return;
+    if (document.documentElement.dataset.layersPillsBound === "true") return;
+    document.documentElement.dataset.layersPillsBound = "true";
 
     const ACTIVE = ["border-accent", "bg-accent/10", "font-medium", "text-accent"];
     const MUTED = [
@@ -169,33 +171,78 @@ const defaultFramework = "vanilla";
       "hover:text-foreground",
     ];
 
-    pillContainer.addEventListener("click", (e) => {
-      const pill = e.target.closest("[data-framework]");
-      if (!pill) return;
+    document.addEventListener("click", (e) => {
+      const target = e.target instanceof Element ? e.target : null;
+      const pill = target?.closest("[data-framework-pills] [data-framework]");
+      if (!(pill instanceof HTMLElement)) return;
 
       const framework = pill.dataset.framework;
+      const scope =
+        pill.closest("[data-framework-pills]")?.parentElement ?? document;
 
-      pillContainer.querySelectorAll("[data-framework]").forEach((p) => {
-        const isActive = p.dataset.framework === framework;
-        p.classList.remove(...ACTIVE, ...MUTED);
-        p.classList.add(...(isActive ? ACTIVE : MUTED));
+      scope
+        .querySelectorAll("[data-framework-pills] [data-framework]")
+        .forEach((p) => {
+          if (!(p instanceof HTMLElement)) return;
+          const isActive = p.dataset.framework === framework;
+          p.classList.remove(...ACTIVE, ...MUTED);
+          p.classList.add(...(isActive ? ACTIVE : MUTED));
+        });
+
+      scope.querySelectorAll("[data-code]").forEach((block) => {
+        if (!(block instanceof HTMLElement)) return;
+        block.classList.toggle("hidden", block.dataset.code !== framework);
       });
 
-      document.querySelectorAll("[data-code]").forEach((block) => {
-        if (block.dataset.code === framework) {
-          block.classList.remove("hidden");
-        } else {
-          block.classList.add("hidden");
-        }
-      });
-
-      document.querySelectorAll("[data-install]").forEach((box) => {
-        if (box.dataset.install === framework) {
-          box.classList.remove("hidden");
-        } else {
-          box.classList.add("hidden");
-        }
+      scope.querySelectorAll("[data-install]").forEach((box) => {
+        if (!(box instanceof HTMLElement)) return;
+        box.classList.toggle("hidden", box.dataset.install !== framework);
       });
     });
+  })();
+</script>
+
+<script is:inline>
+  (() => {
+    if (document.documentElement.dataset.layersHeroCopyBound === "true") return;
+    document.documentElement.dataset.layersHeroCopyBound = "true";
+    const COPY =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';
+    const CHECK =
+      '<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-green-600 dark:text-green-500"><path d="M20 6 9 17l-5-5"/></svg>';
+    const ensureButtons = () => {
+      const scope = document.querySelector("[data-framework-pills]")
+        ?.parentElement;
+      if (!scope) return;
+      scope.querySelectorAll("[data-code] pre").forEach((pre) => {
+        if (!(pre instanceof HTMLElement)) return;
+        if (pre.parentElement?.closest("pre")) return;
+        if (pre.querySelector("[data-layers-copy]")) return;
+        pre.classList.add("group", "relative");
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className =
+          "absolute top-2 right-3 z-[2] inline-flex size-[1.875rem] select-none items-center justify-center rounded-md bg-background text-muted-foreground transition-colors hover:bg-muted hover:text-foreground [&_svg]:pointer-events-none [&_svg]:shrink-0";
+        button.setAttribute("data-layers-copy", "");
+        button.setAttribute("aria-label", "Copy code");
+        button.innerHTML = COPY;
+        button.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(
+              pre.querySelector("code")?.textContent ?? "",
+            );
+          } catch {
+            return;
+          }
+          button.innerHTML = CHECK;
+          setTimeout(() => {
+            button.innerHTML = COPY;
+          }, 1500);
+        });
+        pre.appendChild(button);
+      });
+    };
+    ensureButtons();
+    document.addEventListener("astro:after-swap", ensureButtons);
   })();
 </script>

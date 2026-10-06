@@ -3,6 +3,10 @@ title: Serial queues
 description: One occupying layer at a time with scope serial, getQueuedSnapshot, and queued-confirm flows.
 search:
   tags: ["guide"]
+related:
+  - /guides/nested-overlays
+  - /examples/serial-onboarding
+  - /concepts/stacks-scope-gc
 ---
 
 Onboarding steps, queued confirms, wizards — some surfaces must show one layer at a time. Set `scope: { strategy: "serial" }` on the stack so later opens wait as `queued` instead of mounting in parallel.

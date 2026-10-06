@@ -1,5 +1,6 @@
 import { defineComponents } from "blume";
 
+import Header from "./components/blume/Header.astro";
 import Pagination from "./components/blume/Pagination.astro";
 import RecipeCodeBlock from "./components/RecipeCodeBlock.astro";
 
@@ -12,6 +13,7 @@ export default defineComponents({
     CodeBlock: RecipeCodeBlock,
   },
   layout: {
+    Header,
     // Use the theme radius token (rounded-blume) instead of the built-in pills
     // (rounded-full) — softer corners that match the table/install cards.
     Pagination,
