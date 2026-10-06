@@ -3,6 +3,12 @@ title: Awaiting results
 description: Await typed responses from a wired handle (or bag-form open), infer types via DataTag, or fire-and-forget with void.
 search:
   tags: ["guide"]
+  keywords: [promise, typed result, DataTag, fire-and-forget]
+  boost: 3
+related:
+  - /guides/getting-started
+  - /examples/confirm-dialog
+  - /reference/core-api
 ---
 
 Need a boolean back from a confirm? Wire the declaration, then `await confirm.open(...)` — `Promise<R>` with no call-site generic. Awaiting is optional; fire-and-forget is equally first-class.

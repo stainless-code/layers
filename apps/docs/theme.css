@@ -45,3 +45,7 @@ a:has(> span > .logo-svg):hover .logo-active {
 a:has(> span > .logo-svg):hover .logo-top {
   transform: translateX(1px);
 }
+
+.landing-gutter {
+  padding-inline: max(1.5rem, calc((100vw - 72.5rem) / 2));
+}
