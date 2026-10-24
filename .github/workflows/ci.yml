@@ -294,6 +294,17 @@ jobs:
             --ignore=GHSA-5gmw-xhrv-c9v3 --ignore=GHSA-85c8-ppgw-ccpr
             --ignore=GHSA-p6vx-979v-rg4c --ignore=GHSA-jp82-f5mq-hwhp
             --ignore=GHSA-jqcg-44mw-7w3h
+            # Docs/dev-only transitives, no src/ or tarball reach (revisit on bumps):
+            # MCP SDK + body-parser via Blume and via @stainless-code/codemap devDep
+            # (evidence/skill tooling only), astro's zod, dompurify, markdown-it
+            # (typedoc), sharp, undici, launch-editor/shell-quote (changesets).
+            --ignore=GHSA-6qxp-vccf-f47h --ignore=GHSA-22jm-h49p-29qw
+            --ignore=GHSA-46jr-4wx8-v453 --ignore=GHSA-27r3-jxmh-p828
+            --ignore=GHSA-cg2g-xh64-v4q7 --ignore=GHSA-mrv2-3pqr-j5jr
+            --ignore=GHSA-587h-7wmj-h5pm --ignore=GHSA-pqg4-j6r4-53mv
+            --ignore=GHSA-gfr2-rv44-r23c --ignore=GHSA-r7fv-28h4-cvq7
+            --ignore=GHSA-wq5f-xc86-pv6w --ignore=GHSA-xjj6-f33q-929c
+            --ignore=GHSA-mrhx-c7xc-m3w5
           )
           NO_COLOR=1 bun audit "${IGNORES[@]}" 2>&1 | sed -E 's/\x1b\[[0-9;]*m//g' > /tmp/bun-audit.log
           cat /tmp/bun-audit.log
