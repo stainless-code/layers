@@ -45,3 +45,64 @@ ErrorDocument 404 /layers/404.html
 <FilesMatch "^llms(-full|-small)?\.txt$">
   Header set X-Robots-Tag "noindex"
 </FilesMatch>
+
+# Agent discovery (isitagentready) — Apache port of dist/_headers.
+# Apache ignores that file; this is what actually ships headers under /layers.
+<IfModule mod_mime.c>
+  AddType application/json .json
+</IfModule>
+
+# Compound extension needs a filename match — AddType splits on dots.
+<FilesMatch "\.tar\.gz$">
+  ForceType application/gzip
+</FilesMatch>
+
+# Homepage Link header (RFC 8288 / RFC 9727 s3). Minimal form; keep in sync with dist/_headers.
+<IfModule mod_setenvif.c>
+  SetEnvIf Request_URI "^/layers/$" IS_LAYERS_HOME
+  SetEnvIf Request_URI "^/layers/index\.html$" IS_LAYERS_HOME
+</IfModule>
+<IfModule mod_headers.c>
+  Header always set Link "</layers/.well-known/api-catalog>; rel=\"api-catalog\"; type=\"application/linkset+json\", </layers/.well-known/ai-catalog.json>; rel=\"ai-catalog\"; type=\"application/ai-catalog+json\", </layers/openapi.json>; rel=\"service-desc\"; type=\"application/json\", </layers/agent-readability.json>; rel=\"describedby\"; type=\"application/json\", </layers/llms.txt>; rel=\"describedby\"; type=\"text/plain\", </layers/index.md>; rel=\"alternate\"; type=\"text/markdown\"" env=IS_LAYERS_HOME
+  # Internal rewrites rename request env vars with a REDIRECT_ prefix.
+  Header always set Link "</layers/.well-known/api-catalog>; rel=\"api-catalog\"; type=\"application/linkset+json\", </layers/.well-known/ai-catalog.json>; rel=\"ai-catalog\"; type=\"application/ai-catalog+json\", </layers/openapi.json>; rel=\"service-desc\"; type=\"application/json\", </layers/agent-readability.json>; rel=\"describedby\"; type=\"application/json\", </layers/llms.txt>; rel=\"describedby\"; type=\"text/plain\", </layers/index.md>; rel=\"alternate\"; type=\"text/markdown\"" env=REDIRECT_IS_LAYERS_HOME
+</IfModule>
+
+# Extensionless file needs explicit type (else text/plain fails the scan).
+<Files "api-catalog">
+  ForceType 'application/linkset+json; profile="https://www.rfc-editor.org/info/rfc9727"'
+</Files>
+
+<IfModule mod_headers.c>
+  <FilesMatch "(^ai-catalog\.json$|^ard\.json$|^api-catalog$|^agent-readability\.json$|index\.json$)">
+    Header set Access-Control-Allow-Origin "*"
+  </FilesMatch>
+</IfModule>
+
+# Pragmatic Accept: text/markdown (static-first, not strict RFC).
+# Subdir rules shadow the domain-root rewrite block, so both live here.
+<IfModule mod_rewrite.c>
+RewriteEngine On
+
+RewriteCond %{REQUEST_URI} \.(css|js|mjs|map|png|jpe?g|webp|gif|svg|avif|ico|woff2?|ttf|otf|eot|xml|txt|json|pdf|mp4|webm|mp3|wav|ogg|zip)$ [NC]
+RewriteRule ^ - [L]
+RewriteCond %{REQUEST_URI} \.mdx?$ [NC]
+RewriteRule ^ - [L]
+
+# /layers/ -> /layers/index.md
+RewriteCond %{HTTP:Accept} text/markdown [NC]
+RewriteCond %{HTTP:Accept} !text/markdown(?:\s*;\s*(?!q\s*=)[^;,]+)*\s*;\s*q\s*=\s*0(\.0*)?(\s*[;,]|\s*$) [NC]
+RewriteRule ^$ /layers/index.md [L,T=text/markdown]
+
+# /layers/index.html -> /layers/index.md (same representation as /layers/)
+RewriteCond %{HTTP:Accept} text/markdown [NC]
+RewriteCond %{HTTP:Accept} !text/markdown(?:\s*;\s*(?!q\s*=)[^;,]+)*\s*;\s*q\s*=\s*0(\.0*)?(\s*[;,]|\s*$) [NC]
+RewriteRule ^index\.html$ /layers/index.md [L,T=text/markdown]
+
+# /layers/<route> -> twin .md
+RewriteCond %{HTTP:Accept} text/markdown [NC]
+RewriteCond %{HTTP:Accept} !text/markdown(?:\s*;\s*(?!q\s*=)[^;,]+)*\s*;\s*q\s*=\s*0(\.0*)?(\s*[;,]|\s*$) [NC]
+RewriteCond %{REQUEST_FILENAME} !\.md$ [NC]
+RewriteCond %{DOCUMENT_ROOT}/layers/$1.md -f
+RewriteRule ^(.+?)/?$ /layers/$1.md [L,T=text/markdown]
+</IfModule>
